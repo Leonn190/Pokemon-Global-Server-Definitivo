@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Petra Rocha, capitão do estádio Pedra.\nNão confunda rocha com coisa morta. Pedra conta história devagar, e quem não escuta acaba tropeçando nela.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora você pode encarar minha formação Pedra.\nRespeito 2 abre a pedreira de batalha. Agora vamos ver se seu time sabe bater sem quebrar a própria mão."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para a pedreira? Bom. As pedras estavam aqui antes e provavelmente estarão depois da sua pressa passar."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Capitão Pedra só aceita desafio oficial com respeito 2.\nOmastar e Kabutops vieram de tempo antigo, Gigalith não desperdiça brilho e Aurorus não se move por capricho.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Meu time é fóssil, casca e montanha: Omastar prende, Kabutops corta, Crustle carrega muralha, Barbaracle divide força, Aurorus pesa o tempo e Gigalith encerra como desabamento.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já sabe: Pedra não é só defesa. É memória comprimida, impacto calculado e paciência mineral."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaPetraRocha": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Só não espera que a resposta role ladeira abaixo por preguiça.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasPetraRocha",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou. Bom. Pedra gosta de quem aceita olhar a mesma camada até perceber outra história nela."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComPetraRocha": true,
+          "ConversasPetraRocha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Pedra?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é camada?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é pressão?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é paciência?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conhece Sidney?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Pedra porque ela dá escala ao orgulho. A gente acha que está demorando, aí olha para uma rocha e lembra que tempo também é força.",
+      "opcoes": [
+        {
+          "texto": "O que é camada?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Camada é história acumulada. Omastar e Kabutops carregam isso: não são só antigos, são respostas que sobreviveram a mundos diferentes.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCamadaPetraRocha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é pressão?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Pressão transforma. Gigalith brilha porque algo aguentou peso por tempo suficiente. Meu presente exige respeitar esse processo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPressãoPetraRocha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é paciência?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Paciência não é ficar parado. É esperar com estrutura. Crustle carrega casa nas costas e ainda acha caminho.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPaciênciaPetraRocha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é fazer você bater contra tempo sólido. Crustle segura, Barbaracle responde em partes, Aurorus muda o clima emocional e Gigalith fecha o espaço.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time parece museu agressivo: fósseis, cascas, colônias de braços, aurora antiga e cristal vivo.",
+      "opcoes": [
+        {
+          "texto": "Omastar e Kabutops.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Crustle e Barbaracle.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Aurorus e Gigalith.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Omastar prende com memória de mar antigo. Kabutops corta como se o fóssil tivesse acordado sem esquecer a lâmina.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Crustle transforma abrigo em arma. Barbaracle parece desordem, mas cada braço cobra um erro diferente.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Aurorus traz beleza de era perdida. Gigalith guarda luz em pedra densa, como se a montanha respirasse por cristais.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Sidney, o líder Pedra, entende essa paciência dura. Eu trabalho a entrada da pedreira; ele é a montanha quando decide responder.",
+      "opcoes": [
+        {
+          "texto": "O que é camada?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComPetraRocha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuCamadaPetraRocha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPressãoPetraRocha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPaciênciaPetraRocha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente existe, mas ele não abre só por pedido.\nVocê precisa conversar comigo e entender três pontos: camada, pressão e paciência.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você chegou ao paredão do presente. Ele não abre com força bruta; abre quando você entende a rocha.",
+      "opcoes": [
+        {
+          "texto": "Ler a camada, suportar a pressão e praticar paciência.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Bater na parede até ela rachar.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Desistir porque pedra demora a responder.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "A parede agradece o esforço e continua parede. Sua mão é que não gostou.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Pedra responde devagar, mas responde. Quem sai antes escuta só silêncio.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto. É um fragmento de paciência: pequeno, denso e difícil de ignorar.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Você não tentou quebrar tudo; achou a fissura certa.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque confundiu dureza com ausência de movimento. A rocha estava mudando, só que devagar.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa se perde por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

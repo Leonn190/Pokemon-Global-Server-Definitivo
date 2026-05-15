@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Nora Campos, capitão do estádio Normal.\nNão espere teatro demais. No estádio Normal, o difícil é fazer o básico tão bem que ele para de parecer básico.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora você pode encarar minha formação Normal.\nRespeito 2 libera a batalha. Agora vamos ver se seu time aguenta uma luta sem desculpa exótica."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para o campo? Bom. Normal é isso: repetir, cuidar, melhorar e não fingir que precisa de raio colorido para ter valor."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Capitão Normal só aceita desafio oficial com respeito 2.\nTauros não corre por pedido vazio, Miltank não entrega leite para malcriado e Stoutland sabe farejar preparo de longe.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Meu time é simples só para quem não presta atenção: Tauros rompe, Zangoose responde, Miltank sustenta, Ursaring pesa, Porygon2 ajusta cálculo e Stoutland fecha com lealdade.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já entendeu: Normal não é ausência de identidade. É fundamento antes da firula."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaNoraCampos": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu gosto de conversa clara, sem tentar transformar todo conselho em profecia.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasNoraCampos",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou. Isso já mostra constância. Muita gente some quando descobre que o básico dá trabalho."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComNoraCampos": true,
+          "ConversasNoraCampos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Normal?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é rotina?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é confiança?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é constância?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conhece Suriane?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Normal porque ele não precisa se vender como raro. Vida de campo ensina isso: acordar, cuidar, treinar, cair, levantar e fazer melhor amanhã.",
+      "opcoes": [
+        {
+          "texto": "O que é rotina?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Rotina não é prisão. É chão. Sem rotina, até talento vira visita passageira. Meu presente só abre para quem aceita esse trabalho repetido.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRotinaNoraCampos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é confiança?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Confiança nasce de cuidado, não de discurso. Stoutland não protege por pose; protege porque conhece o caminho de volta.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuConfiançaNoraCampos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é constância?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Constância é continuar bom depois que a novidade passou. Miltank parece tranquila porque entende força de longo prazo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuConstânciaNoraCampos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é vencer por fundamento. Tauros abre, Zangoose pune, Miltank segura, Ursaring pesa, Porygon2 ajusta e Stoutland confirma o que sobrou.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time parece cotidiano, mas cada um tem uma função firme no campo.",
+      "opcoes": [
+        {
+          "texto": "Tauros e Zangoose.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Miltank e Ursaring.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Porygon2 e Stoutland.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Tauros é impulso controlado. Zangoose é resposta afiada para quem achou que Normal não morde.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Miltank sustenta a luta com paciência. Ursaring lembra que força simples continua sendo força quando chega perto.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Porygon2 calcula o que muita gente chama de instinto. Stoutland fecha a equipe com faro, lealdade e presença.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Suriane, a líder Normal, entende muito bem que o comum pode carregar afeto, disciplina e peso. Eu sou mais direta; ela dá ao básico uma presença maior.",
+      "opcoes": [
+        {
+          "texto": "O que é rotina?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComNoraCampos",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuRotinaNoraCampos",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuConfiançaNoraCampos",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuConstânciaNoraCampos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente existe, mas ele não abre só por pedido.\nVocê precisa conversar comigo e entender três pontos: rotina, confiança e constância.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você chegou ao celeiro do presente. O cadeado não pede segredo místico. Pede fundamento.",
+      "opcoes": [
+        {
+          "texto": "Manter rotina, construir confiança e praticar constância.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Procurar um truque raro para parecer especial.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Fazer uma vez certo e achar que já basta.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Truque raro não substitui mão firme no trabalho diário.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Uma vez certa é sorte. Repetir certo é treino.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto. Não brilha exagerado, mas vai servir quando o básico precisar segurar a luta.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Foi limpo. Gosto quando a vitória não precisa se explicar com fogos.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque abandonou o simples cedo demais. Volta para a base e a luta muda.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa se perde por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

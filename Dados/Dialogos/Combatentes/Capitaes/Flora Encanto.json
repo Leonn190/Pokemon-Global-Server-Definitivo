@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Flora Encanto, capitão do estádio Fada.\nBem-vindo ao jardim encantado. Bonito, sim. Inofensivo? Só para quem acha que espinho pede licença.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora você pode encarar minha formação Fada.\nRespeito 2 abre o círculo Fada. Agora vamos ver se você entende encanto sem cair em ilusão barata."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para o jardim? Ótimo. Flores mudam pouco por fora, mas o perfume entrega quem passou distraído."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Capitão Fada só aceita desafio oficial com respeito 2.\nAzumarill parece alegre, Mimikyu parece pequeno e Grimmsnarl parece brincadeira até a pessoa errar o limite.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Meu time mistura doçura e perigo: Azumarill sustenta, Wigglytuff embala, Mimikyu desloca o olhar, Sylveon pressiona com graça, Grimmsnarl cobra limite e Florges fecha o jardim.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já entendeu: Fada não é só fofura. É pacto, brilho, proteção e punição para quem passa do limite."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaFloraEncanto": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Só não confunda gentileza com permissão para pisar no canteiro.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasFloraEncanto",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou. Bom. Encanto de verdade não some depois da primeira pergunta; ele fica mais exigente."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComFloraEncanto": true,
+          "ConversasFloraEncanto": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Fada?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é promessa?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é brilho?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é limite?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conhece Nathzinha?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Fada porque gosto do contraste. O mesmo gesto que acolhe também pode fechar a porta. Encanto sem limite vira armadilha; limite sem encanto vira muro.",
+      "opcoes": [
+        {
+          "texto": "O que é promessa?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Promessa é magia simples e perigosa. Quem promete cria caminho; quem quebra promessa deixa rastro. Meu presente exige entender esse peso.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPromessaFloraEncanto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é brilho?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Brilho chama atenção, mas também revela poeira. Sylveon usa beleza como pressão, não como enfeite vazio.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuBrilhoFloraEncanto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é limite?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Limite é cuidado com forma de cerca. Grimmsnarl sabe sorrir antes de lembrar que nem todo avanço merece acolhimento.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLimiteFloraEncanto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é deixar você confortável demais. Wigglytuff amacia o ritmo, Mimikyu muda o foco, Sylveon pressiona bonito e Grimmsnarl pune invasão.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é jardim e trava ao mesmo tempo: acolhe, confunde, encanta e fecha.",
+      "opcoes": [
+        {
+          "texto": "Azumarill e Wigglytuff.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Mimikyu e Sylveon.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Grimmsnarl e Florges.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Azumarill parece leve, mas segura impacto com alegria teimosa. Wigglytuff transforma canto e volume em controle de espaço.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Mimikyu mexe com o olhar antes da escolha. Sylveon mostra que graça também pode empurrar o adversário para trás.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Grimmsnarl é limite com dentes. Florges é jardim inteiro lembrando que beleza organizada também domina campo.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Nathzinha costuma tratar as coisas de forma mais simples e direta. Eu gosto disso. Às vezes o tipo Fada fica melhor quando não tenta explicar todo brilho.",
+      "opcoes": [
+        {
+          "texto": "O que é promessa?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComFloraEncanto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPromessaFloraEncanto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuBrilhoFloraEncanto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuLimiteFloraEncanto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente existe, mas ele não abre só por pedido.\nVocê precisa conversar comigo e entender três pontos: promessa, brilho e limite.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você chegou ao arco do presente. Ele abre para quem entende que encanto também tem regra.",
+      "opcoes": [
+        {
+          "texto": "Honrar a promessa, olhar além do brilho e respeitar o limite.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Pegar a flor mais bonita sem pedir.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Achar que tudo fofo é fraco.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "O jardim viu. Ele sempre vê quando a mão chega antes do respeito.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Essa é a armadilha mais velha contra Fada. O sorriso vem antes da resposta.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto. É delicado, mas não trate delicadeza como fragilidade.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Você soube atacar sem pisar em tudo. Isso é raro.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque caiu no brilho e esqueceu o limite. Fada pune esse tipo de pressa com educação.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa se perde por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

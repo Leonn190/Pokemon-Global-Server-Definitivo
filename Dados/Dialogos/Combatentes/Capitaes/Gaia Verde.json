@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Gaia Verde, capitão do estádio Planta.\nBem-vindo ao viveiro. Aqui Planta não é cenário: é paciência crescendo até virar força.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora você pode encarar minha formação Planta.\nRespeito 2 permite a batalha. Agora seu time vai descobrir se sabe lutar contra algo que cresce enquanto você se distrai."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou ao viveiro? Bom. Planta gosta de retorno: folha nova, tentativa nova, erro antigo virando adubo."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Capitão Planta só aceita desafio oficial com respeito 2.\nLilligant não dança por pressa, Tangrowth não solta cipó sem motivo e Rillaboom não marca ritmo para quem ainda não respeitou o campo.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Meu time cresce em camadas: Lilligant organiza o passo, Whimsicott perturba a rota, Ludicolo mistura chuva e festa, Leafeon corta limpo, Tangrowth prende e Rillaboom comanda o ciclo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já sabe que Planta não é passiva. Ela ocupa, regenera, prende, floresce e volta."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaGaiaVerde": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Só cuidado para não pedir fruto antes de entender a raiz.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasGaiaVerde",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou. Boa escolha. Planta ensina que voltar não é retroceder quando a raiz ficou mais forte."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComGaiaVerde": true,
+          "ConversasGaiaVerde": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Planta?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é raiz?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é poda?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é ciclo?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conhece Suneiva?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Planta porque ela vence sem precisar parecer urgente. Crescer é uma forma lenta de coragem. Quem não percebe só entende quando já está cercado.",
+      "opcoes": [
+        {
+          "texto": "O que é raiz?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Raiz é compromisso invisível. Ninguém aplaude raiz, mas tudo cai sem ela. Meu presente só abre para quem valoriza o que sustenta.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRaizGaiaVerde": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é poda?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Poda parece perda, mas às vezes é direção. Leafeon entende corte limpo: tirar excesso para a energia chegar onde importa.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPodaGaiaVerde": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é ciclo?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Ciclo é aceitar volta sem chamar de fracasso. Semente, broto, folha, queda e adubo: a luta também gira assim.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCicloGaiaVerde": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é crescer no espaço que você abandona. Whimsicott distrai, Tangrowth prende, Ludicolo muda o clima e Rillaboom faz o campo obedecer ao ritmo.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é jardim em movimento: dança, vento, chuva, corte, cipó e tambor.",
+      "opcoes": [
+        {
+          "texto": "Lilligant e Whimsicott.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Ludicolo e Leafeon.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Tangrowth e Rillaboom.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Lilligant transforma elegância em ritmo. Whimsicott é vento pequeno causando problema grande no lugar exato.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Ludicolo mistura alegria com clima ruim para o adversário. Leafeon corta com simplicidade de folha afiada.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Tangrowth prende como mato que tomou o caminho. Rillaboom chama o ciclo no tambor e faz o campo responder.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Suneiva, a líder Planta, gosta de matemática e de raiz. Eu acho bonito: toda planta parece poesia, mas por baixo tem conta, proporção e repetição.",
+      "opcoes": [
+        {
+          "texto": "O que é raiz?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComGaiaVerde",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuRaizGaiaVerde",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPodaGaiaVerde",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuCicloGaiaVerde",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente existe, mas ele não abre só por pedido.\nVocê precisa conversar comigo e entender três pontos: raiz, poda e ciclo.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você chegou à estufa do presente. A porta está viva e só responde ao cuidado certo.",
+      "opcoes": [
+        {
+          "texto": "Fortalecer a raiz, aceitar a poda e respeitar o ciclo.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Puxar a planta pela folha para ela crescer mais rápido.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Guardar todo galho seco por medo de perder algo.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Crescimento forçado quebra a planta pela parte que parecia mais bonita.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Sem poda, energia vira confusão. Até carinho demais pode sufocar.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto. É simples, mas carrega a paciência de algo que decidiu crescer.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Boa leitura de ciclo. Você atacou sem esquecer que o campo voltava a crescer.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque tentou resolver tudo antes da raiz aparecer. Planta adora adversário apressado.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa se perde por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

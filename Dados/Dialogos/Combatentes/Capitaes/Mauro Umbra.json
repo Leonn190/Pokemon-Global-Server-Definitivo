@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Mauro Umbra, capitão do estádio Sombrio.\nNo meu corredor, luz demais também atrapalha. Quem olha só para o brilho não percebe onde o golpe realmente começou.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora você pode encarar minha formação Sombrio.\nSombrio não é trapaça barata. É aceitar que todo treinador carrega uma parte escondida e decidir o que faz com ela."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para a sombra? Ótimo. Quem retorna sem fazer barulho costuma ter aprendido alguma coisa."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Capitão Sombrio só aceita desafio oficial com respeito 2.\nHoundoom late para blefe, Drapion fareja hesitação e Umbreon não se move por plateia.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Meu time trabalha no intervalo entre ameaça e dúvida: Houndoom pressiona, Drapion prende, Weavile corta, Zoroark confunde, Honchkrow pune orgulho e Umbreon fecha a porta.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já deve ter percebido: Sombrio não vence só escondendo. Vence fazendo o adversário revelar cedo demais o que queria proteger."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaMauroUmbra": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Fala baixo. Aqui a conversa funciona melhor quando a pessoa não tenta parecer maior que a própria sombra.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasMauroUmbra",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou para perguntar mais. Bom sinal. A sombra assusta menos quando a gente para de fingir que ela não existe."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComMauroUmbra": true,
+          "ConversasMauroUmbra": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Sombrio?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é sombra?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é risco?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é máscara?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conhece Luna Véu?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Sombrio porque ele pune vaidade. Muita gente treina para ser vista; eu treino para sobreviver quando ninguém está olhando. A vitória que nasce no escuro ainda é vitória.",
+      "opcoes": [
+        {
+          "texto": "O que é sombra?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Sombra não é ausência de caminho. É um caminho que exige atenção. Meu presente só abre para quem entende que recuar um passo pode revelar a entrada certa.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSombraMauroUmbra": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é risco?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Risco é diferente de imprudência. Weavile vive no fio da lâmina, mas nunca corre só para parecer corajoso. O risco certo tem saída preparada.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRiscoMauroUmbra": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é máscara?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Máscara não é mentira obrigatória. Zoroark ensina que aparência também é ferramenta. O problema começa quando o treinador esquece o próprio rosto por baixo dela.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMáscaraMauroUmbra": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é fazer você gastar certeza. Se você ataca cedo demais, Drapion te trava. Se espera demais, Honchkrow toma o céu. Se tenta ler tudo, Zoroark muda a pergunta.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time não é um grupo de vilões. É uma formação de controle, pressão e silêncio.",
+      "opcoes": [
+        {
+          "texto": "Houndoom e Drapion.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Weavile e Zoroark.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Honchkrow e Umbreon.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Houndoom acende o medo antes do contato. Drapion transforma esse medo em posição ruim. Um late para abrir espaço; o outro fecha a pinça.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Weavile é velocidade sem cerimônia. Zoroark é a dúvida vestida de certeza. Juntos, eles fazem o adversário bater no lugar errado.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Honchkrow pune quem se acha intocável. Umbreon é o oposto: segura, observa e deixa o erro amadurecer até cair sozinho.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Luna Véu entende o peso das memórias. Eu respeito isso. O Fantasma dela pergunta o que ficou; o Sombrio que eu treino pergunta o que você tentou esconder antes de ficar.",
+      "opcoes": [
+        {
+          "texto": "O que é sombra?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComMauroUmbra",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuSombraMauroUmbra",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuRiscoMauroUmbra",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuMáscaraMauroUmbra",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente existe, mas ele não abre só por pedido.\nVocê precisa conversar comigo e entender três pontos: sombra, risco e máscara.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você chegou ao cadeado da sombra. Agora escolha sem posar de herói. O presente é para quem entendeu o caminho, não para quem gritou no corredor.",
+      "opcoes": [
+        {
+          "texto": "Aceitar a sombra, medir o risco e usar a máscara sem virar refém dela.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Apagar todas as luzes e atacar sem pensar.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Fingir que não tenho medo de nada.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Escuro sem plano é só tropeço. Até Houndoom espera o momento certo para avançar.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Quem diz que não teme nada costuma obedecer ao medo sem perceber.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto. Não é prêmio de malandragem; é lembrança de autocontrole quando a arena fica escura.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Interessante. Você não tentou iluminar tudo; escolheu onde olhar primeiro.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque tentou responder a toda sombra como se fosse ataque. Nem toda escuridão precisa virar pânico.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa se perde por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

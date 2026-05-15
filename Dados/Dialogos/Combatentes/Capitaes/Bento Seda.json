@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Bento Seda, capitão do estádio Inseto.\nNão pisa achando que o pequeno é simples. Inseto parece frágil até você perceber que já entrou na teia.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora você pode encarar minha formação Inseto.\nRespeito 2 abre a estufa de combate. Agora a conversa vira movimento, e movimento mal calculado gruda."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para a seda? Ótimo. Quem aprende com Inseto descobre que repetição também pode ser elegância."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Capitão Inseto só aceita desafio oficial com respeito 2.\nPinsir não aperta mão sem motivo, Scyther não mostra lâmina por cortesia e Vikavolt não gasta carga com visita apressada.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Meu time cresce em fases: Pinsir prende, Scyther corta, Galvantula arma campo, Frosmoth esfria a pressa, Scolipede atropela linha reta e Vikavolt dispara quando a teia já fez o trabalho.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você entende que Inseto não é tipo de coadjuvante. É sistema: enxame, ciclo, emboscada e transformação."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaBentoSeda": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Fala. Só cuidado para não confundir delicadeza com convite. Seda também segura.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasBentoSeda",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou para olhar de perto. Bom. O mundo dos insetos recompensa quem nota o detalhe antes do susto."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComBentoSeda": true,
+          "ConversasBentoSeda": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Inseto?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é casulo?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é teia?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é metamorfose?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conhece Murilo?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Inseto porque todo mundo subestima. Eu gosto desse segundo de surpresa em que a pessoa percebe que o menor corpo tinha o plano maior.",
+      "opcoes": [
+        {
+          "texto": "O que é casulo?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Casulo é pausa com trabalho por dentro. Por fora parece espera; por dentro é reconstrução. Meu presente só abre para quem respeita esse intervalo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCasuloBentoSeda": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é teia?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Teia é mapa. Não é só armadilha. Cada fio diz onde alguém passou, onde puxou forte e onde vai se denunciar de novo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTeiaBentoSeda": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é metamorfose?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Metamorfose é mudar sem pedir licença para a opinião dos outros. Frosmoth parece delicado, mas nasceu de uma transformação que não pediu aplauso.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMetamorfoseBentoSeda": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é deixar o campo mais inteligente que o adversário. Galvantula escreve o caminho, Scolipede pune linha reta e Vikavolt transforma atraso em raio.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time parece coleção de criaturas diferentes, mas todos obedecem a uma ideia: prender, transformar e finalizar.",
+      "opcoes": [
+        {
+          "texto": "Pinsir e Scyther.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Galvantula e Frosmoth.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Scolipede e Vikavolt.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Pinsir resolve distância curta com pressão bruta. Scyther corta o tempo entre intenção e arrependimento.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Galvantula monta o tabuleiro com fios vivos. Frosmoth muda a temperatura da decisão e faz a pressa ficar pesada.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Scolipede atropela quem só olha para frente. Vikavolt espera o campo carregar para soltar a resposta final.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Murilo, o líder Inseto, entende bem essa ideia de ser subestimado. Ele transforma isso em provocação. Eu transformo em método.",
+      "opcoes": [
+        {
+          "texto": "O que é casulo?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComBentoSeda",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuCasuloBentoSeda",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuTeiaBentoSeda",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuMetamorfoseBentoSeda",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente existe, mas ele não abre só por pedido.\nVocê precisa conversar comigo e entender três pontos: casulo, teia e metamorfose.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você chegou ao casulo do presente. A saída está nos fios certos. Escolha como atravessar sem rasgar tudo.",
+      "opcoes": [
+        {
+          "texto": "Respeitar o casulo, ler a teia e aceitar a metamorfose.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Arrancar todos os fios para chegar mais rápido.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Ficar parado esperando virar forte por milagre.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Quem rasga a teia perde o mapa. Depois reclama que se perdeu sozinho.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Casulo não é preguiça. Mudança exige trabalho invisível.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto. É pequeno, mas não confunda tamanho com importância.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Boa adaptação. Quando a teia mudou, você não ficou brigando com o fio antigo.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque lutou contra o enxame como se fosse um único alvo parado.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa se perde por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Téo Barro, capitão do estádio Terrestre.\nChega com cuidado. O chão parece parado, mas registra tudo: passo forte, passo falso e pressa sem raiz.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora você pode encarar minha formação Terrestre.\nRespeito 2 firma seu pé no estádio Terrestre. Agora dá para ver se você aguenta uma batalha que vem de baixo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para sujar a bota? Bom. Terra ensina melhor quem não tem medo de parecer menos brilhante por um tempo."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Capitão Terrestre só aceita desafio oficial com respeito 2.\nSandslash não cava por vaidade, Hippowdon não se move por pressa e Excadrill não abre túnel para quem não respeita o terreno.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Meu time trabalha com chão vivo: Sandslash corta por baixo, Gliscor cruza o ar seco, Hippowdon pesa o clima, Excadrill perfura resposta, Donphan gira massa e Krookodile pune descuido.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já sabe que Terrestre não é só poeira. É fundação, atrito, peso e caminho."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaTeoBarro": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Só não pisa no assunto como se o terreno fosse seu antes de conhecer a trilha.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasTeoBarro",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou. Isso é bom. Terra gosta de visita que aprende onde não deve pisar de novo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComTeoBarro": true,
+          "ConversasTeoBarro": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Terrestre?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é solo?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é peso?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é trilha?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conhece Amable?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Terrestre porque ele lembra que todo plano precisa tocar o chão. Ideia bonita sem solo vira poeira no primeiro impacto.",
+      "opcoes": [
+        {
+          "texto": "O que é solo?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Solo é memória de passagem. Ele guarda marca de chuva, fuga e batalha. Meu presente exige olhar para o chão antes de pedir destino.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSoloTeoBarro": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é peso?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Peso não é lentidão. Hippowdon é pesado porque decide o ritmo. Donphan é pesado porque transforma movimento em ameaça.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPesoTeoBarro": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é trilha?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Trilha é escolha repetida. Quem só olha para o atalho cai no buraco que o primeiro viajante já tinha avisado.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTrilhaTeoBarro": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é tirar mobilidade. Sandslash abre corte, Hippowdon muda o campo, Excadrill cria pressão subterrânea e Krookodile espera a queda de atenção.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é feito de solo, poeira, túnel, massa e mordida. Parece bruto, mas tem direção.",
+      "opcoes": [
+        {
+          "texto": "Sandslash e Gliscor.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Hippowdon e Excadrill.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Donphan e Krookodile.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Sandslash transforma o chão em lâmina. Gliscor usa o ar seco como extensão da terra, quase rindo da queda.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Hippowdon coloca peso no ambiente inteiro. Excadrill aproveita esse peso para furar a defesa onde ela ficou presa.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Donphan é massa em rotação. Krookodile é paciência predatória: espera você pisar errado para cobrar caro.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Amable, o líder Terrestre, fala menos do que muita gente gostaria, mas entende chão como poucos. Eu preparo trilha; ele transforma terreno em julgamento.",
+      "opcoes": [
+        {
+          "texto": "O que é solo?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComTeoBarro",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuSoloTeoBarro",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPesoTeoBarro",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuTrilhaTeoBarro",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente existe, mas ele não abre só por pedido.\nVocê precisa conversar comigo e entender três pontos: solo, peso e trilha.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você chegou ao barranco do presente. A passagem está firme, mas só para quem escolhe o passo certo.",
+      "opcoes": [
+        {
+          "texto": "Ler o solo, respeitar o peso e seguir a trilha.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Cavar qualquer buraco até encontrar algo.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Ignorar as marcas do chão e correr reto.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Cavar sem leitura só desaba o próprio caminho.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "O chão avisou antes. Você só preferiu chamar aviso de detalhe.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto. É uma lembrança de chão firme para quando a luta tentar te deslocar.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Pé bem colocado. Você percebeu onde o terreno queria te prender.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque lutou olhando para frente e esqueceu que o ataque vinha de baixo.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa se perde por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

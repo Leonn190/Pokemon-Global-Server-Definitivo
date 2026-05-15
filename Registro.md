@@ -15,7 +15,7 @@
 - **Tamanho total:** 1.915 GB (2.055.732.701 bytes)
 - **Dias desde a criação do projeto:** 73
 - **Dias desde a criação oficial:** 347
-- **Horas estimadas:** 313.00
+- **Horas estimadas:** 637.00
 - **Linhas totais gerais:** 129.948
 - **Commits (projeto):** 687
 - **Adições desde o último relatório:** <span style='color: green'>+16.239</span>

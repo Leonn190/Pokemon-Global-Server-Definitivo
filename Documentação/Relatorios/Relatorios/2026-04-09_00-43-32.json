@@ -11,7 +11,7 @@
     "dias_desde_criacao_repo": 38,
     "dias_desde_criacao_oficial": 312,
     "data_criacao_oficial": "2025-06-01",
-    "horas_estimadas": 313.0,
+    "horas_estimadas": 244.0,
     "commits": 305
   },
   "python": {
@@ -1135,7 +1135,7 @@
     "itens": []
   },
   "meta": {
-    "numero_relatorio": 1,
+    "numero_relatorio": 30,
     "criado_em": "2026-04-29T23:45:11",
     "data_referencia": "2026-04-09T00:43:43",
     "projeto": "Pokemon-Global-Server-Definitivo",

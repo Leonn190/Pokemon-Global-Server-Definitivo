@@ -403,7 +403,7 @@ def gerar_secao_autor_site() -> str:
         "## 5. Autor e Site",
         "",
         "- **Autor:** Leon Cunha Alvaro Lopez Soto",
-        "- **Site oficial:** `COLOCAR_SITE_DO_GLOBAL_SERVER_AQUI`",
+        "- **Site oficial:** https://leonn190.github.io/Pokemon-Global-Server-Definitivo/",
     ])
 
 

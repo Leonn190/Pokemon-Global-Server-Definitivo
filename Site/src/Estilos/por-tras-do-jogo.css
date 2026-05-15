@@ -135,6 +135,15 @@
   background: rgba(255, 217, 52, 0.08);
   color: var(--texto);
 }
+.relatorio-figura {
+  margin: 0;
+  overflow-x: auto;
+}
+.relatorio-figura img {
+  display: block;
+  width: min(100%, 1120px);
+  height: auto;
+}
 .relatorio-tabela-wrap {
   overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.12);

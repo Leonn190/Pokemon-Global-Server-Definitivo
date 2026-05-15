@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional, Tuple
 # ============================================================
 # CONFIGURAÇÃO MANUAL
 # ============================================================
-MODELO_ATUAL = 10
+MODELO_ATUAL = 11
 PASTA_RELATORIOS_ORIGINAIS = "Documentação/RelatoriosLegado"
 PASTA_RELATORIOS_ATUALIZADOS = "Documentação/Relatorios"
 CAMINHO_GERADOR_ATUAL = "Ferramentas/GeradorRelatorios.py"
@@ -324,8 +324,6 @@ def garantir_estrutura_relatorios(relatorios_root: Path) -> None:
     imagens_dir_de_relatorios(relatorios_root).mkdir(parents=True, exist_ok=True)
     registros_dir = relatorios_root / "Registros"
     registros_dir.mkdir(parents=True, exist_ok=True)
-    readmes_dir = relatorios_root / "Readmes"
-    readmes_dir.mkdir(parents=True, exist_ok=True)
     json_dir = relatorios_root / "Relatorios"
     json_dir.mkdir(parents=True, exist_ok=True)
 
@@ -483,7 +481,6 @@ def enriquecer_relatorio_atualizado(
     meta["relatorios_dir"] = PASTA_RELATORIOS_ATUALIZADOS
     meta["relatorios_json_dir"] = f"{PASTA_RELATORIOS_ATUALIZADOS}/Relatorios"
     meta["registros_dir"] = f"{PASTA_RELATORIOS_ATUALIZADOS}/Registros"
-    meta["readmes_dir"] = f"{PASTA_RELATORIOS_ATUALIZADOS}/Readmes"
     meta["script"] = "Ferramentas/AtualizadorRelatorios.py"
     meta["script_gerador_modelo"] = CAMINHO_GERADOR_ATUAL
 
@@ -521,7 +518,6 @@ def main() -> None:
 
     pasta_imagens_atualizadas = imagens_dir_de_relatorios(pasta_relatorios_atualizados)
     pasta_registros_atualizados = registros_dir_de_relatorios(pasta_relatorios_atualizados)
-    pasta_readmes_atualizados = readmes_dir_de_relatorios(pasta_relatorios_atualizados)
     pasta_jsons_atualizados = json_dir_de_relatorios(pasta_relatorios_atualizados)
 
     relatorios = listar_jsons_relatorios(pasta_relatorios_origem)
@@ -610,14 +606,6 @@ def main() -> None:
                 vlog(f"  - Markdown atualizado: {destino_md}")
             else:
                 vlog("  - Aviso: markdown não foi encontrado no snapshot gerado.")
-
-            if readme_gerado and readme_gerado.exists():
-                readme_texto = readme_gerado.read_text(encoding="utf-8", errors="ignore")
-                destino_readme = pasta_readmes_atualizados / nome_md_original
-                salvar_texto(destino_readme, readme_texto)
-                vlog(f"  - README atualizado: {destino_readme}")
-            else:
-                vlog("  - Aviso: README não foi encontrado no snapshot gerado.")
 
             if imagens_geradas and imagens_geradas.exists():
                 destino_imagens = pasta_imagens_atualizadas / stem_original

@@ -62,6 +62,13 @@ function inlineMarkdown(valor) {
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
 }
 
+function caminhoImagemRelatorio(valor) {
+  const normalizado = String(valor || "").replace(/\\/g, "/");
+  const prefixoPublic = "Site/public/";
+  if (normalizado.startsWith(prefixoPublic)) return `/${normalizado.slice(prefixoPublic.length)}`;
+  return normalizado;
+}
+
 function tabelaMarkdown(bloco) {
   const linhas = bloco.map((linha) => linha.trim()).filter(Boolean);
   if (linhas.length < 2) return null;
@@ -115,6 +122,16 @@ export function markdownParaHtml(markdown) {
     if (!linha.trim()) {
       fecharParagrafo();
       fecharLista();
+      continue;
+    }
+
+    const imagem = linha.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imagem) {
+      fecharParagrafo();
+      fecharLista();
+      const alt = escaparHtml(imagem[1] || "");
+      const src = escaparHtml(caminhoImagemRelatorio(imagem[2]));
+      saida.push(`<figure class="relatorio-figura"><img src="${src}" alt="${alt}" loading="lazy"></figure>`);
       continue;
     }
 

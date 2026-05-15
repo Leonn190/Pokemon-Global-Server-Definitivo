@@ -1,0 +1,587 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Nádia Víbora, capitã do estádio Venenoso.\nPode respirar. Se eu quisesse te envenenar na entrada, você já estaria negociando com o chão.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. A batalha está liberada.\nAgora sim posso testar se você sabe diferenciar ameaça real de perfume amargo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou sem trazer antídoto? Corajoso.\nOu confiante demais. Os dois são materiais úteis para teste."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero a batalha da capitã Venenosa."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Como funciona seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Sem respeito 2, nada de batalha oficial.\nVenenoso exige controle. Quem pula etapa costuma confundir dose com desastre.",
+      "opcoes": [
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Minha batalha é dose, tempo e acúmulo.\nSalazzle seduz a atenção, Toxicroak ameaça contato, Drapion fecha rota, Toxapex aguenta o mundo, Scolipede acelera e Muk transforma o fim em lama.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, eu posso ser direta: se você tratar veneno como dano comum, já perdeu metade da luta."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaNadiaVibora": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode perguntar. Só não toca nos frascos sem ler etiqueta.\nO verde claro cura, o verde escuro provavelmente cura também, mas depois de piorar sua semana.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasNadiaVibora",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou e ainda está inteiro.\nIsso coloca você acima de muitos curiosos do estádio."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComNadiaVibora": true,
+          "ConversasNadiaVibora": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Venenoso?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Me explica dose.",
+          "destino": "dose"
+        },
+        {
+          "texto": "Me explica tempo.",
+          "destino": "tempo"
+        },
+        {
+          "texto": "Me explica antídoto.",
+          "destino": "antidoto"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Venenoso porque quase todo mundo olha para ele do jeito errado.\nChamam de sujo, covarde, lento. Eu chamo de honesto: ele mostra que consequência também é golpe.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemNadiaVibora": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece medicina.",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Isso parece armadilha.",
+          "destino": "armadilha"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "medicina": {
+      "fala": "Medicina e veneno moram na mesma rua. A diferença é dose, contexto e intenção.\nPor isso eu não gosto de treinador apressado: ele pega ferramenta fina e usa como martelo.",
+      "opcoes": [
+        {
+          "texto": "Então dose importa.",
+          "destino": "dose"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "armadilha": {
+      "fala": "Armadilha não precisa ser buraco no chão. Pode ser uma escolha que parece segura por dois turnos.\nQuando o adversário percebe, já está lutando dentro do meu frasco.",
+      "opcoes": [
+        {
+          "texto": "Então tempo importa.",
+          "destino": "tempo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "dose": {
+      "fala": "Dose é precisão. Pouco não muda nada, muito denuncia o plano, o certo altera a batalha sem pedir licença.\nSalazzle entende dose social. Ela vence muita coisa antes de atacar de verdade.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuDoseNadiaVibora": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala da Salazzle.",
+          "destino": "salazzle"
+        },
+        {
+          "texto": "Isso abre o presente?",
+          "destino": "trava"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "tempo": {
+      "fala": "Tempo é deixar o efeito trabalhar.\nToxapex parece parado para quem só respeita golpe grande. Para mim, ele é um relógio com espinhos.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTempoNadiaVibora": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Toxapex.",
+          "destino": "toxapex"
+        },
+        {
+          "texto": "E o Scolipede?",
+          "destino": "scolipede"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "antidoto": {
+      "fala": "Antídoto é responsabilidade. Quem usa veneno sem saber desfazer o dano é só imprudente com estética perigosa.\nEu respeito o veneno porque respeito também a cura.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuAntidotoNadiaVibora": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso muda como você batalha.",
+          "destino": "controle"
+        },
+        {
+          "texto": "Checar presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "controle": {
+      "fala": "Exato. Meu objetivo não é espalhar caos. É controlar a consequência até o adversário ficar sem resposta limpa.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "antidoto"
+        },
+        {
+          "texto": "Voltar à conversa.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "trava": {
+      "fala": "Meu presente exige três frascos conceituais: dose, tempo e antídoto.\nSe você pegou só o veneno e esqueceu o antídoto, você ainda não entendeu meu estádio.",
+      "opcoes": [
+        {
+          "texto": "Checar presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Salazzle desvia atenção. Toxicroak pune aproximação. Drapion segura canto. Toxapex transforma paciência em muralha.\nScolipede acelera o perigo. Muk é o fim pegajoso de quem achou que dava para ignorar acúmulo.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuTimeNadiaVibora": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Drapion.",
+          "destino": "drapion"
+        },
+        {
+          "texto": "Fala do Muk.",
+          "destino": "muk"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "salazzle": {
+      "fala": "Salazzle sabe que veneno também pode ser conversa bonita no momento errado.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "dose"
+        }
+      ]
+    },
+    "toxicroak": {
+      "fala": "Toxicroak é o aviso para quem acha que encostar resolve tudo. Às vezes o contato é exatamente o erro.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "drapion": {
+      "fala": "Drapion é porta fechada com pinça. Ele não precisa correr se o caminho já é dele.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "toxapex": {
+      "fala": "Toxapex é paciência cruel. Ele não tem pressa porque sabe que o outro lado está gastando ar.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "tempo"
+        }
+      ]
+    },
+    "scolipede": {
+      "fala": "Scolipede lembra que veneno também pode ser velocidade. Às vezes a toxina chega antes da dúvida.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "tempo"
+        }
+      ]
+    },
+    "muk": {
+      "fala": "Muk é o que sobra quando o adversário tenta varrer consequência para baixo do tapete.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComNadiaVibora",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuDoseNadiaVibora",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuTempoNadiaVibora",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuAntidotoNadiaVibora",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Eu não entrego frasco para quem só gostou da caveirinha no rótulo.\nAprenda dose, tempo e antídoto. Depois a caixa abre.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você passou pelo caminho que eu queria ver.\nO presente não era só prêmio: era uma forma de testar se você prestou atenção na lógica do meu estádio.\nÚltima escolha: pegue a chave conceitual certa para abrir a caixa.",
+      "opcoes": [
+        {
+          "texto": "Separar dose, esperar o tempo e guardar o antídoto.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Forçar a tampa logo de uma vez.",
+          "destino": "erro_presente_forca"
+        },
+        {
+          "texto": "Ignorar a explicação e pedir direto.",
+          "destino": "erro_presente_pressa"
+        }
+      ]
+    },
+    "erro_presente_forca": {
+      "fala": "Força sem leitura quebra mais coisa do que resolve. Volta um passo e pensa no que você acabou de ouvir.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "erro_presente_pressa": {
+      "fala": "Pressa demais. O presente está aqui, mas eu não entrego para quem pula exatamente a parte que dá sentido a ele.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto com cuidado.\nE lembra: veneno respeitado vira ferramenta; veneno tratado como brinquedo vira problema.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Boa resistência a consequência.\nVocê não deixou o veneno escrever a luta inteira sozinho.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu. Normal.\nVenenoso costuma parecer controlado até você perceber que já aceitou o ritmo errado.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero uma dica.",
+          "destino": "antidoto"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Nádia Víbora.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,624 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Caio Ferraz, capitão do estádio Metal.\nAqui nada entra torto: se a peça não encaixa, a gente mede de novo antes de bater o martelo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora você pode testar seu time contra a linha metálica do estádio.\nSó não confunda metal com parede parada. Metal dobra, corta, trava e volta para o lugar."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para a oficina? Bom sinal.\nQuem volta sem reclamar do barulho normalmente está começando a entender o estádio Metal."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero a batalha do capitão Metal."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "O que seu time faz?",
+          "destino": "time"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Capitão não libera batalha por simpatia. O requisito é respeito 2 no estádio Metal.\nPode conversar comigo, pode olhar a oficina, mas a porta da arena só abre quando o registro estiver certo.",
+      "opcoes": [
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Minha batalha é sobre estrutura.\nSkarmory segura o alto, Ferrothorn fecha caminho, Bisharp pune erro, Copperajah pressiona, Steelix ancora e Lucario finaliza.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto eu não preciso te explicar o básico.\nVocê já sabe que metal bom não é só duro: é elástico, afiado e confiável."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaCaioFerraz": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Fala. Só cuidado onde encosta: metade dessas peças está quente, a outra metade está afiada, e a terceira metade eu ainda estou medindo.\nSim, eu sei que três metades não fecha conta. É por isso que eu meço tudo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasCaioFerraz",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você está voltando bastante para conversar.\nIsso é raro. A maioria só quer bater em Steelix e sair chamando de estratégia."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComCaioFerraz": true,
+          "ConversasCaioFerraz": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Metal?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Me explica a liga metálica.",
+          "destino": "liga"
+        },
+        {
+          "texto": "Qual é o perigo da ferrugem?",
+          "destino": "ferrugem"
+        },
+        {
+          "texto": "O que é a dobradiça do estádio?",
+          "destino": "dobradica"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Metal foi escolha natural. Eu gosto de coisa que aguenta pressão sem precisar fazer cena.\nUm bom aço não grita que é forte. Ele simplesmente segura a ponte enquanto todo mundo passa por cima.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemCaioFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com defesa.",
+          "destino": "defesa"
+        },
+        {
+          "texto": "E combina com ataque?",
+          "destino": "ataque"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "defesa": {
+      "fala": "Defesa metálica não é ficar parado apanhando.\nÉ escolher onde a pancada entra, absorver o impacto e devolver o adversário para uma posição pior.",
+      "opcoes": [
+        {
+          "texto": "Então não é só dureza.",
+          "destino": "liga"
+        },
+        {
+          "texto": "Quero ouvir do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "ataque": {
+      "fala": "Metal também ataca com precisão. Uma lâmina ruim machuca pouco e quebra rápido; uma lâmina boa corta uma vez e decide a luta.\nBisharp e Lucario entendem isso melhor do que qualquer discurso meu.",
+      "opcoes": [
+        {
+          "texto": "Fala do Bisharp.",
+          "destino": "bisharp"
+        },
+        {
+          "texto": "Fala do Lucario.",
+          "destino": "lucario"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "liga": {
+      "fala": "Liga metálica é mistura com intenção. Não é jogar material junto e torcer para virar coisa boa.\nMeu time funciona assim: parede, corte, pressão e leitura. Separados eles são peças. Juntos viram mecanismo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLigaCaioFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quem é a parede?",
+          "destino": "steelix"
+        },
+        {
+          "texto": "Quem é o corte?",
+          "destino": "bisharp"
+        },
+        {
+          "texto": "Quem é a pressão?",
+          "destino": "copperajah"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ferrugem": {
+      "fala": "Ferrugem é o inimigo silencioso do Metal. Não é golpe bonito, não é explosão, é descuido acumulado.\nNa batalha, ferrugem é repetir o mesmo plano até o oponente perceber todos os seus encaixes.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFerrugemCaioFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como evitar isso?",
+          "destino": "manutencao"
+        },
+        {
+          "texto": "Isso parece estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "manutencao": {
+      "fala": "Manutenção é humildade. Você confere parafuso mesmo quando acha que está firme.\nQuem não revisa o próprio time perde para a primeira vibração diferente.",
+      "opcoes": [
+        {
+          "texto": "Vou revisar meu time.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ferrugem"
+        }
+      ]
+    },
+    "dobradica": {
+      "fala": "A dobradiça é a peça pequena que decide se a porta abre suave ou arranca a parede junto.\nNo meu estádio, a dobradiça é timing: entrar, travar, recuar e voltar no ângulo certo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuDobradicaCaioFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então o presente tem uma trava?",
+          "destino": "trava"
+        },
+        {
+          "texto": "Isso combina com Skarmory.",
+          "destino": "skarmory"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "trava": {
+      "fala": "Tem. Eu gosto de presente com trava simples: quem conversa entende, quem só aperta botão acha que está quebrado.\nPara abrir, você precisa entender liga, ferrugem e dobradiça. Nessa ordem, o metal para de resistir.",
+      "opcoes": [
+        {
+          "texto": "Checar se eu entendi.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar para a conversa.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Skarmory cobre o céu. Ferrothorn pune contato. Bisharp transforma erro em corte. Copperajah chega como prensa.\nSteelix é fundação. Lucario é a parte do metal que parece espírito, mas ainda bate como ferramenta.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuTimeCaioFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Steelix.",
+          "destino": "steelix"
+        },
+        {
+          "texto": "Fala do Lucario.",
+          "destino": "lucario"
+        },
+        {
+          "texto": "Quero batalhar contra isso.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "skarmory": {
+      "fala": "Skarmory é telhado e lâmina ao mesmo tempo. Ele me lembra que proteção também pode vir de cima.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "steelix": {
+      "fala": "Steelix é o chão que decidiu virar serpente. Se você não respeita base, ele te ensina com peso.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso é fundação.",
+          "destino": "liga"
+        }
+      ]
+    },
+    "bisharp": {
+      "fala": "Bisharp não discute muito. Ele espera sua abertura e transforma descuido em corte limpo.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "liga"
+        }
+      ]
+    },
+    "copperajah": {
+      "fala": "Copperajah é prensa com memória. Quando ele entra, o espaço da arena fica menor.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "liga"
+        }
+      ]
+    },
+    "lucario": {
+      "fala": "Lucario é metal com leitura de aura. É a prova de que técnica sem sensibilidade vira só barulho de oficina.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar para origem.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Estratégia boa não é complicada. Ela só precisa continuar funcionando depois do primeiro impacto.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "ferrugem"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Isso já é metade do caminho. A outra metade é não fingir que revisou.",
+      "opcoes": [
+        {
+          "texto": "Checar presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComCaioFerraz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuLigaCaioFerraz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuFerrugemCaioFerraz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuDobradicaCaioFerraz",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente está preso numa caixa de metal simples.\nPara abrir sem forçar, você precisa entender três coisas comigo: liga, ferrugem e dobradiça.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você passou pelo caminho que eu queria ver.\nO presente não era só prêmio: era uma forma de testar se você prestou atenção na lógica do meu estádio.\nÚltima escolha: pegue a chave conceitual certa para abrir a caixa.",
+      "opcoes": [
+        {
+          "texto": "Alinhar liga, evitar ferrugem e abrir pela dobradiça.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Forçar a tampa logo de uma vez.",
+          "destino": "erro_presente_forca"
+        },
+        {
+          "texto": "Ignorar a explicação e pedir direto.",
+          "destino": "erro_presente_pressa"
+        }
+      ]
+    },
+    "erro_presente_forca": {
+      "fala": "Força sem leitura quebra mais coisa do que resolve. Volta um passo e pensa no que você acabou de ouvir.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "erro_presente_pressa": {
+      "fala": "Pressa demais. O presente está aqui, mas eu não entrego para quem pula exatamente a parte que dá sentido a ele.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto.\nNão é só recompensa; é lembrança de oficina: mede antes, encaixa depois e só então aperta.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Boa leitura de estrutura.\nMetal respeita quem encontra a folga certa sem quebrar a peça inteira.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu, mas sua estrutura não desmontou totalmente.\nRevise os encaixes, arrume a ordem das peças e volta.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero uma dica.",
+          "destino": "manutencao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Caio Ferraz.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

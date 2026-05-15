@@ -1,0 +1,578 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Ícaro Mente, capitão do estádio Psíquico.\nAntes que você pergunte: não, eu não li sua mente. Você olhou para a porta, para mim e para a arena nessa ordem.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. A batalha está liberada.\nAgora podemos descobrir se sua estratégia é pensamento ou só reação elegante."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Interessante.\nRevisitar uma conversa é uma forma discreta de admitir que a primeira leitura não bastou."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero a batalha do capitão Psíquico."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Como funciona seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "A batalha do capitão exige respeito 2.\nSem isso, a arena abre para conversa, não para confronto. Regra simples evita ruído mental.",
+      "opcoes": [
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Minha batalha é sequência mental.\nKadabra calcula abertura, Mr. Mime desenha limite, Grumpig pesa insistência, Xatu olha o próximo passo, Musharna segura sonho e Reuniclus fecha com precisão.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, a conversa fica curta.\nVocê já sabe que no Psíquico a primeira derrota costuma acontecer antes do primeiro golpe."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaIcaroMente": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Podemos conversar. Só tenta perceber quando uma pergunta sua já carrega a resposta escondida.\nA maioria das pessoas chama isso de intuição. Eu chamo de pista mal disfarçada.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasIcaroMente",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você retornou com mais calma.\nIsso já muda a conversa: menos ansiedade, mais espaço para pensamento."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComIcaroMente": true,
+          "ConversasIcaroMente": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Psíquico?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Me ensina a respirar antes de agir.",
+          "destino": "respirar"
+        },
+        {
+          "texto": "Me ensina a observar padrões.",
+          "destino": "observar"
+        },
+        {
+          "texto": "Me ensina a agir sem pressa.",
+          "destino": "agir"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Psíquico porque gosto do intervalo entre perceber e responder.\nÉ um lugar pequeno, mas cabe uma batalha inteira dentro dele.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemIcaroMente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece xadrez.",
+          "destino": "xadrez"
+        },
+        {
+          "texto": "Isso parece meditação.",
+          "destino": "meditacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "xadrez": {
+      "fala": "Xadrez é uma boa comparação, mas incompleta.\nNo tabuleiro, as peças obedecem. Na arena, os Pokémon têm ritmo, medo, força e teimosia.",
+      "opcoes": [
+        {
+          "texto": "Então observar importa.",
+          "destino": "observar"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "meditacao": {
+      "fala": "Meditação não é virar estátua. É notar o impulso antes de obedecer a ele.\nUm treinador que percebe o próprio impulso já ganhou alguns turnos invisíveis.",
+      "opcoes": [
+        {
+          "texto": "Então respirar importa.",
+          "destino": "respirar"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "respirar": {
+      "fala": "Respirar é o primeiro nó do labirinto.\nQuando você respira, a pressa perde a autoridade. Aí o pensamento deixa de ser arrastado pelo susto.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRespirarIcaroMente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Depois vem observar?",
+          "destino": "observar"
+        },
+        {
+          "texto": "Isso destrava o presente?",
+          "destino": "trava"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "observar": {
+      "fala": "Observar é separar sinal de ruído.\nKadabra finge que calcula tudo, mas o segredo é mais simples: ele descarta o que não importa antes dos outros.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuObservarIcaroMente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Kadabra.",
+          "destino": "kadabra"
+        },
+        {
+          "texto": "E depois agir?",
+          "destino": "agir"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "agir": {
+      "fala": "Agir sem pressa não é agir devagar.\nÉ agir quando a decisão está limpa. Reuniclus é lento para parecer óbvio, mas rápido quando a linha fecha.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuAgirIcaroMente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Reuniclus.",
+          "destino": "reuniclus"
+        },
+        {
+          "texto": "Checar presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "trava": {
+      "fala": "Meu presente fica num labirinto mental pequeno.\nEle abre quando você passa pelos três passos sem inverter: respirar, observar, agir.",
+      "opcoes": [
+        {
+          "texto": "Checar se eu passei.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Kadabra lê abertura. Mr. Mime coloca parede onde você jurava que havia caminho. Grumpig pune insistência repetida.\nXatu olha para frente, Musharna pesa o sonho e Reuniclus transforma calma em impacto.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuTimeIcaroMente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Xatu.",
+          "destino": "xatu"
+        },
+        {
+          "texto": "Fala do Musharna.",
+          "destino": "musharna"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "kadabra": {
+      "fala": "Kadabra não adivinha: ele reduz possibilidades até a escolha parecer magia.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "observar"
+        }
+      ]
+    },
+    "mr_mime": {
+      "fala": "Mr. Mime é limite. Às vezes a melhor resposta é fazer o outro gastar força contra uma parede que ele não viu.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "grumpig": {
+      "fala": "Grumpig gosta de adversário teimoso. Cada repetição vira pista para ele dançar melhor.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "xatu": {
+      "fala": "Xatu não olha longe para parecer misterioso. Ele olha longe porque o próximo erro costuma nascer antes do próximo turno.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "musharna": {
+      "fala": "Musharna lembra que sonho também pesa. Quem luta cansado mentalmente começa a obedecer imagens, não fatos.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "reuniclus": {
+      "fala": "Reuniclus é calma com massa. Quando ele decide, parece tarde demais porque você gastou tempo olhando para o lugar errado.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "agir"
+        },
+        {
+          "texto": "Voltar ao time.",
+          "destino": "time"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComIcaroMente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuRespirarIcaroMente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuObservarIcaroMente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuAgirIcaroMente",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente está no centro de um labirinto curto.\nO caminho é mental: respirar, observar e só então agir.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você passou pelo caminho que eu queria ver.\nO presente não era só prêmio: era uma forma de testar se você prestou atenção na lógica do meu estádio.\nÚltima escolha: pegue a chave conceitual certa para abrir a caixa.",
+      "opcoes": [
+        {
+          "texto": "Respirar, observar e agir nessa ordem.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Forçar a tampa logo de uma vez.",
+          "destino": "erro_presente_forca"
+        },
+        {
+          "texto": "Ignorar a explicação e pedir direto.",
+          "destino": "erro_presente_pressa"
+        }
+      ]
+    },
+    "erro_presente_forca": {
+      "fala": "Força sem leitura quebra mais coisa do que resolve. Volta um passo e pensa no que você acabou de ouvir.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "erro_presente_pressa": {
+      "fala": "Pressa demais. O presente está aqui, mas eu não entrego para quem pula exatamente a parte que dá sentido a ele.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você encontrou o centro. Pegue isto.\nNão é prêmio para quem adivinha; é prêmio para quem organiza a própria pressa.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Interessante.\nSua melhor jogada provavelmente nasceu alguns turnos antes de você perceber.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu. Não chama isso de falta de sorte ainda.\nPrimeiro veja se você reagiu antes de pensar.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero uma dica.",
+          "destino": "respirar"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Ícaro Mente.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

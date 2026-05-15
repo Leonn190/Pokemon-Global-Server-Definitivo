@@ -1,0 +1,582 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Helena Voltz na área. Capitã do estádio Elétrico, técnica de palco, DJ quando deixam e fiscal de cabo desencapado por necessidade.\nSe ouvir estalo, não corre: primeiro olha onde pisa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 na tomada. Agora dá para liberar a batalha.\nPrometo uma descarga limpa: sem gambiarra, sem curto injusto, só pulso e reação."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Gosto disso.\nO primeiro choque assusta; o segundo ensina ritmo."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero a batalha da capitã Elétrica."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Como funciona seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Sem respeito 2, nada de batalha oficial.\nEnergia sem disjuntor vira incêndio, e capitão existe justamente para não deixar isso acontecer.",
+      "opcoes": [
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Minha batalha é pulso: Raichu acelera, Manectric pressiona, Galvantula prende, Toxtricity bagunça o ritmo, Jolteon passa como faísca e Ampharos ilumina o fim.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com esse respeito todo, eu posso aumentar a voltagem sem te explicar onde fica o botão de emergência."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaHelenaVoltz": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Fala rápido ou fala no ritmo; eu acompanho os dois.\nSó não fala atravessado em cima do pulso, porque até conversa desafina.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasHelenaVoltz",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você já está pegando o compasso da arena.\nDaqui a pouco eu te boto para revisar cabo comigo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComHelenaVoltz": true,
+          "ConversasHelenaVoltz": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Elétrico?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Me explica aterramento.",
+          "destino": "aterramento"
+        },
+        {
+          "texto": "Me explica pulso.",
+          "destino": "pulso"
+        },
+        {
+          "texto": "Me explica descarga.",
+          "destino": "descarga"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Eu escolhi Elétrico porque é o tipo que menos aceita mentira.\nOu tem circuito, ou não tem. Ou conduz, ou isola. Ou você respeita a carga, ou ela te cobra na hora.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemHelenaVoltz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece palco.",
+          "destino": "palco"
+        },
+        {
+          "texto": "Isso parece batalha.",
+          "destino": "batalha_teoria"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "palco": {
+      "fala": "Palco e arena são quase a mesma coisa: luz, ruído, cabo escondido, gente achando que tudo é mágica.\nA diferença é que na arena o solo pode tentar te derrotar também.",
+      "opcoes": [
+        {
+          "texto": "E o Toxtricity?",
+          "destino": "toxtricity"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "batalha_teoria": {
+      "fala": "Batalha elétrica é tempo de resposta. Você cria uma janela menor do que o adversário consegue pensar.\nQuando ele percebe, o choque já virou decisão.",
+      "opcoes": [
+        {
+          "texto": "Então o pulso é central.",
+          "destino": "pulso"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "aterramento": {
+      "fala": "Aterramento é humildade elétrica. Toda energia precisa de caminho seguro para voltar.\nNo meu time, Ampharos faz isso: ilumina, estabiliza e impede que a pressa vire curto.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuAterramentoHelenaVoltz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Ampharos.",
+          "destino": "ampharos"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "trava"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pulso": {
+      "fala": "Pulso é repetição com intenção. Galvantula prende o ritmo, Jolteon corta o intervalo e Raichu muda a velocidade do compasso.\nSem pulso, Elétrico vira clarão bonito e nada mais.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPulsoHelenaVoltz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Galvantula.",
+          "destino": "galvantula"
+        },
+        {
+          "texto": "Fala do Jolteon.",
+          "destino": "jolteon"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "descarga": {
+      "fala": "Descarga é a decisão final. Não é gastar tudo porque brilhou; é soltar quando o circuito já está fechado.\nManectric e Toxtricity são perigosos por isso: eles não só atacam, eles fecham o ambiente.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuDescargaHelenaVoltz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Manectric.",
+          "destino": "manectric"
+        },
+        {
+          "texto": "Fala do Toxtricity.",
+          "destino": "toxtricity"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "trava": {
+      "fala": "Meu presente fica atrás de três chaves: aterramento, pulso e descarga.\nQuem aprende só a dar choque ganha batalha curta. Quem entende retorno, ritmo e decisão aguenta a arena inteira.",
+      "opcoes": [
+        {
+          "texto": "Checar presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Raichu inicia rápido. Manectric morde espaço. Galvantula transforma campo em rede. Toxtricity toca sujeira no circuito.\nJolteon é velocidade pura. Ampharos é farol: quando ele acende, a luta fica honesta para mim e perigosa para você.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuTimeHelenaVoltz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Toxtricity.",
+          "destino": "toxtricity"
+        },
+        {
+          "texto": "Fala do Ampharos.",
+          "destino": "ampharos"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "raichu": {
+      "fala": "Raichu começa como faísca esperta: não é o maior brilho, mas sabe onde encostar.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "manectric": {
+      "fala": "Manectric é tensão acumulada. Ele faz o adversário sentir que o ar ficou carregado antes do golpe sair.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "descarga"
+        }
+      ]
+    },
+    "galvantula": {
+      "fala": "Galvantula costura a arena com fio invisível. Quando você acha que está livre, já pisou no compasso dele.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "pulso"
+        }
+      ]
+    },
+    "toxtricity": {
+      "fala": "Toxtricity é o chiado que vira música. Ele desafina o adversário até o erro parecer escolha.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "descarga"
+        },
+        {
+          "texto": "Voltar ao palco.",
+          "destino": "palco"
+        }
+      ]
+    },
+    "jolteon": {
+      "fala": "Jolteon não espera aplauso. Ele passa, resolve e deixa o barulho chegar depois.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "pulso"
+        }
+      ]
+    },
+    "ampharos": {
+      "fala": "Ampharos é meu farol. Nem toda luz serve para cegar; algumas servem para lembrar onde está o chão.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "aterramento"
+        },
+        {
+          "texto": "Voltar ao time.",
+          "destino": "time"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComHelenaVoltz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuAterramentoHelenaVoltz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPulsoHelenaVoltz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuDescargaHelenaVoltz",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Meu presente não sai com botão de atalho.\nPrimeiro você precisa fechar o circuito: aterramento, pulso e descarga.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você passou pelo caminho que eu queria ver.\nO presente não era só prêmio: era uma forma de testar se você prestou atenção na lógica do meu estádio.\nÚltima escolha: pegue a chave conceitual certa para abrir a caixa.",
+      "opcoes": [
+        {
+          "texto": "Fechar o circuito: aterramento, pulso e descarga.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Forçar a tampa logo de uma vez.",
+          "destino": "erro_presente_forca"
+        },
+        {
+          "texto": "Ignorar a explicação e pedir direto.",
+          "destino": "erro_presente_pressa"
+        }
+      ]
+    },
+    "erro_presente_forca": {
+      "fala": "Força sem leitura quebra mais coisa do que resolve. Volta um passo e pensa no que você acabou de ouvir.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "erro_presente_pressa": {
+      "fala": "Pressa demais. O presente está aqui, mas eu não entrego para quem pula exatamente a parte que dá sentido a ele.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Circuito fechado. Pode pegar.\nLeva isso como lembrança: energia boa não é a mais barulhenta, é a que chega inteira no alvo.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Boa condução.\nNão foi só aguentar choque; você leu o intervalo entre eles.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu, mas não queimou o circuito.\nRevê seu aterramento e volta. O problema geralmente começa antes do choque.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero uma dica.",
+          "destino": "aterramento"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Helena Voltz.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

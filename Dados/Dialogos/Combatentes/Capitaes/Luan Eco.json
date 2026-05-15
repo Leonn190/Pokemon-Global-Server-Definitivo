@@ -1,0 +1,578 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Luan Eco, capitão do estádio Sonoro.\nNão precisa gritar. Se a sala responde, eu escuto até pensamento batendo na parede.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. A batalha está liberada.\nAgora a gente descobre se seu time acompanha compasso ou só faz barulho junto."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Bom.\nEco só existe porque alguma coisa decidiu responder."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero a batalha do capitão Sonoro."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Como funciona seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Sem respeito 2, a batalha oficial não começa.\nAté som precisa de espaço certo para virar música. Antes disso, é só ruído batendo na parede.",
+      "opcoes": [
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Minha batalha é volume, resposta e silêncio.\nDelcatty marca entrada, Audino escuta, Kricketune corta com ritmo, Altaria abre harmonia, Toxtricity distorce e Exploud fecha a arena no grave.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, posso tirar o abafador.\nSe você só defende golpe visível, Sonoro passa por dentro do escudo."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaLuanEco": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu prefiro pergunta com pausa.\nPausa não é vazio; é onde a resposta escolhe se vale a pena aparecer.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasLuanEco",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou num tom melhor.\nNo começo todo mundo entra alto. Depois alguns aprendem a escutar a sala."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComLuanEco": true,
+          "ConversasLuanEco": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Sonoro?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Me explica silêncio.",
+          "destino": "silencio"
+        },
+        {
+          "texto": "Me explica pulso.",
+          "destino": "pulso"
+        },
+        {
+          "texto": "Me explica retorno.",
+          "destino": "retorno"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Sonoro porque som atravessa lugar que parede acha que protege.\nÉ tipo invisível, mas não tímido: ele chega pelo ar, pelo chão, pelo peito e pela memória.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemLuanEco": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece música.",
+          "destino": "musica"
+        },
+        {
+          "texto": "Isso parece eco.",
+          "destino": "eco"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "musica": {
+      "fala": "Música é batalha organizada para ninguém se machucar. Batalha é música onde alguém esqueceu de combinar o final.\nEu tento ficar no meio dessas duas coisas.",
+      "opcoes": [
+        {
+          "texto": "Então pulso importa.",
+          "destino": "pulso"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "eco": {
+      "fala": "Eco é resposta atrasada. Ele ensina uma coisa simples: tudo que você emite volta de algum jeito.\nNa arena, isso vale para golpe, escolha e arrogância.",
+      "opcoes": [
+        {
+          "texto": "Então retorno importa.",
+          "destino": "retorno"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "silencio": {
+      "fala": "Silêncio é o primeiro instrumento. Sem ele, você não sabe se está ouvindo música ou bagunça.\nAudino entende isso: ele escuta antes de curar, antes de responder, antes de se mover.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSilencioLuanEco": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Audino.",
+          "destino": "audino"
+        },
+        {
+          "texto": "Isso abre o presente?",
+          "destino": "trava"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pulso": {
+      "fala": "Pulso é a linha que segura todo mundo junto.\nKricketune parece frágil até você perceber que o corte dele chega no tempo exato em que sua defesa respira.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPulsoLuanEco": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Kricketune.",
+          "destino": "kricketune"
+        },
+        {
+          "texto": "E o Exploud?",
+          "destino": "exploud"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "retorno": {
+      "fala": "Retorno é o som voltando com informação.\nQuem ataca sem ouvir retorno repete erro. Quem escuta ajusta a próxima nota e a próxima pancada.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRetornoLuanEco": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala da Altaria.",
+          "destino": "altaria"
+        },
+        {
+          "texto": "Checar presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "trava": {
+      "fala": "Meu presente está numa caixa acústica simples.\nEla abre quando você entende silêncio, pulso e retorno. Bater mais forte só cria ruído.",
+      "opcoes": [
+        {
+          "texto": "Checar presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Delcatty marca presença sem pesar. Audino escuta a arena. Kricketune faz do corte uma marcação.\nAltaria carrega harmonia, Toxtricity distorce o meio e Exploud lembra que volume também pode ser arquitetura.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuTimeLuanEco": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala do Exploud.",
+          "destino": "exploud"
+        },
+        {
+          "texto": "Fala do Toxtricity.",
+          "destino": "toxtricity"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "delcatty": {
+      "fala": "Delcatty entra leve. Às vezes o primeiro som da música não precisa parecer ameaça para comandar o tom.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "audino": {
+      "fala": "Audino é escuta ativa. Ele percebe ruído no time antes do golpe virar problema.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "silencio"
+        }
+      ]
+    },
+    "kricketune": {
+      "fala": "Kricketune transforma ritmo em lâmina. Subestimar isso é apanhar no contratempo.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "pulso"
+        }
+      ]
+    },
+    "altaria": {
+      "fala": "Altaria é harmonia com asa. Ela suaviza o campo só para o adversário baixar a guarda no compasso errado.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "retorno"
+        }
+      ]
+    },
+    "toxtricity": {
+      "fala": "Toxtricity é distorção. Ele pega um som limpo e pergunta: e se a arena inteira vibrar torta?",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "time"
+        }
+      ]
+    },
+    "exploud": {
+      "fala": "Exploud não é só volume. Ele é arquitetura de pressão: quando o grave entra, o corpo entende antes da cabeça.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "pulso"
+        },
+        {
+          "texto": "Voltar ao time.",
+          "destino": "time"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComLuanEco",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuSilencioLuanEco",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPulsoLuanEco",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuRetornoLuanEco",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. A caixa acústica continua fechada.\nVocê precisa passar pelo caminho mínimo: silêncio, pulso e retorno.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você passou pelo caminho que eu queria ver.\nO presente não era só prêmio: era uma forma de testar se você prestou atenção na lógica do meu estádio.\nÚltima escolha: pegue a chave conceitual certa para abrir a caixa.",
+      "opcoes": [
+        {
+          "texto": "Ouvir o silêncio, marcar o pulso e esperar o retorno.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Forçar a tampa logo de uma vez.",
+          "destino": "erro_presente_forca"
+        },
+        {
+          "texto": "Ignorar a explicação e pedir direto.",
+          "destino": "erro_presente_pressa"
+        }
+      ]
+    },
+    "erro_presente_forca": {
+      "fala": "Força sem leitura quebra mais coisa do que resolve. Volta um passo e pensa no que você acabou de ouvir.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "erro_presente_pressa": {
+      "fala": "Pressa demais. O presente está aqui, mas eu não entrego para quem pula exatamente a parte que dá sentido a ele.",
+      "opcoes": [
+        {
+          "texto": "Tentar de novo.",
+          "destino": "porta_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora a caixa respondeu. Pegue isto.\nGuarda como lembrança: quem escuta melhor, erra menos alto.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Seu time entrou no compasso certo.\nEu ouvi menos ruído do que esperava, e isso é elogio.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu. Acontece quando o barulho fica maior que a escuta.\nVolta depois de ouvir onde seu ritmo quebrou.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero uma dica.",
+          "destino": "silencio"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Luan Eco.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

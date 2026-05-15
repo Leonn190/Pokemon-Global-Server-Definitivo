@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import json
 import time
 import unicodedata
-from pathlib import Path
 
 from Servidor.Gerais.EstadoServidor import garantir_bootstrap_op, obter_nivel_op
+from Servidor.Gerais.LoaderCatalogos import carregar_catalogo
 from Servidor.Logica.Comandos.ComandosBatalha import MAPA_FUNCOES_COMANDOS_BATALHA
 from Servidor.Logica.Comandos.ComandosGeral import MAPA_FUNCOES_COMANDOS_GERAL
 from Servidor.Logica.Comandos.ComandosMundo import MAPA_FUNCOES_COMANDOS_MUNDO
 
 
-_RAIZ_PROJETO = Path(__file__).resolve().parents[3]
-_CAMINHO_CATALOGO_COMANDOS = _RAIZ_PROJETO / "Dados" / "Catalogo" / "Comandos.json"
 _CAMPOS_CATALOGO = ("nome", "aliases", "contexto", "nivel", "uso", "descricao", "argumentos", "exemplos")
 
 MAPA_FUNCOES_COMANDOS = {
@@ -84,11 +81,7 @@ def _metadados_minimos(nome: str) -> dict:
 
 
 def _itens_catalogo_json() -> list[dict]:
-    try:
-        dados = json.loads(_CAMINHO_CATALOGO_COMANDOS.read_text(encoding="utf-8"))
-    except Exception as exc:
-        print(f"[Comandos] Falha ao carregar catalogo JSON {_CAMINHO_CATALOGO_COMANDOS}: {exc}")
-        return []
+    dados = carregar_catalogo("comandos")
     if isinstance(dados, dict):
         itens = dados.get("comandos", [])
     else:

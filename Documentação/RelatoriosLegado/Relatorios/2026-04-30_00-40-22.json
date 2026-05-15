@@ -1,0 +1,1772 @@
+{
+  "resumo": {
+    "pastas": 1272,
+    "arquivos": 72240,
+    "arquivos_texto": 318,
+    "tamanho_texto_bytes": 3338162,
+    "tamanho_texto_kb": 3259.92,
+    "tamanho_bytes": 618331580,
+    "tamanho_gb": 0.575866,
+    "linhas_totais_geral": 79582,
+    "dias_desde_criacao_repo": 59,
+    "dias_desde_criacao_oficial": 333,
+    "data_criacao_oficial": "2025-06-01",
+    "horas_estimadas": 464.0,
+    "commits": 486
+  },
+  "python": {
+    "py_arquivos": 215,
+    "linhas_totais": 56895,
+    "tamanho_bytes": 2514855,
+    "tamanho_kb": 2455.91,
+    "classes_encontradas": 187,
+    "funcoes_encontradas": 834,
+    "metodos_encontrados": 2509,
+    "total_funcoes_e_metodos": 3343,
+    "bibliotecas_diferentes": 44,
+    "bibliotecas": [
+      "AtualizadorReadMe",
+      "Codigo",
+      "Outros",
+      "Prefabs",
+      "SimuladorServerGeral",
+      "SimuladorServerJogo",
+      "__future__",
+      "ast",
+      "atexit",
+      "collections",
+      "colorsys",
+      "concurrent",
+      "copy",
+      "csv",
+      "ctypes",
+      "dataclasses",
+      "datetime",
+      "hashlib",
+      "importlib",
+      "itertools",
+      "json",
+      "math",
+      "matplotlib",
+      "moderngl",
+      "os",
+      "pathlib",
+      "pygame",
+      "pypresence",
+      "random",
+      "re",
+      "shutil",
+      "struct",
+      "subprocess",
+      "sys",
+      "tempfile",
+      "threading",
+      "time",
+      "tomllib",
+      "types",
+      "typing",
+      "unicodedata",
+      "urllib",
+      "uuid",
+      "webbrowser"
+    ],
+    "top50_maiores_py_por_linhas": [
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "linhas": 1828,
+        "tamanho_bytes": 67572,
+        "tamanho_kb": 65.99
+      },
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemon.py",
+        "linhas": 1267,
+        "tamanho_bytes": 58285,
+        "tamanho_kb": 56.92
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py",
+        "linhas": 1088,
+        "tamanho_bytes": 51101,
+        "tamanho_kb": 49.9
+      },
+      {
+        "arquivo": "Codigo/Paineis/VisualizadorLog.py",
+        "linhas": 1073,
+        "tamanho_bytes": 63528,
+        "tamanho_kb": 62.04
+      },
+      {
+        "arquivo": "Codigo/ModulosMundo/ControladorObjetos.py",
+        "linhas": 1029,
+        "tamanho_bytes": 51792,
+        "tamanho_kb": 50.58
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/EstadoServidor.py",
+        "linhas": 993,
+        "tamanho_bytes": 40583,
+        "tamanho_kb": 39.63
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Geradores/GeradorPokemon.py",
+        "linhas": 837,
+        "tamanho_bytes": 35351,
+        "tamanho_kb": 34.52
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Texto.py",
+        "linhas": 806,
+        "tamanho_bytes": 31713,
+        "tamanho_kb": 30.97
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Batalha/PokemonBatalha.py",
+        "linhas": 779,
+        "tamanho_bytes": 43712,
+        "tamanho_kb": 42.69
+      },
+      {
+        "arquivo": "Codigo/ModulosBatalha/MontadorJogadas.py",
+        "linhas": 719,
+        "tamanho_bytes": 36619,
+        "tamanho_kb": 35.76
+      },
+      {
+        "arquivo": "Codigo/ModulosMundo/ControladorPlayer.py",
+        "linhas": 719,
+        "tamanho_bytes": 35310,
+        "tamanho_kb": 34.48
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/Cerebros/CerebroNPCs.py",
+        "linhas": 717,
+        "tamanho_bytes": 38846,
+        "tamanho_kb": 37.94
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/BancoDados.py",
+        "linhas": 689,
+        "tamanho_bytes": 34652,
+        "tamanho_kb": 33.84
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Logica/Comandos/Comandos.py",
+        "linhas": 681,
+        "tamanho_bytes": 29104,
+        "tamanho_kb": 28.42
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Geradores/GeradorMundo.py",
+        "linhas": 678,
+        "tamanho_bytes": 27848,
+        "tamanho_kb": 27.2
+      },
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemonBatalha.py",
+        "linhas": 677,
+        "tamanho_bytes": 34241,
+        "tamanho_kb": 33.44
+      },
+      {
+        "arquivo": "Outros/AtualizadorRelatorios.py",
+        "linhas": 651,
+        "tamanho_bytes": 24178,
+        "tamanho_kb": 23.61
+      },
+      {
+        "arquivo": "Codigo/Paineis/Container.py",
+        "linhas": 637,
+        "tamanho_bytes": 23893,
+        "tamanho_kb": 23.33
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Batalha/Partida.py",
+        "linhas": 629,
+        "tamanho_bytes": 31239,
+        "tamanho_kb": 30.51
+      },
+      {
+        "arquivo": "Codigo/Cenas/CenaMundo.py",
+        "linhas": 623,
+        "tamanho_bytes": 35298,
+        "tamanho_kb": 34.47
+      },
+      {
+        "arquivo": "Codigo/Visual/PokemonBatalhaEstado.py",
+        "linhas": 596,
+        "tamanho_bytes": 28098,
+        "tamanho_kb": 27.44
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Rotas/Atualizador.py",
+        "linhas": 575,
+        "tamanho_bytes": 29298,
+        "tamanho_kb": 28.61
+      },
+      {
+        "arquivo": "Codigo/Telas/Telas/TelaServers.py",
+        "linhas": 570,
+        "tamanho_bytes": 18904,
+        "tamanho_kb": 18.46
+      },
+      {
+        "arquivo": "Codigo/ModulosGerais/ImagensMapa.py",
+        "linhas": 567,
+        "tamanho_bytes": 25646,
+        "tamanho_kb": 25.04
+      },
+      {
+        "arquivo": "Codigo/Visual/PokemonBatalhaAnimator.py",
+        "linhas": 567,
+        "tamanho_bytes": 25281,
+        "tamanho_kb": 24.69
+      },
+      {
+        "arquivo": "Codigo/ModulosGerais/Sonoridades.py",
+        "linhas": 553,
+        "tamanho_bytes": 14943,
+        "tamanho_kb": 14.59
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelArvoreHabilidades.py",
+        "linhas": 547,
+        "tamanho_bytes": 27453,
+        "tamanho_kb": 26.81
+      },
+      {
+        "arquivo": "Codigo/Telas/Telas/TelasGenericas.py",
+        "linhas": 547,
+        "tamanho_bytes": 19571,
+        "tamanho_kb": 19.11
+      },
+      {
+        "arquivo": "Codigo/Geradores/PokemonMundo.py",
+        "linhas": 542,
+        "tamanho_bytes": 26126,
+        "tamanho_kb": 25.51
+      },
+      {
+        "arquivo": "Outros/EditorSkins.py",
+        "linhas": 514,
+        "tamanho_bytes": 20452,
+        "tamanho_kb": 19.97
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioItens.py",
+        "linhas": 509,
+        "tamanho_bytes": 24334,
+        "tamanho_kb": 23.76
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Rotas/Ativador.py",
+        "linhas": 505,
+        "tamanho_bytes": 24274,
+        "tamanho_kb": 23.71
+      },
+      {
+        "arquivo": "Codigo/ModulosMundo/LeitorDialogo.py",
+        "linhas": 494,
+        "tamanho_bytes": 20852,
+        "tamanho_kb": 20.36
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/ObjetosMundoServer.py",
+        "linhas": 494,
+        "tamanho_bytes": 32826,
+        "tamanho_kb": 32.06
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Botao.py",
+        "linhas": 489,
+        "tamanho_bytes": 18435,
+        "tamanho_kb": 18.0
+      },
+      {
+        "arquivo": "Codigo/ModulosBatalha/PokemonBatalha.py",
+        "linhas": 485,
+        "tamanho_bytes": 23533,
+        "tamanho_kb": 22.98
+      },
+      {
+        "arquivo": "Codigo/ModulosMundo/LeitorMundo.py",
+        "linhas": 484,
+        "tamanho_bytes": 22337,
+        "tamanho_kb": 21.81
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Batalha/BatalhaIA/AvaliadorIA.py",
+        "linhas": 480,
+        "tamanho_bytes": 26157,
+        "tamanho_kb": 25.54
+      },
+      {
+        "arquivo": "Codigo/ModulosGerais/FiltroCamera.py",
+        "linhas": 478,
+        "tamanho_bytes": 22046,
+        "tamanho_kb": 21.53
+      },
+      {
+        "arquivo": "Outros/AtualizadorReadMe.py",
+        "linhas": 461,
+        "tamanho_bytes": 16748,
+        "tamanho_kb": 16.36
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/InicializadorNPC.py",
+        "linhas": 461,
+        "tamanho_bytes": 24426,
+        "tamanho_kb": 23.85
+      },
+      {
+        "arquivo": "Outros/Mixer.py",
+        "linhas": 460,
+        "tamanho_bytes": 15677,
+        "tamanho_kb": 15.31
+      },
+      {
+        "arquivo": "Codigo/ModulosBatalha/ControladorBatalha.py",
+        "linhas": 457,
+        "tamanho_bytes": 22071,
+        "tamanho_kb": 21.55
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaDialogo.py",
+        "linhas": 439,
+        "tamanho_bytes": 19935,
+        "tamanho_kb": 19.47
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelReceitas.py",
+        "linhas": 438,
+        "tamanho_bytes": 15050,
+        "tamanho_kb": 14.7
+      },
+      {
+        "arquivo": "Codigo/ModulosBatalha/Arena.py",
+        "linhas": 429,
+        "tamanho_bytes": 20637,
+        "tamanho_kb": 20.15
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/Cerebros/CerebroCentral.py",
+        "linhas": 427,
+        "tamanho_bytes": 22349,
+        "tamanho_kb": 21.83
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaCriarPersonagem.py",
+        "linhas": 423,
+        "tamanho_bytes": 15704,
+        "tamanho_kb": 15.34
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Batalha/BatalhaIA/MacroSimulador.py",
+        "linhas": 419,
+        "tamanho_bytes": 19680,
+        "tamanho_kb": 19.22
+      },
+      {
+        "arquivo": "Codigo/Geradores/Player/Controle.py",
+        "linhas": 414,
+        "tamanho_bytes": 17920,
+        "tamanho_kb": 17.5
+      }
+    ],
+    "top20_maiores_funcoes_metodos": [
+      {
+        "arquivo": "Codigo/Paineis/VisualizadorLog.py",
+        "nome": "VisualizadorLog._registro_evento",
+        "tipo": "metodo",
+        "linhas": 330
+      },
+      {
+        "arquivo": "Codigo/Geradores/Estadio.py",
+        "nome": "EstadioInterno.renderizar",
+        "tipo": "metodo",
+        "linhas": 254
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Fluxos.py",
+        "nome": "Fluxo.desenhar",
+        "tipo": "metodo",
+        "linhas": 249
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Rotas/Atualizador.py",
+        "nome": "processar_atualizador_json",
+        "tipo": "funcao",
+        "linhas": 249
+      },
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "nome": "coletar_metricas",
+        "tipo": "funcao",
+        "linhas": 247
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py",
+        "nome": "InventarioPokemons.atualizar",
+        "tipo": "metodo",
+        "linhas": 147
+      },
+      {
+        "arquivo": "Codigo/ModulosGerais/Colisor.py",
+        "nome": "Colisor.resolver_movimento_com_colisores",
+        "tipo": "metodo",
+        "linhas": 146
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Geradores/GeradorMundo.py",
+        "nome": "_executar_world_generator",
+        "tipo": "funcao",
+        "linhas": 144
+      },
+      {
+        "arquivo": "Outros/AtualizadorRelatorios.py",
+        "nome": "main",
+        "tipo": "funcao",
+        "linhas": 140
+      },
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "nome": "gerar_markdown",
+        "tipo": "funcao",
+        "linhas": 139
+      },
+      {
+        "arquivo": "Codigo/Telas/Telas/TelaMapa.py",
+        "nome": "TelaMapa.desenhar",
+        "tipo": "metodo",
+        "linhas": 136
+      },
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "nome": "analisar_python_ast",
+        "tipo": "funcao",
+        "linhas": 132
+      },
+      {
+        "arquivo": "Codigo/Telas/Telas/TelaMenu.py",
+        "nome": "TelaMenu",
+        "tipo": "funcao",
+        "linhas": 131
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/Cerebros/CerebroNPCs.py",
+        "nome": "CerebroNPCs.executar_tick",
+        "tipo": "metodo",
+        "linhas": 122
+      },
+      {
+        "arquivo": "Codigo/ModulosBatalha/ControladorAnimacoes.py",
+        "nome": "ControladorAnimacoes.criar_animacao_de_evento",
+        "tipo": "metodo",
+        "linhas": 120
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Botao.py",
+        "nome": "Botao.render",
+        "tipo": "metodo",
+        "linhas": 119
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py",
+        "nome": "InventarioPokemons._reconstruir",
+        "tipo": "metodo",
+        "linhas": 119
+      },
+      {
+        "arquivo": "Codigo/Cenas/CenaMundo.py",
+        "nome": "CenaMundo.atualizar_cena",
+        "tipo": "metodo",
+        "linhas": 118
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaCriarPersonagem.py",
+        "nome": "SubtelaCriarPersonagem._rebuild_layout",
+        "tipo": "metodo",
+        "linhas": 112
+      },
+      {
+        "arquivo": "Outros/Mixer.py",
+        "nome": "main",
+        "tipo": "funcao",
+        "linhas": 109
+      }
+    ],
+    "top20_maiores_classes": [
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemon.py",
+        "nome": "FichaPokemon",
+        "linhas": 1245
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py",
+        "nome": "InventarioPokemons",
+        "linhas": 1059
+      },
+      {
+        "arquivo": "Codigo/ModulosMundo/ControladorObjetos.py",
+        "nome": "ControladorObjetos",
+        "linhas": 1003
+      },
+      {
+        "arquivo": "Codigo/Paineis/VisualizadorLog.py",
+        "nome": "VisualizadorLog",
+        "linhas": 883
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Batalha/PokemonBatalha.py",
+        "nome": "PokemonBatalha",
+        "linhas": 733
+      },
+      {
+        "arquivo": "Codigo/ModulosMundo/ControladorPlayer.py",
+        "nome": "ControladorPlayer",
+        "linhas": 700
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/Cerebros/CerebroNPCs.py",
+        "nome": "CerebroNPCs",
+        "linhas": 697
+      },
+      {
+        "arquivo": "Codigo/ModulosBatalha/MontadorJogadas.py",
+        "nome": "MontadorJogadas",
+        "linhas": 677
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/BancoDados.py",
+        "nome": "BancoDadosMundo",
+        "linhas": 661
+      },
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemonBatalha.py",
+        "nome": "FichaPokemonBatalha",
+        "linhas": 657
+      },
+      {
+        "arquivo": "Codigo/Paineis/Container.py",
+        "nome": "Container",
+        "linhas": 628
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Batalha/Partida.py",
+        "nome": "Partida",
+        "linhas": 601
+      },
+      {
+        "arquivo": "Codigo/Cenas/CenaMundo.py",
+        "nome": "CenaMundo",
+        "linhas": 586
+      },
+      {
+        "arquivo": "Codigo/Visual/PokemonBatalhaEstado.py",
+        "nome": "PokemonBatalhaEstado",
+        "linhas": 543
+      },
+      {
+        "arquivo": "Codigo/Visual/PokemonBatalhaAnimator.py",
+        "nome": "PokemonAnimator",
+        "linhas": 537
+      },
+      {
+        "arquivo": "Codigo/ModulosGerais/ImagensMapa.py",
+        "nome": "GerenciadorImagensMapa",
+        "linhas": 520
+      },
+      {
+        "arquivo": "Codigo/Geradores/PokemonMundo.py",
+        "nome": "Pokemon",
+        "linhas": 518
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelArvoreHabilidades.py",
+        "nome": "PainelArvoreHabilidades",
+        "linhas": 517
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioItens.py",
+        "nome": "InventarioItens",
+        "linhas": 492
+      },
+      {
+        "arquivo": "Codigo/ModulosMundo/LeitorDialogo.py",
+        "nome": "LeitorDialogo",
+        "linhas": 484
+      }
+    ],
+    "top10_arquivos_mais_importados": [
+      {
+        "arquivo": "Codigo/Prefabs/Texto.py",
+        "vezes_importado": 43
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Botao.py",
+        "vezes_importado": 31
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Logica/Executes/ExecutesAtaques/UtilitariosExecutes.py",
+        "vezes_importado": 21
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/EstadoServidor.py",
+        "vezes_importado": 16
+      },
+      {
+        "arquivo": "Codigo/Geradores/ItemInventario.py",
+        "vezes_importado": 15
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/BancoDados.py",
+        "vezes_importado": 14
+      },
+      {
+        "arquivo": "Codigo/ModulosGerais/Sonoridades.py",
+        "vezes_importado": 13
+      },
+      {
+        "arquivo": "Codigo/ModulosGerais/Auxiliares.py",
+        "vezes_importado": 13
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Rotas/Ativador.py",
+        "vezes_importado": 12
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Geradores/GeradorPokemon.py",
+        "vezes_importado": 11
+      }
+    ],
+    "top10_arquivos_que_mais_importam": [
+      {
+        "arquivo": "Codigo/Cenas/CenaMundo.py",
+        "arquivos_internos_importados": 22,
+        "imports_totais": 25,
+        "linhas": 623
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Logica/Executes/ExecutesAtaques/ControladorExecutes.py",
+        "arquivos_internos_importados": 22,
+        "imports_totais": 23,
+        "linhas": 264
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Mundo/Cerebros/CerebroCentral.py",
+        "arquivos_internos_importados": 16,
+        "imports_totais": 25,
+        "linhas": 427
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py",
+        "arquivos_internos_importados": 16,
+        "imports_totais": 21,
+        "linhas": 1088
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Batalha/BatalhaIA/ControladorIA.py",
+        "arquivos_internos_importados": 12,
+        "imports_totais": 16,
+        "linhas": 166
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/Rotas/Atualizador.py",
+        "arquivos_internos_importados": 11,
+        "imports_totais": 16,
+        "linhas": 575
+      },
+      {
+        "arquivo": "Codigo/Cenas/ControladorCenas.py",
+        "arquivos_internos_importados": 11,
+        "imports_totais": 16,
+        "linhas": 299
+      },
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemonBatalha.py",
+        "arquivos_internos_importados": 10,
+        "imports_totais": 15,
+        "linhas": 677
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioItens.py",
+        "arquivos_internos_importados": 10,
+        "imports_totais": 13,
+        "linhas": 509
+      },
+      {
+        "arquivo": "Codigo/ModulosBatalha/ControladorBatalha.py",
+        "arquivos_internos_importados": 10,
+        "imports_totais": 13,
+        "linhas": 457
+      }
+    ]
+  },
+  "pastas_importantes": {
+    "observacao": "Rank recursivo por linhas das 16 pastas principais definidas manualmente.",
+    "itens": [
+      {
+        "pasta": "ServerGerais",
+        "caminho": "SimuladorServerJogo/Gerais",
+        "existe": true,
+        "arquivos": 51,
+        "subpastas": 4,
+        "tamanho_bytes": 489511,
+        "tamanho_kb": 478.04,
+        "linhas_gerais": 8623,
+        "rank": 1
+      },
+      {
+        "pasta": "Dados",
+        "caminho": "Dados",
+        "existe": true,
+        "arquivos": 56,
+        "subpastas": 6,
+        "tamanho_bytes": 340307,
+        "tamanho_kb": 332.33,
+        "linhas_gerais": 7332,
+        "rank": 2
+      },
+      {
+        "pasta": "Paineis",
+        "caminho": "Codigo/Paineis",
+        "existe": true,
+        "arquivos": 16,
+        "subpastas": 0,
+        "tamanho_bytes": 309720,
+        "tamanho_kb": 302.46,
+        "linhas_gerais": 6716,
+        "rank": 3
+      },
+      {
+        "pasta": "ServerBatalha",
+        "caminho": "SimuladorServerJogo/Batalha",
+        "existe": true,
+        "arquivos": 24,
+        "subpastas": 1,
+        "tamanho_bytes": 285517,
+        "tamanho_kb": 278.83,
+        "linhas_gerais": 6202,
+        "rank": 4
+      },
+      {
+        "pasta": "Telas",
+        "caminho": "Codigo/Telas",
+        "existe": true,
+        "arquivos": 19,
+        "subpastas": 2,
+        "tamanho_bytes": 246618,
+        "tamanho_kb": 240.84,
+        "linhas_gerais": 6047,
+        "rank": 5
+      },
+      {
+        "pasta": "ServerMundo",
+        "caminho": "SimuladorServerJogo/Mundo",
+        "existe": true,
+        "arquivos": 17,
+        "subpastas": 1,
+        "tamanho_bytes": 239917,
+        "tamanho_kb": 234.29,
+        "linhas_gerais": 4479,
+        "rank": 6
+      },
+      {
+        "pasta": "Outros",
+        "caminho": "Outros",
+        "existe": true,
+        "arquivos": 9,
+        "subpastas": 0,
+        "tamanho_bytes": 162177,
+        "tamanho_kb": 158.38,
+        "linhas_gerais": 4406,
+        "rank": 7
+      },
+      {
+        "pasta": "ModulosMundo",
+        "caminho": "Codigo/ModulosMundo",
+        "existe": true,
+        "arquivos": 14,
+        "subpastas": 0,
+        "tamanho_bytes": 202323,
+        "tamanho_kb": 197.58,
+        "linhas_gerais": 4302,
+        "rank": 8
+      },
+      {
+        "pasta": "ModulosGerais",
+        "caminho": "Codigo/ModulosGerais",
+        "existe": true,
+        "arquivos": 22,
+        "subpastas": 1,
+        "tamanho_bytes": 158837,
+        "tamanho_kb": 155.11,
+        "linhas_gerais": 4128,
+        "rank": 9
+      },
+      {
+        "pasta": "ServerLogica",
+        "caminho": "SimuladorServerJogo/Logica",
+        "existe": true,
+        "arquivos": 41,
+        "subpastas": 4,
+        "tamanho_bytes": 129422,
+        "tamanho_kb": 126.39,
+        "linhas_gerais": 4105,
+        "rank": 10
+      },
+      {
+        "pasta": "ModulosBatalha",
+        "caminho": "Codigo/ModulosBatalha",
+        "existe": true,
+        "arquivos": 12,
+        "subpastas": 1,
+        "tamanho_bytes": 180006,
+        "tamanho_kb": 175.79,
+        "linhas_gerais": 3730,
+        "rank": 11
+      },
+      {
+        "pasta": "Prefabs",
+        "caminho": "Codigo/Prefabs",
+        "existe": true,
+        "arquivos": 14,
+        "subpastas": 0,
+        "tamanho_bytes": 134961,
+        "tamanho_kb": 131.8,
+        "linhas_gerais": 3606,
+        "rank": 12
+      },
+      {
+        "pasta": "Geradores",
+        "caminho": "Codigo/Geradores",
+        "existe": true,
+        "arquivos": 16,
+        "subpastas": 1,
+        "tamanho_bytes": 155304,
+        "tamanho_kb": 151.66,
+        "linhas_gerais": 3464,
+        "rank": 13
+      },
+      {
+        "pasta": "Visual",
+        "caminho": "Codigo/Visual",
+        "existe": true,
+        "arquivos": 6,
+        "subpastas": 0,
+        "tamanho_bytes": 75847,
+        "tamanho_kb": 74.07,
+        "linhas_gerais": 1682,
+        "rank": 14
+      },
+      {
+        "pasta": "Cenas",
+        "caminho": "Codigo/Cenas",
+        "existe": true,
+        "arquivos": 6,
+        "subpastas": 0,
+        "tamanho_bytes": 69367,
+        "tamanho_kb": 67.74,
+        "linhas_gerais": 1432,
+        "rank": 15
+      },
+      {
+        "pasta": "Site",
+        "caminho": "Site",
+        "existe": true,
+        "arquivos": 21,
+        "subpastas": 6,
+        "tamanho_bytes": 34711,
+        "tamanho_kb": 33.9,
+        "linhas_gerais": 1349,
+        "rank": 16
+      }
+    ]
+  },
+  "linhas_por_extensao": {
+    "observacao": "Contabiliza extensões textuais principais, incluindo .css, .html, .astro e .js quando existirem.",
+    "itens": [
+      {
+        "ext": ".py",
+        "linhas": 56895,
+        "arquivos": 215,
+        "tamanho_bytes": 2514855,
+        "tamanho_kb": 2455.91,
+        "percentual_linhas": 71.5498
+      },
+      {
+        "ext": ".md",
+        "linhas": 7829,
+        "arquivos": 4,
+        "tamanho_bytes": 247529,
+        "tamanho_kb": 241.73,
+        "percentual_linhas": 9.8456
+      },
+      {
+        "ext": ".json",
+        "linhas": 6677,
+        "arquivos": 51,
+        "tamanho_bytes": 172397,
+        "tamanho_kb": 168.36,
+        "percentual_linhas": 8.3968
+      },
+      {
+        "ext": ".java",
+        "linhas": 4033,
+        "arquivos": 7,
+        "tamanho_bytes": 155777,
+        "tamanho_kb": 152.13,
+        "percentual_linhas": 5.0718
+      },
+      {
+        "ext": ".csv",
+        "linhas": 1765,
+        "arquivos": 8,
+        "tamanho_bytes": 191612,
+        "tamanho_kb": 187.12,
+        "percentual_linhas": 2.2196
+      },
+      {
+        "ext": ".toml",
+        "linhas": 1060,
+        "arquivos": 14,
+        "tamanho_bytes": 22564,
+        "tamanho_kb": 22.04,
+        "percentual_linhas": 1.333
+      },
+      {
+        "ext": ".css",
+        "linhas": 626,
+        "arquivos": 3,
+        "tamanho_bytes": 11638,
+        "tamanho_kb": 11.37,
+        "percentual_linhas": 0.7872
+      },
+      {
+        "ext": ".astro",
+        "linhas": 578,
+        "arquivos": 14,
+        "tamanho_bytes": 19126,
+        "tamanho_kb": 18.68,
+        "percentual_linhas": 0.7269
+      },
+      {
+        "ext": ".js",
+        "linhas": 55,
+        "arquivos": 1,
+        "tamanho_bytes": 1725,
+        "tamanho_kb": 1.68,
+        "percentual_linhas": 0.0692
+      }
+    ]
+  },
+  "peso_por_extensao": {
+    "itens": [
+      {
+        "ext": ".png",
+        "arquivos": 71814,
+        "tamanho_bytes": 511177269,
+        "tamanho_kb": 499196.55,
+        "tamanho_mb": 487.4966,
+        "percentual_total": 82.6704
+      },
+      {
+        "ext": ".ogg",
+        "arquivos": 35,
+        "tamanho_bytes": 95037882,
+        "tamanho_kb": 92810.43,
+        "tamanho_mb": 90.6352,
+        "percentual_total": 15.3701
+      },
+      {
+        "ext": ".wav",
+        "arquivos": 9,
+        "tamanho_bytes": 3998274,
+        "tamanho_kb": 3904.56,
+        "tamanho_mb": 3.8131,
+        "percentual_total": 0.6466
+      },
+      {
+        "ext": ".jpg",
+        "arquivos": 23,
+        "tamanho_bytes": 3788203,
+        "tamanho_kb": 3699.42,
+        "tamanho_mb": 3.6127,
+        "percentual_total": 0.6126
+      },
+      {
+        "ext": ".py",
+        "arquivos": 215,
+        "tamanho_bytes": 2514855,
+        "tamanho_kb": 2455.91,
+        "tamanho_mb": 2.3984,
+        "percentual_total": 0.4067
+      },
+      {
+        "ext": ".mp3",
+        "arquivos": 5,
+        "tamanho_bytes": 652013,
+        "tamanho_kb": 636.73,
+        "tamanho_mb": 0.6218,
+        "percentual_total": 0.1054
+      },
+      {
+        "ext": ".md",
+        "arquivos": 4,
+        "tamanho_bytes": 247529,
+        "tamanho_kb": 241.73,
+        "tamanho_mb": 0.2361,
+        "percentual_total": 0.04
+      },
+      {
+        "ext": ".ttf",
+        "arquivos": 2,
+        "tamanho_bytes": 201356,
+        "tamanho_kb": 196.64,
+        "tamanho_mb": 0.192,
+        "percentual_total": 0.0326
+      },
+      {
+        "ext": ".csv",
+        "arquivos": 8,
+        "tamanho_bytes": 191612,
+        "tamanho_kb": 187.12,
+        "tamanho_mb": 0.1827,
+        "percentual_total": 0.031
+      },
+      {
+        "ext": ".json",
+        "arquivos": 51,
+        "tamanho_bytes": 172397,
+        "tamanho_kb": 168.36,
+        "tamanho_mb": 0.1644,
+        "percentual_total": 0.0279
+      },
+      {
+        "ext": ".java",
+        "arquivos": 7,
+        "tamanho_bytes": 155777,
+        "tamanho_kb": 152.13,
+        "tamanho_mb": 0.1486,
+        "percentual_total": 0.0252
+      },
+      {
+        "ext": ".class",
+        "arquivos": 31,
+        "tamanho_bytes": 128123,
+        "tamanho_kb": 125.12,
+        "tamanho_mb": 0.1222,
+        "percentual_total": 0.0207
+      },
+      {
+        "ext": ".toml",
+        "arquivos": 14,
+        "tamanho_bytes": 22564,
+        "tamanho_kb": 22.04,
+        "tamanho_mb": 0.0215,
+        "percentual_total": 0.0036
+      },
+      {
+        "ext": ".astro",
+        "arquivos": 14,
+        "tamanho_bytes": 19126,
+        "tamanho_kb": 18.68,
+        "tamanho_mb": 0.0182,
+        "percentual_total": 0.0031
+      },
+      {
+        "ext": ".css",
+        "arquivos": 3,
+        "tamanho_bytes": 11638,
+        "tamanho_kb": 11.37,
+        "tamanho_mb": 0.0111,
+        "percentual_total": 0.0019
+      },
+      {
+        "ext": ".frag",
+        "arquivos": 1,
+        "tamanho_bytes": 9628,
+        "tamanho_kb": 9.4,
+        "tamanho_mb": 0.0092,
+        "percentual_total": 0.0016
+      },
+      {
+        "ext": ".js",
+        "arquivos": 1,
+        "tamanho_bytes": 1725,
+        "tamanho_kb": 1.68,
+        "tamanho_mb": 0.0016,
+        "percentual_total": 0.0003
+      },
+      {
+        "ext": ".mjs",
+        "arquivos": 1,
+        "tamanho_bytes": 500,
+        "tamanho_kb": 0.49,
+        "tamanho_mb": 0.0005,
+        "percentual_total": 0.0001
+      },
+      {
+        "ext": ".vert",
+        "arquivos": 1,
+        "tamanho_bytes": 170,
+        "tamanho_kb": 0.17,
+        "tamanho_mb": 0.0002,
+        "percentual_total": 0.0
+      }
+    ]
+  },
+  "peso_por_categoria": {
+    "observacao": "Pizza de peso dividida em imagens, áudio e texto.",
+    "itens": [
+      {
+        "categoria": "Imagens",
+        "arquivos": 71837,
+        "tamanho_bytes": 514965472,
+        "tamanho_kb": 502895.97,
+        "tamanho_mb": 491.1093,
+        "percentual_total": 83.2831
+      },
+      {
+        "categoria": "Áudio",
+        "arquivos": 49,
+        "tamanho_bytes": 99688169,
+        "tamanho_kb": 97351.73,
+        "tamanho_mb": 95.07,
+        "percentual_total": 16.1221
+      },
+      {
+        "categoria": "Texto",
+        "arquivos": 354,
+        "tamanho_bytes": 3677939,
+        "tamanho_kb": 3591.74,
+        "tamanho_mb": 3.5076,
+        "percentual_total": 0.5948
+      }
+    ]
+  },
+  "arquivos": {
+    "top10_maiores_por_linhas": [
+      {
+        "arquivo": "Legado/DiretrizesBatalha_v7_ajustada.md",
+        "ext": ".md",
+        "linhas": 4860
+      },
+      {
+        "arquivo": "Legado/PlanoImplementacaoBatalha_5Fases_ajustado.md",
+        "ext": ".md",
+        "linhas": 1872
+      },
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "ext": ".py",
+        "linhas": 1828
+      },
+      {
+        "arquivo": "Dados/Tabelas/Pokemon Global Server - Pokemons.csv",
+        "ext": ".csv",
+        "linhas": 1309
+      },
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemon.py",
+        "ext": ".py",
+        "linhas": 1267
+      },
+      {
+        "arquivo": "Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py",
+        "ext": ".py",
+        "linhas": 1088
+      },
+      {
+        "arquivo": "Codigo/Paineis/VisualizadorLog.py",
+        "ext": ".py",
+        "linhas": 1073
+      },
+      {
+        "arquivo": "Codigo/ModulosMundo/ControladorObjetos.py",
+        "ext": ".py",
+        "linhas": 1029
+      },
+      {
+        "arquivo": "README.md",
+        "ext": ".md",
+        "linhas": 1022
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Gerais/EstadoServidor.py",
+        "ext": ".py",
+        "linhas": 993
+      }
+    ]
+  },
+  "comparativo_ultimo_relatorio": {
+    "disponivel": true,
+    "itens": [
+      {
+        "metrica": "arquivos",
+        "nome": "Arquivos",
+        "anterior": 72205.0,
+        "atual": 72240.0,
+        "diferenca": 35.0
+      },
+      {
+        "metrica": "linhas",
+        "nome": "Linhas",
+        "anterior": 77883.0,
+        "atual": 79582.0,
+        "diferenca": 1699.0
+      },
+      {
+        "metrica": "linhas_py",
+        "nome": "Linhas .py",
+        "anterior": 56597.0,
+        "atual": 56895.0,
+        "diferenca": 298.0
+      },
+      {
+        "metrica": "metodos_funcoes",
+        "nome": "Métodos/funções",
+        "anterior": 3323.0,
+        "atual": 3343.0,
+        "diferenca": 20.0
+      },
+      {
+        "metrica": "classes",
+        "nome": "Classes",
+        "anterior": 187.0,
+        "atual": 187.0,
+        "diferenca": 0.0
+      },
+      {
+        "metrica": "commits",
+        "nome": "Commits",
+        "anterior": 473.0,
+        "atual": 486.0,
+        "diferenca": 13.0
+      },
+      {
+        "metrica": "tamanho",
+        "nome": "Tamanho",
+        "anterior": 627126964.0,
+        "atual": 618331580.0,
+        "diferenca": -8795384.0
+      }
+    ]
+  },
+  "diff_desde_ultimo_relatorio": {
+    "arquivos_alterados": 1341,
+    "adicoes": 64772,
+    "reducoes": 20018,
+    "binarios": 1075,
+    "tamanho_diff": 84790,
+    "disponivel": true,
+    "commit_anterior": "dd67edc2aff45f198bfeb7f315835f493261fc31",
+    "commit_atual": "2e4da163732340a29078c93f69599cf334aa8494"
+  },
+  "top_commits_por_diff": {
+    "itens": [
+      {
+        "hash": "ac5a5bf900ccfd11bc59bd1659b71cf415ba8a37",
+        "hash_curto": "ac5a5bf900cc",
+        "data": "2026-04-30T00:14:09-03:00",
+        "autor": "Leonn190",
+        "mensagem": "atualizaÃ§Ã£o dos relatorios",
+        "arquivos_alterados": 1249,
+        "adicoes": 55831,
+        "reducoes": 19639,
+        "binarios": 1038,
+        "tamanho_diff": 75470,
+        "rank": 1
+      },
+      {
+        "hash": "a848209b229e9c946d2814f9dfcf8f80e98b58e6",
+        "hash_curto": "a848209b229e",
+        "data": "2026-04-29T14:03:24-03:00",
+        "autor": "Leonn190",
+        "mensagem": "Estrutura solida do site",
+        "arquivos_alterados": 25,
+        "adicoes": 5924,
+        "reducoes": 423,
+        "binarios": 0,
+        "tamanho_diff": 6347,
+        "rank": 2
+      },
+      {
+        "hash": "351102dcfff2d25c7867ba4132b6dc0a2852ec56",
+        "hash_curto": "351102dcfff2",
+        "data": "2026-04-29T11:16:32-03:00",
+        "autor": "Leonn190",
+        "mensagem": "relatorio",
+        "arquivos_alterados": 12,
+        "adicoes": 2136,
+        "reducoes": 229,
+        "binarios": 8,
+        "tamanho_diff": 2365,
+        "rank": 3
+      }
+    ]
+  },
+  "meta": {
+    "numero_relatorio": 52,
+    "criado_em": "2026-04-30T00:40:22",
+    "data_referencia": "2026-04-30T00:40:22",
+    "projeto": "Pokemon-Global-Server-Definitivo",
+    "arquivo": "2026-04-30_00-40-22.json",
+    "arquivo_markdown": "2026-04-30_00-40-22.md",
+    "arquivo_readme": "2026-04-30_00-40-22.md",
+    "base_dir": "C:\\Users\\euleo\\OneDrive\\Documentos\\GitHub\\Pokemon-Global-Server-Definitivo",
+    "script": "Outros/GeradorRelatorios.py",
+    "relatorios_dir": "Outros/Relatorios",
+    "relatorios_json_dir": "Outros/Relatorios/Relatorios",
+    "registros_dir": "Outros/Relatorios/Registros",
+    "modelo": 10,
+    "autor": "Leon Cunha Alvaro Lopez Soto",
+    "incremento_horas": 0.0,
+    "horas_base_anterior": 313.0,
+    "relatorio_anterior": "2026-04-29_11-15-13.json",
+    "imagens_dir": "Outros/Relatorios/Imagens/2026-04-30_00-40-22"
+  },
+  "historico_crescimento": {
+    "itens": [
+      {
+        "data": "2026-03-03T15:08:47",
+        "linhas_totais_geral": 4179.0,
+        "linhas_py": 4179.0,
+        "arquivos_py": 78.0,
+        "commits": 19.0,
+        "tamanho_bytes": 100294342.0
+      },
+      {
+        "data": "2026-03-03T16:24:02",
+        "linhas_totais_geral": 4852.0,
+        "linhas_py": 4852.0,
+        "arquivos_py": 79.0,
+        "commits": 26.0,
+        "tamanho_bytes": 100824677.0
+      },
+      {
+        "data": "2026-03-03T20:06:38",
+        "linhas_totais_geral": 5216.0,
+        "linhas_py": 5216.0,
+        "arquivos_py": 80.0,
+        "commits": 30.0,
+        "tamanho_bytes": 100836699.0
+      },
+      {
+        "data": "2026-03-03T22:54:10",
+        "linhas_totais_geral": 5734.0,
+        "linhas_py": 5734.0,
+        "arquivos_py": 81.0,
+        "commits": 33.0,
+        "tamanho_bytes": 351895012.0
+      },
+      {
+        "data": "2026-03-04T10:56:26",
+        "linhas_totais_geral": 6437.0,
+        "linhas_py": 6437.0,
+        "arquivos_py": 80.0,
+        "commits": 40.0,
+        "tamanho_bytes": 352593778.0
+      },
+      {
+        "data": "2026-03-04T23:39:39",
+        "linhas_totais_geral": 8878.0,
+        "linhas_py": 8877.0,
+        "arquivos_py": 90.0,
+        "commits": 51.0,
+        "tamanho_bytes": 391347578.0
+      },
+      {
+        "data": "2026-03-05T21:07:50",
+        "linhas_totais_geral": 11093.0,
+        "linhas_py": 11092.0,
+        "arquivos_py": 98.0,
+        "commits": 78.0,
+        "tamanho_bytes": 391885202.0
+      },
+      {
+        "data": "2026-03-06T15:56:37",
+        "linhas_totais_geral": 11437.0,
+        "linhas_py": 11436.0,
+        "arquivos_py": 99.0,
+        "commits": 86.0,
+        "tamanho_bytes": 391900001.0
+      },
+      {
+        "data": "2026-03-07T01:12:50",
+        "linhas_totais_geral": 11669.0,
+        "linhas_py": 11668.0,
+        "arquivos_py": 99.0,
+        "commits": 89.0,
+        "tamanho_bytes": 391910371.0
+      },
+      {
+        "data": "2026-03-07T10:39:36",
+        "linhas_totais_geral": 14521.0,
+        "linhas_py": 12075.0,
+        "arquivos_py": 96.0,
+        "commits": 94.0,
+        "tamanho_bytes": 454971586.0
+      },
+      {
+        "data": "2026-03-08T09:43:18",
+        "linhas_totais_geral": 15286.0,
+        "linhas_py": 12393.0,
+        "arquivos_py": 96.0,
+        "commits": 108.0,
+        "tamanho_bytes": 396528721.0
+      },
+      {
+        "data": "2026-03-08T19:00:41",
+        "linhas_totais_geral": 16416.0,
+        "linhas_py": 13522.0,
+        "arquivos_py": 96.0,
+        "commits": 116.0,
+        "tamanho_bytes": 394565804.0
+      },
+      {
+        "data": "2026-03-09T22:08:40",
+        "linhas_totais_geral": 18369.0,
+        "linhas_py": 15407.0,
+        "arquivos_py": 107.0,
+        "commits": 129.0,
+        "tamanho_bytes": 394687692.0
+      },
+      {
+        "data": "2026-03-10T23:01:01",
+        "linhas_totais_geral": 20241.0,
+        "linhas_py": 17279.0,
+        "arquivos_py": 113.0,
+        "commits": 143.0,
+        "tamanho_bytes": 405652644.0
+      },
+      {
+        "data": "2026-03-12T01:02:57",
+        "linhas_totais_geral": 20127.0,
+        "linhas_py": 17163.0,
+        "arquivos_py": 117.0,
+        "commits": 148.0,
+        "tamanho_bytes": 405662529.0
+      },
+      {
+        "data": "2026-03-12T21:50:30",
+        "linhas_totais_geral": 22782.0,
+        "linhas_py": 18006.0,
+        "arquivos_py": 120.0,
+        "commits": 160.0,
+        "tamanho_bytes": 405782214.0
+      },
+      {
+        "data": "2026-03-14T10:55:58",
+        "linhas_totais_geral": 23480.0,
+        "linhas_py": 18696.0,
+        "arquivos_py": 116.0,
+        "commits": 165.0,
+        "tamanho_bytes": 405811548.0
+      },
+      {
+        "data": "2026-03-17T21:27:50",
+        "linhas_totais_geral": 26571.0,
+        "linhas_py": 20006.0,
+        "arquivos_py": 118.0,
+        "commits": 171.0,
+        "tamanho_bytes": 405945010.0
+      },
+      {
+        "data": "2026-03-19T23:32:06",
+        "linhas_totais_geral": 27190.0,
+        "linhas_py": 20361.0,
+        "arquivos_py": 117.0,
+        "commits": 178.0,
+        "tamanho_bytes": 406689898.0
+      },
+      {
+        "data": "2026-03-22T16:16:40",
+        "linhas_totais_geral": 27849.0,
+        "linhas_py": 21020.0,
+        "arquivos_py": 118.0,
+        "commits": 186.0,
+        "tamanho_bytes": 407912030.0
+      },
+      {
+        "data": "2026-03-29T00:34:54",
+        "linhas_totais_geral": 29303.0,
+        "linhas_py": 22473.0,
+        "arquivos_py": 119.0,
+        "commits": 195.0,
+        "tamanho_bytes": 421464620.0
+      },
+      {
+        "data": "2026-04-01T02:32:48",
+        "linhas_totais_geral": 31703.0,
+        "linhas_py": 24851.0,
+        "arquivos_py": 122.0,
+        "commits": 214.0,
+        "tamanho_bytes": 425065744.0
+      },
+      {
+        "data": "2026-04-02T03:09:12",
+        "linhas_totais_geral": 32923.0,
+        "linhas_py": 25942.0,
+        "arquivos_py": 124.0,
+        "commits": 226.0,
+        "tamanho_bytes": 427777384.0
+      },
+      {
+        "data": "2026-04-03T01:22:51",
+        "linhas_totais_geral": 33244.0,
+        "linhas_py": 26263.0,
+        "arquivos_py": 124.0,
+        "commits": 234.0,
+        "tamanho_bytes": 427848906.0
+      },
+      {
+        "data": "2026-04-04T02:28:32",
+        "linhas_totais_geral": 36371.0,
+        "linhas_py": 28710.0,
+        "arquivos_py": 129.0,
+        "commits": 257.0,
+        "tamanho_bytes": 433973061.0
+      },
+      {
+        "data": "2026-04-04T17:10:52",
+        "linhas_totais_geral": 38288.0,
+        "linhas_py": 29781.0,
+        "arquivos_py": 131.0,
+        "commits": 266.0,
+        "tamanho_bytes": 434811898.0
+      },
+      {
+        "data": "2026-04-05T18:17:45",
+        "linhas_totais_geral": 39701.0,
+        "linhas_py": 30034.0,
+        "arquivos_py": 131.0,
+        "commits": 274.0,
+        "tamanho_bytes": 434862504.0
+      },
+      {
+        "data": "2026-04-06T01:42:57",
+        "linhas_totais_geral": 41914.0,
+        "linhas_py": 32050.0,
+        "arquivos_py": 135.0,
+        "commits": 285.0,
+        "tamanho_bytes": 434964736.0
+      },
+      {
+        "data": "2026-04-08T21:38:46",
+        "linhas_totais_geral": 42735.0,
+        "linhas_py": 34993.0,
+        "arquivos_py": 141.0,
+        "commits": 295.0,
+        "tamanho_bytes": 434913154.0
+      },
+      {
+        "data": "2026-04-09T00:43:43",
+        "linhas_totais_geral": 43597.0,
+        "linhas_py": 35064.0,
+        "arquivos_py": 137.0,
+        "commits": 305.0,
+        "tamanho_bytes": 433642135.0
+      },
+      {
+        "data": "2026-04-10T16:33:05",
+        "linhas_totais_geral": 44928.0,
+        "linhas_py": 36391.0,
+        "arquivos_py": 141.0,
+        "commits": 309.0,
+        "tamanho_bytes": 433708018.0
+      },
+      {
+        "data": "2026-04-11T21:18:35",
+        "linhas_totais_geral": 48916.0,
+        "linhas_py": 40271.0,
+        "arquivos_py": 149.0,
+        "commits": 320.0,
+        "tamanho_bytes": 477266329.0
+      },
+      {
+        "data": "2026-04-12T04:53:36",
+        "linhas_totais_geral": 51775.0,
+        "linhas_py": 43114.0,
+        "arquivos_py": 160.0,
+        "commits": 323.0,
+        "tamanho_bytes": 477407116.0
+      },
+      {
+        "data": "2026-04-12T19:31:05",
+        "linhas_totais_geral": 53124.0,
+        "linhas_py": 44080.0,
+        "arquivos_py": 163.0,
+        "commits": 328.0,
+        "tamanho_bytes": 581032273.0
+      },
+      {
+        "data": "2026-04-13T06:58:52",
+        "linhas_totais_geral": 56440.0,
+        "linhas_py": 47396.0,
+        "arquivos_py": 165.0,
+        "commits": 333.0,
+        "tamanho_bytes": 581176531.0
+      },
+      {
+        "data": "2026-04-14T06:49:33",
+        "linhas_totais_geral": 77263.0,
+        "linhas_py": 47307.0,
+        "arquivos_py": 164.0,
+        "commits": 343.0,
+        "tamanho_bytes": 581819001.0
+      },
+      {
+        "data": "2026-04-14T21:10:56",
+        "linhas_totais_geral": 56724.0,
+        "linhas_py": 47493.0,
+        "arquivos_py": 163.0,
+        "commits": 348.0,
+        "tamanho_bytes": 589777273.0
+      },
+      {
+        "data": "2026-04-15T21:49:29",
+        "linhas_totais_geral": 59526.0,
+        "linhas_py": 49587.0,
+        "arquivos_py": 166.0,
+        "commits": 354.0,
+        "tamanho_bytes": 594269561.0
+      },
+      {
+        "data": "2026-04-18T17:57:02",
+        "linhas_totais_geral": 61114.0,
+        "linhas_py": 50380.0,
+        "arquivos_py": 167.0,
+        "commits": 364.0,
+        "tamanho_bytes": 594462275.0
+      },
+      {
+        "data": "2026-04-19T06:59:59",
+        "linhas_totais_geral": 61254.0,
+        "linhas_py": 50517.0,
+        "arquivos_py": 167.0,
+        "commits": 369.0,
+        "tamanho_bytes": 594569757.0
+      },
+      {
+        "data": "2026-04-19T23:17:42",
+        "linhas_totais_geral": 63415.0,
+        "linhas_py": 52674.0,
+        "arquivos_py": 174.0,
+        "commits": 375.0,
+        "tamanho_bytes": 595588424.0
+      },
+      {
+        "data": "2026-04-21T05:37:12",
+        "linhas_totais_geral": 63543.0,
+        "linhas_py": 52802.0,
+        "arquivos_py": 174.0,
+        "commits": 385.0,
+        "tamanho_bytes": 610323320.0
+      },
+      {
+        "data": "2026-04-23T20:05:25",
+        "linhas_totais_geral": 69945.0,
+        "linhas_py": 52917.0,
+        "arquivos_py": 174.0,
+        "commits": 401.0,
+        "tamanho_bytes": 610538485.0
+      },
+      {
+        "data": "2026-04-23T23:56:01",
+        "linhas_totais_geral": 71494.0,
+        "linhas_py": 53266.0,
+        "arquivos_py": 177.0,
+        "commits": 404.0,
+        "tamanho_bytes": 610589730.0
+      },
+      {
+        "data": "2026-04-24T09:46:36",
+        "linhas_totais_geral": 57860.0,
+        "linhas_py": 41042.0,
+        "arquivos_py": 147.0,
+        "commits": 407.0,
+        "tamanho_bytes": 609968133.0
+      },
+      {
+        "data": "2026-04-26T03:26:18",
+        "linhas_totais_geral": 65215.0,
+        "linhas_py": 47752.0,
+        "arquivos_py": 169.0,
+        "commits": 423.0,
+        "tamanho_bytes": 612548228.0
+      },
+      {
+        "data": "2026-04-26T21:25:17",
+        "linhas_totais_geral": 67431.0,
+        "linhas_py": 49016.0,
+        "arquivos_py": 170.0,
+        "commits": 434.0,
+        "tamanho_bytes": 626976401.0
+      },
+      {
+        "data": "2026-04-27T21:44:46",
+        "linhas_totais_geral": 72371.0,
+        "linhas_py": 53244.0,
+        "arquivos_py": 185.0,
+        "commits": 448.0,
+        "tamanho_bytes": 627084643.0
+      },
+      {
+        "data": "2026-04-28T11:43:35",
+        "linhas_totais_geral": 74252.0,
+        "linhas_py": 54456.0,
+        "arquivos_py": 206.0,
+        "commits": 458.0,
+        "tamanho_bytes": 627168517.0
+      },
+      {
+        "data": "2026-04-28T21:09:13",
+        "linhas_totais_geral": 76960.0,
+        "linhas_py": 55674.0,
+        "arquivos_py": 206.0,
+        "commits": 464.0,
+        "tamanho_bytes": 627956164.0
+      },
+      {
+        "data": "2026-04-29T11:15:13",
+        "linhas_totais_geral": 77883.0,
+        "linhas_py": 56597.0,
+        "arquivos_py": 214.0,
+        "commits": 473.0,
+        "tamanho_bytes": 627126964.0
+      },
+      {
+        "data": "2026-04-30T00:40:22",
+        "linhas_totais_geral": 79582,
+        "linhas_py": 56895,
+        "arquivos_py": 215,
+        "commits": 486,
+        "tamanho_bytes": 618331580
+      }
+    ]
+  },
+  "graficos": {
+    "rank_16_pastas_barras": "../Imagens/2026-04-30_00-40-22/rank_16_pastas_barras.png",
+    "rank_16_pastas_barras_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/rank_16_pastas_barras.png",
+    "rank_16_pastas_pizza": "../Imagens/2026-04-30_00-40-22/rank_16_pastas_pizza.png",
+    "rank_16_pastas_pizza_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/rank_16_pastas_pizza.png",
+    "linhas_por_extensao_barras": "../Imagens/2026-04-30_00-40-22/linhas_por_extensao_barras.png",
+    "linhas_por_extensao_barras_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/linhas_por_extensao_barras.png",
+    "linhas_por_extensao_pizza": "../Imagens/2026-04-30_00-40-22/linhas_por_extensao_pizza.png",
+    "linhas_por_extensao_pizza_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/linhas_por_extensao_pizza.png",
+    "peso_por_extensao_barras_top12": "../Imagens/2026-04-30_00-40-22/peso_por_extensao_barras_top12.png",
+    "peso_por_extensao_barras_top12_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/peso_por_extensao_barras_top12.png",
+    "peso_por_categoria_pizza": "../Imagens/2026-04-30_00-40-22/peso_por_categoria_pizza.png",
+    "peso_por_categoria_pizza_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/peso_por_categoria_pizza.png",
+    "linhas_totais_geral": "../Imagens/2026-04-30_00-40-22/crescimento_linhas_totais.png",
+    "linhas_totais_geral_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/crescimento_linhas_totais.png",
+    "linhas_py": "../Imagens/2026-04-30_00-40-22/crescimento_linhas_py.png",
+    "linhas_py_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/crescimento_linhas_py.png",
+    "arquivos_py": "../Imagens/2026-04-30_00-40-22/crescimento_arquivos_py.png",
+    "arquivos_py_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/crescimento_arquivos_py.png",
+    "commits": "../Imagens/2026-04-30_00-40-22/crescimento_commits.png",
+    "commits_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/crescimento_commits.png",
+    "tamanho_bytes": "../Imagens/2026-04-30_00-40-22/crescimento_peso_jogo.png",
+    "tamanho_bytes_root": "Outros/Relatorios/Imagens/2026-04-30_00-40-22/crescimento_peso_jogo.png"
+  }
+}

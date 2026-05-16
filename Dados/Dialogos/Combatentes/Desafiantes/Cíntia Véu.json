@@ -1,0 +1,231 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Cíntia Véu, desafiante do estádio Fantasma. Não precisa falar baixo; os meus Pokémon escutam até intenção mal escondida.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você tem respeito no Fantasma. Então já sabe que nem toda presença aparece no centro da sala."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Interessante. Algumas pessoas chamam isso de coragem; outras chamam de assombração repetida."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Falar do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Alguma dica rápida?",
+          "destino": "checar_dica"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Eu gosto de deixar a batalha respirar no escuro. Quando o outro tenta iluminar tudo, revela onde tem medo.",
+      "ao_entrar": {
+        "setor": {
+          "FalouComCintiaVeu": true,
+          "CintiaVeuConversas": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que você valoriza em batalha?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Você conhece alguém do estádio?",
+          "destino": "citacao"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "valor": {
+      "fala": "Sinistea guarda etiqueta, Sandygast espera pegadas, Duskull observa, Litwick chama curioso, Gastly ri da forma e Drifloon carrega distrações para longe.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCintiaVeu": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora entendi sua lógica.",
+          "destino": "dica_aprendida"
+        },
+        {
+          "texto": "Quero enfrentar isso.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é Sinistea, Sandygast, Duskull, Litwick, Gastly, Drifloon. Não é um grupo perfeito, mas cada um tem uma função dentro do meu jeito Fantasma de lutar.",
+      "opcoes": [
+        {
+          "texto": "Como você usa esse time?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Vou testar esse time na batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "citacao": {
+      "fala": "Luna Véu diz que Fantasma não é susto, é memória. Vasques parece concordar, só que de um jeito bem menos gentil.",
+      "opcoes": [
+        {
+          "texto": "Boa referência.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Chega de conversa. Batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_dica": {
+      "desvio_condicional": {
+        "padrao": "dica_basica",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCintiaVeu",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "dica_aprendida"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "dica_basica": {
+      "fala": "Minha dica: não persiga sombra correndo. Ela sempre chega antes ao canto.",
+      "opcoes": [
+        {
+          "texto": "Vou lembrar disso.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Então vamos lutar.",
+          "acao": "batalha",
+          "batalha": 1
+        }
+      ]
+    },
+    "dica_aprendida": {
+      "fala": "Você percebeu: contra Fantasma, errar alvo pode ser pior que não atacar.",
+      "opcoes": [
+        {
+          "texto": "Agora quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Encontrou o fio certo no véu antes que eu fechasse a cena.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais um pouco.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu. Não se culpe; às vezes a sala muda quando ninguém está olhando.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Pedir uma dica antes de ir.",
+          "destino": "checar_dica"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Cíntia Véu.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Cael Víbora, desafiante do estádio Venenoso. Meu time parece simples, mas simples é o melhor jeito de alguém baixar a guarda.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você tem respeito no Venenoso. Ótimo. Então já sabe que a pior dose é a que você percebe tarde demais."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou inteiro? Impressionante. Ou você é resistente, ou ainda não entendeu onde pisou."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Falar do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Alguma dica rápida?",
+          "destino": "checar_dica"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Eu gosto de vencer por acúmulo. Um arranhão, uma troca ruim, uma escolha apressada. Quando nota, já virou tratamento.",
+      "ao_entrar": {
+        "setor": {
+          "FalouComCaelVibora": true,
+          "CaelViboraConversas": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que você valoriza em batalha?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Você conhece alguém do estádio?",
+          "destino": "citacao"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "valor": {
+      "fala": "Weedle ensina paciência, Zubat incomoda no escuro, Oddish parece inocente, Croagunk ri do perigo, Ekans espera e Koffing transforma espaço em problema.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCaelVibora": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora entendi sua lógica.",
+          "destino": "dica_aprendida"
+        },
+        {
+          "texto": "Quero enfrentar isso.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é Weedle, Zubat, Oddish, Croagunk, Ekans, Koffing. Não é um grupo perfeito, mas cada um tem uma função dentro do meu jeito Venenoso de lutar.",
+      "opcoes": [
+        {
+          "texto": "Como você usa esse time?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Vou testar esse time na batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "citacao": {
+      "fala": "Nádia Víbora fala que veneno é responsabilidade. Eu tento lembrar disso antes de fazer piada.",
+      "opcoes": [
+        {
+          "texto": "Boa referência.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Chega de conversa. Batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_dica": {
+      "desvio_condicional": {
+        "padrao": "dica_basica",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCaelVibora",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "dica_aprendida"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "dica_basica": {
+      "fala": "Minha dica: se eu parecer fraco no começo, desconfie. Veneno não precisa gritar.",
+      "opcoes": [
+        {
+          "texto": "Vou lembrar disso.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Então vamos lutar.",
+          "acao": "batalha",
+          "batalha": 1
+        }
+      ]
+    },
+    "dica_aprendida": {
+      "fala": "Você percebeu o ponto: contra Venenoso, cada turno inútil vira uma dívida.",
+      "opcoes": [
+        {
+          "texto": "Agora quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Admito: não achei a veia certa nessa batalha.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais um pouco.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu. Não foi de uma vez, né? É assim que eu gosto.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Pedir uma dica antes de ir.",
+          "destino": "checar_dica"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Cael Víbora.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Kael Draco, desafiante do estádio Dragão. Meu time ainda está crescendo, mas todo dragão começa como promessa perigosa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você já tem respeito no Dragão. Então eu não preciso explicar grandeza; só preciso testar se você aguenta uma parte dela."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Ótimo. Dragões não respeitam histórias contadas uma vez só."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Falar do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Alguma dica rápida?",
+          "destino": "checar_dica"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Eu gosto de batalhas que parecem maiores do que são. A postura vem antes da asa.",
+      "ao_entrar": {
+        "setor": {
+          "FalouComKaelDraco": true,
+          "KaelDracoConversas": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que você valoriza em batalha?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Você conhece alguém do estádio?",
+          "destino": "citacao"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "valor": {
+      "fala": "Applin esconde potencial, Bagon sonha alto, Jangmo-o treina honra, Goomy resiste, Noibat domina som e Axew carrega futuro nos dentes.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuKaelDraco": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora entendi sua lógica.",
+          "destino": "dica_aprendida"
+        },
+        {
+          "texto": "Quero enfrentar isso.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é Applin, Bagon, Jangmo-o, Goomy, Noibat, Axew. Não é um grupo perfeito, mas cada um tem uma função dentro do meu jeito Dragão de lutar.",
+      "opcoes": [
+        {
+          "texto": "Como você usa esse time?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Vou testar esse time na batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "citacao": {
+      "fala": "Ryu Draconi fala em honra. Felps fala em radicalidade. Eu tento provar que dá para ter os dois sem tropeçar na própria pose.",
+      "opcoes": [
+        {
+          "texto": "Boa referência.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Chega de conversa. Batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_dica": {
+      "desvio_condicional": {
+        "padrao": "dica_basica",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuKaelDraco",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "dica_aprendida"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "dica_basica": {
+      "fala": "Minha dica: não espere forma final para levar Dragão a sério. O começo já morde.",
+      "opcoes": [
+        {
+          "texto": "Vou lembrar disso.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Então vamos lutar.",
+          "acao": "batalha",
+          "batalha": 1
+        }
+      ]
+    },
+    "dica_aprendida": {
+      "fala": "Você entendeu: Dragão pune quem subestima crescimento.",
+      "opcoes": [
+        {
+          "texto": "Agora quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Sua história ficou maior que a minha hoje.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais um pouco.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu. Não foi só força; foi presença. Dragão também vence antes do impacto.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Pedir uma dica antes de ir.",
+          "destino": "checar_dica"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Kael Draco.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

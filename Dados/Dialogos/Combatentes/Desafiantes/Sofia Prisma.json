@@ -1,0 +1,231 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Sofia Prisma, desafiante do estádio Psíquico. Eu ainda erro previsões, mas quase sempre percebo quando alguém mente para si mesmo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Seu respeito no Psíquico aparece antes da sua fala. Isso é bom: poupa tempo e aumenta o risco."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Eu imaginei três motivos para isso, mas prefiro ouvir o quarto."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Falar do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Alguma dica rápida?",
+          "destino": "checar_dica"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Meu jeito de lutar começa antes do golpe. Eu olho hesitação, repetição e pressa.",
+      "ao_entrar": {
+        "setor": {
+          "FalouComSofiaPrisma": true,
+          "SofiaPrismaConversas": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que você valoriza em batalha?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Você conhece alguém do estádio?",
+          "destino": "citacao"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "valor": {
+      "fala": "Wynaut devolve intenção, Mime Jr distrai, Natu observa, Abra foge do óbvio, Ralts sente o clima e Espurr guarda silêncio demais para alguém tão pequeno.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSofiaPrisma": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora entendi sua lógica.",
+          "destino": "dica_aprendida"
+        },
+        {
+          "texto": "Quero enfrentar isso.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é Wynaut, Mime Jr, Natu, Abra, Ralts, Espurr. Não é um grupo perfeito, mas cada um tem uma função dentro do meu jeito Psiquico de lutar.",
+      "opcoes": [
+        {
+          "texto": "Como você usa esse time?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Vou testar esse time na batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "citacao": {
+      "fala": "Ícaro Mente me ensinou que pensar demais também vira ruído. Ainda estou aprendendo a cortar esse excesso.",
+      "opcoes": [
+        {
+          "texto": "Boa referência.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Chega de conversa. Batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_dica": {
+      "desvio_condicional": {
+        "padrao": "dica_basica",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuSofiaPrisma",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "dica_aprendida"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "dica_basica": {
+      "fala": "Minha dica: não escolha sempre o movimento mais lógico. Contra Psíquico, o óbvio chega antes de você.",
+      "opcoes": [
+        {
+          "texto": "Vou lembrar disso.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Então vamos lutar.",
+          "acao": "batalha",
+          "batalha": 1
+        }
+      ]
+    },
+    "dica_aprendida": {
+      "fala": "Você entendeu: a mente não vence por adivinhar tudo, vence por fazer o outro duvidar no segundo errado.",
+      "opcoes": [
+        {
+          "texto": "Agora quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Eu vi a possibilidade, mas não consegui mudar o final a tempo.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais um pouco.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu. Talvez sua estratégia estivesse boa; talvez sua pressa tenha contado ela para mim.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Pedir uma dica antes de ir.",
+          "destino": "checar_dica"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Sofia Prisma.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

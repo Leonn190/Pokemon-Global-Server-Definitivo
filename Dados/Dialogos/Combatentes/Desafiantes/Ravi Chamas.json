@@ -1,0 +1,231 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Ravi Chamas, desafiante do estádio Fogo. Não sou o maior incêndio daqui, mas já sei começar faísca em lugar seco.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você tem respeito no Fogo. Então nada de chama de vela: vou acender do jeito certo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para esquentar de novo? Boa. Fogo fraco morre; fogo treinado aprende vento."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Falar do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Alguma dica rápida?",
+          "destino": "checar_dica"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Eu gosto de pressão. Não pressão burra, pressão que obriga o outro a decidir antes de ficar confortável.",
+      "ao_entrar": {
+        "setor": {
+          "FalouComRaviChamas": true,
+          "RaviChamasConversas": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que você valoriza em batalha?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Você conhece alguém do estádio?",
+          "destino": "citacao"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "valor": {
+      "fala": "Magby esquenta rápido, Vulpix engana bonito, Torchic acelera, Chimchar improvisa, Tepig empurra e Litten encara como se já tivesse vencido.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRaviChamas": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora entendi sua lógica.",
+          "destino": "dica_aprendida"
+        },
+        {
+          "texto": "Quero enfrentar isso.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é Magby, Vulpix, Torchic, Chimchar, Tepig, Litten. Não é um grupo perfeito, mas cada um tem uma função dentro do meu jeito Fogo de lutar.",
+      "opcoes": [
+        {
+          "texto": "Como você usa esse time?",
+          "destino": "valor"
+        },
+        {
+          "texto": "Vou testar esse time na batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "citacao": {
+      "fala": "Dante Brasa fala que fogo sem controle só suja a cozinha. Garcia fala menos, mas queima mais. Eu fico no meio.",
+      "opcoes": [
+        {
+          "texto": "Boa referência.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Chega de conversa. Batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_dica": {
+      "desvio_condicional": {
+        "padrao": "dica_basica",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuRaviChamas",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "dica_aprendida"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "dica_basica": {
+      "fala": "Minha dica: não espere eu ficar forte para reagir. Fogo pequeno cresce se você deixar ar.",
+      "opcoes": [
+        {
+          "texto": "Vou lembrar disso.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Então vamos lutar.",
+          "acao": "batalha",
+          "batalha": 1
+        }
+      ]
+    },
+    "dica_aprendida": {
+      "fala": "Você percebeu: contra Fogo, cada turno livre vira combustível.",
+      "opcoes": [
+        {
+          "texto": "Agora quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Apagou a chama sem apagar meu ânimo.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mais um pouco.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu. Não fica bravo; até cinza ensina onde a brasa passou.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Pedir uma dica antes de ir.",
+          "destino": "checar_dica"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Ravi Chamas.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

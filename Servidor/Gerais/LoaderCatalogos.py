@@ -9,11 +9,11 @@ _PASTA_CATALOGOS = _RAIZ / "Dados" / "Catalogos"
 _cache_catalogos: dict[str, dict[str, Any]] = {}
 
 _ALIAS_ARQUIVOS = {
-    "baus": "Pokemon Global Server - Baus.json",
-    "pokemon global server - baus": "Pokemon Global Server - Baus.json",
+    "baus": "Baus.json",
+    "pokemon global server - baus": "Baus.json",
     "comandos": "Comandos.json",
-    "receitas": "Pokemon Global Server - Receitas.json",
-    "pokemon global server - receitas": "Pokemon Global Server - Receitas.json",
+    "receitas": "Receitas.json",
+    "pokemon global server - receitas": "Receitas.json",
 }
 
 

@@ -146,14 +146,21 @@ class PainelReceitas(PainelRolavel):
             return cls._receitas_cache
 
         receitas = []
-        bruto = carregar_catalogo("Pokemon Global Server - Receitas")
+        bruto = carregar_catalogo("Receitas")
 
         if isinstance(bruto, dict):
-            for nome_saida, grade in bruto.items():
+            for ordem, (nome_saida, entrada) in enumerate(bruto.items()):
+                id_receita = None
+                grade = entrada
+                if isinstance(entrada, dict):
+                    id_receita = entrada.get('id')
+                    grade = entrada.get('receita')
                 if not isinstance(grade, list):
                     continue
 
                 receita = {
+                    'id': id_receita,
+                    'ordem': ordem,
                     'nome': str(nome_saida),
                     'saida': cls._item_real_por_nome(nome_saida),
                     'grade': [None] * 9
@@ -171,6 +178,13 @@ class PainelReceitas(PainelRolavel):
 
                 receitas.append(receita)
 
+        def chave_ordenacao(receita):
+            try:
+                return (0, int(receita.get('id')), receita.get('ordem', 0))
+            except (TypeError, ValueError):
+                return (1, receita.get('ordem', 0), str(receita.get('nome') or ''))
+
+        receitas.sort(key=chave_ordenacao)
         cls._receitas_cache = receitas
         return receitas
 

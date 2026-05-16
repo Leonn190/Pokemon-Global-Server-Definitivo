@@ -25,6 +25,7 @@ limite_times_pokemon = 6
 limite_conhecimento = 300
 
 [skills.velocista_1]
+id = 1
 nome = "Velocista I"
 ramo = "esquerda"
 grupo = "velocista"
@@ -34,6 +35,7 @@ descricao = "Aumenta a velocidade base para 5.3."
 efeitos = { VelocidadeBaseTiles = 5.3 }
 
 [skills.velocista_2]
+id = 2
 nome = "Velocista II"
 ramo = "esquerda"
 grupo = "velocista"
@@ -43,6 +45,7 @@ descricao = "Aumenta a velocidade base para 5.6."
 efeitos = { VelocidadeBaseTiles = 5.6 }
 
 [skills.velocista_3]
+id = 3
 nome = "Velocista III"
 ramo = "esquerda"
 grupo = "velocista"
@@ -52,6 +55,7 @@ descricao = "Aumenta a velocidade base para 5.9."
 efeitos = { VelocidadeBaseTiles = 5.9 }
 
 [skills.velocista_4]
+id = 4
 nome = "Velocista IV"
 ramo = "esquerda"
 grupo = "velocista"
@@ -61,6 +65,7 @@ descricao = "Aumenta a velocidade base para 6.2."
 efeitos = { VelocidadeBaseTiles = 6.2 }
 
 [skills.velocista_5]
+id = 5
 nome = "Velocista V"
 ramo = "esquerda"
 grupo = "velocista"
@@ -70,6 +75,7 @@ descricao = "Aumenta a velocidade base para 6.5."
 efeitos = { VelocidadeBaseTiles = 6.5 }
 
 [skills.corredor_1]
+id = 6
 nome = "Corredor I"
 ramo = "esquerda"
 grupo = "corredor"
@@ -79,6 +85,7 @@ descricao = "Corrida: minimo 0.28 e maximo 0.56."
 efeitos = { BonusVelocidadeCorridaMin = 0.28, BonusVelocidadeCorridaMax = 0.56 }
 
 [skills.corredor_2]
+id = 7
 nome = "Corredor II"
 ramo = "esquerda"
 grupo = "corredor"
@@ -88,6 +95,7 @@ descricao = "Corrida: minimo 0.31 e maximo 0.62."
 efeitos = { BonusVelocidadeCorridaMin = 0.31, BonusVelocidadeCorridaMax = 0.62 }
 
 [skills.corredor_3]
+id = 8
 nome = "Corredor III"
 ramo = "esquerda"
 grupo = "corredor"
@@ -97,6 +105,7 @@ descricao = "Corrida: minimo 0.34 e maximo 0.68."
 efeitos = { BonusVelocidadeCorridaMin = 0.34, BonusVelocidadeCorridaMax = 0.68 }
 
 [skills.corredor_4]
+id = 9
 nome = "Corredor IV"
 ramo = "esquerda"
 grupo = "corredor"
@@ -106,6 +115,7 @@ descricao = "Corrida: minimo 0.375 e maximo 0.75."
 efeitos = { BonusVelocidadeCorridaMin = 0.375, BonusVelocidadeCorridaMax = 0.75 }
 
 [skills.acelerador_1]
+id = 10
 nome = "Acelerador I"
 ramo = "esquerda"
 grupo = "acelerador"
@@ -115,6 +125,7 @@ descricao = "Reduz aceleracao para 2.3s e desaceleracao para 1.7s."
 efeitos = { TempoAceleracaoCorrida = 2.3, TempoDesaceleracaoCorrida = 1.7 }
 
 [skills.acelerador_2]
+id = 11
 nome = "Acelerador II"
 ramo = "esquerda"
 grupo = "acelerador"
@@ -124,6 +135,7 @@ descricao = "Reduz aceleracao para 2.1s e desaceleracao para 1.4s."
 efeitos = { TempoAceleracaoCorrida = 2.1, TempoDesaceleracaoCorrida = 1.4 }
 
 [skills.acelerador_3]
+id = 12
 nome = "Acelerador III"
 ramo = "esquerda"
 grupo = "acelerador"
@@ -133,6 +145,7 @@ descricao = "Reduz aceleracao para 1.9s e desaceleracao para 1.0s."
 efeitos = { TempoAceleracaoCorrida = 1.9, TempoDesaceleracaoCorrida = 1.0 }
 
 [skills.pulmao_1]
+id = 13
 nome = "Pulmao I"
 ramo = "esquerda"
 grupo = "pulmao"
@@ -142,6 +155,7 @@ descricao = "Aumenta stamina maxima para 110."
 efeitos = { StaminaMax = 110.0 }
 
 [skills.pulmao_2]
+id = 14
 nome = "Pulmao II"
 ramo = "esquerda"
 grupo = "pulmao"
@@ -151,6 +165,7 @@ descricao = "Aumenta stamina maxima para 120."
 efeitos = { StaminaMax = 120.0 }
 
 [skills.pulmao_3]
+id = 15
 nome = "Pulmao III"
 ramo = "esquerda"
 grupo = "pulmao"
@@ -160,6 +175,7 @@ descricao = "Aumenta stamina maxima para 130."
 efeitos = { StaminaMax = 130.0 }
 
 [skills.pulmao_4]
+id = 16
 nome = "Pulmao IV"
 ramo = "esquerda"
 grupo = "pulmao"
@@ -169,6 +185,7 @@ descricao = "Aumenta stamina maxima para 140."
 efeitos = { StaminaMax = 140.0 }
 
 [skills.pulmao_5]
+id = 17
 nome = "Pulmao V"
 ramo = "esquerda"
 grupo = "pulmao"
@@ -178,6 +195,7 @@ descricao = "Aumenta stamina maxima para 150."
 efeitos = { StaminaMax = 150.0 }
 
 [skills.respirador_1]
+id = 18
 nome = "Respirador I"
 ramo = "esquerda"
 grupo = "respirador"
@@ -187,6 +205,7 @@ descricao = "Regeneracao: 14 parado e 6 andando."
 efeitos = { RegeneracaoStaminaParado = 14.0, RegeneracaoStaminaAndando = 6.0 }
 
 [skills.respirador_2]
+id = 19
 nome = "Respirador II"
 ramo = "esquerda"
 grupo = "respirador"
@@ -196,6 +215,7 @@ descricao = "Regeneracao: 16 parado e 7 andando."
 efeitos = { RegeneracaoStaminaParado = 16.0, RegeneracaoStaminaAndando = 7.0 }
 
 [skills.respirador_3]
+id = 20
 nome = "Respirador III"
 ramo = "esquerda"
 grupo = "respirador"
@@ -205,6 +225,7 @@ descricao = "Regeneracao: 18 parado e 8 andando."
 efeitos = { RegeneracaoStaminaParado = 18.0, RegeneracaoStaminaAndando = 8.0 }
 
 [skills.respirador_4]
+id = 21
 nome = "Respirador IV"
 ramo = "esquerda"
 grupo = "respirador"
@@ -214,6 +235,7 @@ descricao = "Regeneracao: 20 parado e 10 andando."
 efeitos = { RegeneracaoStaminaParado = 20.0, RegeneracaoStaminaAndando = 10.0 }
 
 [skills.nadador_1]
+id = 22
 nome = "Nadador I"
 ramo = "esquerda"
 grupo = "nadador"
@@ -223,6 +245,7 @@ descricao = "Agua funda passa a custar 14 stamina por segundo."
 efeitos = { CustoStaminaAguaFunda = 14.0 }
 
 [skills.nadador_2]
+id = 23
 nome = "Nadador II"
 ramo = "esquerda"
 grupo = "nadador"
@@ -232,6 +255,7 @@ descricao = "Agua funda passa a custar 12 stamina por segundo."
 efeitos = { CustoStaminaAguaFunda = 12.0 }
 
 [skills.nadador_3]
+id = 24
 nome = "Nadador III"
 ramo = "esquerda"
 grupo = "nadador"
@@ -241,6 +265,7 @@ descricao = "Agua funda passa a custar 10 stamina por segundo."
 efeitos = { CustoStaminaAguaFunda = 10.0 }
 
 [skills.nadador_4]
+id = 25
 nome = "Nadador IV"
 ramo = "esquerda"
 grupo = "nadador"
@@ -250,6 +275,7 @@ descricao = "Agua funda passa a custar 8 stamina por segundo."
 efeitos = { CustoStaminaAguaFunda = 8.0 }
 
 [skills.aquatico_1]
+id = 26
 nome = "Aquatico I"
 ramo = "esquerda"
 grupo = "aquatico"
@@ -259,6 +285,7 @@ descricao = "Reduz pela metade a penalidade de velocidade em agua rasa."
 efeitos = { MultiplicadorPenalidadeAguaRasa = 0.50, MultiplicadorPenalidadeAguaFunda = 1.00 }
 
 [skills.aquatico_2]
+id = 27
 nome = "Aquatico II"
 ramo = "esquerda"
 grupo = "aquatico"
@@ -268,6 +295,7 @@ descricao = "Mantem agua rasa melhorada e reduz penalidade de agua funda."
 efeitos = { MultiplicadorPenalidadeAguaRasa = 0.50, MultiplicadorPenalidadeAguaFunda = 0.65 }
 
 [skills.boxeador_1]
+id = 28
 nome = "Boxeador I"
 ramo = "esquerda"
 grupo = "boxeador"
@@ -277,6 +305,7 @@ descricao = "Aumenta tapas por segundo para 2.75."
 efeitos = { TapaPorSegundo = 2.75 }
 
 [skills.boxeador_2]
+id = 29
 nome = "Boxeador II"
 ramo = "esquerda"
 grupo = "boxeador"
@@ -286,6 +315,7 @@ descricao = "Aumenta tapas por segundo para 3.5."
 efeitos = { TapaPorSegundo = 3.5 }
 
 [skills.alcance_mao_1]
+id = 30
 nome = "Alcance da Mao I"
 ramo = "esquerda"
 grupo = "alcance_mao"
@@ -295,6 +325,7 @@ descricao = "Aumenta o raio do tapa para 0.41."
 efeitos = { RaioTapa = 0.41 }
 
 [skills.alcance_mao_2]
+id = 31
 nome = "Alcance da Mao II"
 ramo = "esquerda"
 grupo = "alcance_mao"
@@ -304,6 +335,7 @@ descricao = "Aumenta o raio do tapa para 0.46."
 efeitos = { RaioTapa = 0.46 }
 
 [skills.alcance_mao_3]
+id = 32
 nome = "Alcance da Mao III"
 ramo = "esquerda"
 grupo = "alcance_mao"
@@ -313,6 +345,7 @@ descricao = "Aumenta o raio do tapa para 0.54."
 efeitos = { RaioTapa = 0.54 }
 
 [skills.maestria_captura_1]
+id = 33
 nome = "Maestria de Captura I"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -322,6 +355,7 @@ descricao = "Aumenta maestria de captura para 1."
 efeitos = { Maestria = 1 }
 
 [skills.maestria_captura_2]
+id = 34
 nome = "Maestria de Captura II"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -331,6 +365,7 @@ descricao = "Aumenta maestria de captura para 2."
 efeitos = { Maestria = 2 }
 
 [skills.maestria_captura_3]
+id = 35
 nome = "Maestria de Captura III"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -340,6 +375,7 @@ descricao = "Aumenta maestria de captura para 3."
 efeitos = { Maestria = 3 }
 
 [skills.maestria_captura_4]
+id = 36
 nome = "Maestria de Captura IV"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -349,6 +385,7 @@ descricao = "Aumenta maestria de captura para 4."
 efeitos = { Maestria = 4 }
 
 [skills.maestria_captura_5]
+id = 37
 nome = "Maestria de Captura V"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -358,6 +395,7 @@ descricao = "Aumenta maestria de captura para 5."
 efeitos = { Maestria = 5 }
 
 [skills.maestria_captura_6]
+id = 38
 nome = "Maestria de Captura VI"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -367,6 +405,7 @@ descricao = "Aumenta maestria de captura para 6."
 efeitos = { Maestria = 6 }
 
 [skills.maestria_captura_7]
+id = 39
 nome = "Maestria de Captura VII"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -376,6 +415,7 @@ descricao = "Aumenta maestria de captura para 7."
 efeitos = { Maestria = 7 }
 
 [skills.maestria_captura_8]
+id = 40
 nome = "Maestria de Captura VIII"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -385,6 +425,7 @@ descricao = "Aumenta maestria de captura para 8."
 efeitos = { Maestria = 8 }
 
 [skills.maestria_captura_9]
+id = 41
 nome = "Maestria de Captura IX"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -394,6 +435,7 @@ descricao = "Aumenta maestria de captura para 9."
 efeitos = { Maestria = 9 }
 
 [skills.maestria_captura_10]
+id = 42
 nome = "Maestria de Captura X"
 ramo = "centro"
 grupo = "maestria_captura"
@@ -403,6 +445,7 @@ descricao = "Aumenta maestria de captura para 10."
 efeitos = { Maestria = 10 }
 
 [skills.coracoes_1]
+id = 43
 nome = "Coracoes I"
 ramo = "centro"
 grupo = "coracoes"
@@ -412,6 +455,7 @@ descricao = "Aumenta o maximo de coracoes de dungeon para 4."
 efeitos = { CoracoesDungeonMax = 4 }
 
 [skills.coracoes_2]
+id = 44
 nome = "Coracoes II"
 ramo = "centro"
 grupo = "coracoes"
@@ -421,6 +465,7 @@ descricao = "Aumenta o maximo de coracoes de dungeon para 6."
 efeitos = { CoracoesDungeonMax = 6 }
 
 [skills.coracoes_3]
+id = 45
 nome = "Coracoes III"
 ramo = "centro"
 grupo = "coracoes"
@@ -430,6 +475,7 @@ descricao = "Aumenta o maximo de coracoes de dungeon para 8."
 efeitos = { CoracoesDungeonMax = 8 }
 
 [skills.coracoes_4]
+id = 46
 nome = "Coracoes IV"
 ramo = "centro"
 grupo = "coracoes"
@@ -439,6 +485,7 @@ descricao = "Aumenta o maximo de coracoes de dungeon para 10."
 efeitos = { CoracoesDungeonMax = 10 }
 
 [skills.visao_expandida_1]
+id = 47
 nome = "Visao Expandida"
 ramo = "centro"
 grupo = "visao_expandida"
@@ -448,6 +495,7 @@ descricao = "No mundo aberto, a camera usa 45 px por tile."
 efeitos = { VisaoExpandidaMundo = true }
 
 [skills.treinador_experiente_1]
+id = 48
 nome = "Treinador Experiente"
 ramo = "centro"
 grupo = "treinador_experiente"
@@ -457,6 +505,7 @@ descricao = "Pokemons do jogador iniciam batalhas com 60% de energia."
 efeitos = { EnergiaInicialPokemonPercent = 0.60 }
 
 [skills.sniper_1]
+id = 49
 nome = "Sniper I"
 ramo = "centro"
 grupo = "sniper"
@@ -466,6 +515,7 @@ descricao = "Aumenta alcance de projeteis lancados pelo jogador em 5%."
 efeitos = { MultiplicadorAlcanceProjetil = 1.05 }
 
 [skills.sniper_2]
+id = 50
 nome = "Sniper II"
 ramo = "centro"
 grupo = "sniper"
@@ -475,6 +525,7 @@ descricao = "Aumenta alcance de projeteis lancados pelo jogador em 10%."
 efeitos = { MultiplicadorAlcanceProjetil = 1.10 }
 
 [skills.sniper_3]
+id = 51
 nome = "Sniper III"
 ramo = "centro"
 grupo = "sniper"
@@ -484,6 +535,7 @@ descricao = "Aumenta alcance de projeteis lancados pelo jogador em 15%."
 efeitos = { MultiplicadorAlcanceProjetil = 1.15 }
 
 [skills.frutificador_1]
+id = 52
 nome = "Frutificador"
 ramo = "centro"
 grupo = "frutificador"
@@ -493,6 +545,7 @@ descricao = "Aumenta em 1 o limite de frutas na captura."
 efeitos = { BonusLimiteFrutasCaptura = 1 }
 
 [skills.renda_passiva_1]
+id = 53
 nome = "Renda Passiva I"
 ramo = "centro"
 grupo = "renda_passiva"
@@ -502,6 +555,7 @@ descricao = "Ganha 1 ouro a cada 120 XP recebido."
 efeitos = { RendaPassivaXpTaxa = 120 }
 
 [skills.renda_passiva_2]
+id = 54
 nome = "Renda Passiva II"
 ramo = "centro"
 grupo = "renda_passiva"
@@ -511,6 +565,7 @@ descricao = "Ganha 1 ouro a cada 80 XP recebido."
 efeitos = { RendaPassivaXpTaxa = 80 }
 
 [skills.renda_passiva_3]
+id = 55
 nome = "Renda Passiva III"
 ramo = "centro"
 grupo = "renda_passiva"
@@ -520,6 +575,7 @@ descricao = "Ganha 1 ouro a cada 50 XP recebido."
 efeitos = { RendaPassivaXpTaxa = 50 }
 
 [skills.aprendizado_xp_1]
+id = 56
 nome = "Aprendizado de XP I"
 ramo = "centro"
 grupo = "aprendizado_xp"
@@ -529,6 +585,7 @@ descricao = "XP recebido multiplicado por 1.05."
 efeitos = { MultiplicadorXpRecebido = 1.05 }
 
 [skills.aprendizado_xp_2]
+id = 57
 nome = "Aprendizado de XP II"
 ramo = "centro"
 grupo = "aprendizado_xp"
@@ -538,6 +595,7 @@ descricao = "XP recebido multiplicado por 1.10."
 efeitos = { MultiplicadorXpRecebido = 1.10 }
 
 [skills.aprendizado_xp_3]
+id = 58
 nome = "Aprendizado de XP III"
 ramo = "centro"
 grupo = "aprendizado_xp"
@@ -547,6 +605,7 @@ descricao = "XP recebido multiplicado por 1.15."
 efeitos = { MultiplicadorXpRecebido = 1.15 }
 
 [skills.rastreador_1]
+id = 59
 nome = "Rastreador I"
 ramo = "centro"
 grupo = "rastreador"
@@ -556,6 +615,7 @@ descricao = "Pokemons aparecem no minimapa."
 efeitos = { RastreadorPokemons = true, RastreadorBaus = false }
 
 [skills.rastreador_2]
+id = 60
 nome = "Rastreador II"
 ramo = "centro"
 grupo = "rastreador"
@@ -565,6 +625,7 @@ descricao = "Pokemons e baus aparecem no minimapa."
 efeitos = { RastreadorPokemons = true, RastreadorBaus = true }
 
 [skills.explorador_1]
+id = 61
 nome = "Explorador"
 ramo = "centro"
 grupo = "explorador"
@@ -574,6 +635,7 @@ descricao = "Aumenta em 1 o raio de exploracao de chunks."
 efeitos = { BonusRaioExploracaoChunks = 1 }
 
 [skills.negociador_1]
+id = 62
 nome = "Negociador I"
 ramo = "centro"
 grupo = "negociador"
@@ -583,6 +645,7 @@ descricao = "Desconto de 3% nas lojas."
 efeitos = { DescontoLojasPercent = 0.03 }
 
 [skills.negociador_2]
+id = 63
 nome = "Negociador II"
 ramo = "centro"
 grupo = "negociador"
@@ -592,6 +655,7 @@ descricao = "Desconto de 6% nas lojas."
 efeitos = { DescontoLojasPercent = 0.06 }
 
 [skills.negociador_3]
+id = 64
 nome = "Negociador III"
 ramo = "centro"
 grupo = "negociador"
@@ -601,6 +665,7 @@ descricao = "Desconto de 10% nas lojas."
 efeitos = { DescontoLojasPercent = 0.10 }
 
 [skills.pulso_firme_1]
+id = 65
 nome = "Pulso Firme I"
 ramo = "centro"
 grupo = "pulso_firme"
@@ -610,6 +675,7 @@ descricao = "Aumenta velocidade de projeteis lancados pelo jogador em 10%."
 efeitos = { MultiplicadorVelocidadeProjetil = 1.10 }
 
 [skills.pulso_firme_2]
+id = 66
 nome = "Pulso Firme II"
 ramo = "centro"
 grupo = "pulso_firme"
@@ -619,6 +685,7 @@ descricao = "Aumenta velocidade de projeteis lancados pelo jogador em 20%."
 efeitos = { MultiplicadorVelocidadeProjetil = 1.20 }
 
 [skills.teleportador_1]
+id = 67
 nome = "Teleportador"
 ramo = "centro"
 grupo = "teleportador"
@@ -628,6 +695,7 @@ descricao = "Ativa a flag de teleportador no perfil. Nao cria mecanica de telepo
 efeitos = { TeleportadorAtivo = true }
 
 [skills.desbravador_1]
+id = 68
 nome = "Desbravador"
 ramo = "centro"
 grupo = "desbravador"
@@ -637,6 +705,7 @@ descricao = "Mais 1 segundo de invulnerabilidade e 1 chave inicial em dungeon no
 efeitos = { InvulnerabilidadePadraoTicks = 120, ChaveInicialDungeonNova = 1 }
 
 [skills.mochila_1]
+id = 69
 nome = "Mochila I"
 ramo = "direita"
 grupo = "mochila"
@@ -646,6 +715,7 @@ descricao = "Aumenta capacidade da mochila para 300 itens."
 efeitos = { NivelMochila = 3, CapacidadeMochila = 300, MochilaSemLimite = false }
 
 [skills.mochila_2]
+id = 70
 nome = "Mochila II"
 ramo = "direita"
 grupo = "mochila"
@@ -655,6 +725,7 @@ descricao = "Aumenta capacidade da mochila para 600 itens."
 efeitos = { NivelMochila = 6, CapacidadeMochila = 600, MochilaSemLimite = false }
 
 [skills.mochila_3]
+id = 71
 nome = "Mochila III"
 ramo = "direita"
 grupo = "mochila"
@@ -664,6 +735,7 @@ descricao = "Aumenta capacidade da mochila para 1000 itens."
 efeitos = { NivelMochila = 10, CapacidadeMochila = 1000, MochilaSemLimite = false }
 
 [skills.mochila_4]
+id = 72
 nome = "Mochila IV"
 ramo = "direita"
 grupo = "mochila"
@@ -673,6 +745,7 @@ descricao = "Aumenta capacidade da mochila para 1500 itens."
 efeitos = { NivelMochila = 15, CapacidadeMochila = 1500, MochilaSemLimite = false }
 
 [skills.mochila_5]
+id = 73
 nome = "Mochila V"
 ramo = "direita"
 grupo = "mochila"
@@ -682,6 +755,7 @@ descricao = "Aumenta capacidade da mochila para 2000 itens."
 efeitos = { NivelMochila = 20, CapacidadeMochila = 2000, MochilaSemLimite = false }
 
 [skills.mochila_6]
+id = 74
 nome = "Mochila VI"
 ramo = "direita"
 grupo = "mochila"
@@ -691,6 +765,7 @@ descricao = "Remove o limite total de itens da mochila; slots continuam limitand
 efeitos = { MochilaSemLimite = true, CapacidadeMochila = 0 }
 
 [skills.slots_1]
+id = 75
 nome = "Slots I"
 ramo = "direita"
 grupo = "slots"
@@ -700,6 +775,7 @@ descricao = "Aumenta slots do inventario para 40."
 efeitos = { LimiteSlotsInventario = 40 }
 
 [skills.slots_2]
+id = 76
 nome = "Slots II"
 ramo = "direita"
 grupo = "slots"
@@ -709,6 +785,7 @@ descricao = "Aumenta slots do inventario para 48."
 efeitos = { LimiteSlotsInventario = 48 }
 
 [skills.slots_3]
+id = 77
 nome = "Slots III"
 ramo = "direita"
 grupo = "slots"
@@ -718,6 +795,7 @@ descricao = "Aumenta slots do inventario para 56."
 efeitos = { LimiteSlotsInventario = 56 }
 
 [skills.slots_4]
+id = 78
 nome = "Slots IV"
 ramo = "direita"
 grupo = "slots"
@@ -727,6 +805,7 @@ descricao = "Aumenta slots do inventario para 64."
 efeitos = { LimiteSlotsInventario = 64 }
 
 [skills.slots_5]
+id = 79
 nome = "Slots V"
 ramo = "direita"
 grupo = "slots"
@@ -736,6 +815,7 @@ descricao = "Aumenta slots do inventario para 72."
 efeitos = { LimiteSlotsInventario = 72 }
 
 [skills.pokemons_1]
+id = 80
 nome = "Pokemons I"
 ramo = "direita"
 grupo = "pokemons"
@@ -745,6 +825,7 @@ descricao = "Aumenta limite de pokemons para 96."
 efeitos = { LimitePokemons = 96 }
 
 [skills.pokemons_2]
+id = 81
 nome = "Pokemons II"
 ramo = "direita"
 grupo = "pokemons"
@@ -754,6 +835,7 @@ descricao = "Aumenta limite de pokemons para 128."
 efeitos = { LimitePokemons = 128 }
 
 [skills.pokemons_3]
+id = 82
 nome = "Pokemons III"
 ramo = "direita"
 grupo = "pokemons"
@@ -763,6 +845,7 @@ descricao = "Aumenta limite de pokemons para 160."
 efeitos = { LimitePokemons = 160 }
 
 [skills.pokemons_4]
+id = 83
 nome = "Pokemons IV"
 ramo = "direita"
 grupo = "pokemons"
@@ -772,6 +855,7 @@ descricao = "Aumenta limite de pokemons para 200."
 efeitos = { LimitePokemons = 200 }
 
 [skills.pokemons_5]
+id = 84
 nome = "Pokemons V"
 ramo = "direita"
 grupo = "pokemons"
@@ -781,6 +865,7 @@ descricao = "Aumenta limite de pokemons para 256."
 efeitos = { LimitePokemons = 256 }
 
 [skills.pokemons_6]
+id = 85
 nome = "Pokemons VI"
 ramo = "direita"
 grupo = "pokemons"
@@ -790,6 +875,7 @@ descricao = "Aumenta limite de pokemons para 320."
 efeitos = { LimitePokemons = 320 }
 
 [skills.times_1]
+id = 86
 nome = "Times I"
 ramo = "direita"
 grupo = "times"
@@ -799,6 +885,7 @@ descricao = "Aumenta limite de times para 10."
 efeitos = { LimiteTimesPokemon = 10 }
 
 [skills.times_2]
+id = 87
 nome = "Times II"
 ramo = "direita"
 grupo = "times"
@@ -808,6 +895,7 @@ descricao = "Aumenta limite de times para 12."
 efeitos = { LimiteTimesPokemon = 12 }
 
 [skills.times_3]
+id = 88
 nome = "Times III"
 ramo = "direita"
 grupo = "times"
@@ -817,6 +905,7 @@ descricao = "Aumenta limite de times para 16."
 efeitos = { LimiteTimesPokemon = 16 }
 
 [skills.times_4]
+id = 89
 nome = "Times IV"
 ramo = "direita"
 grupo = "times"
@@ -826,6 +915,7 @@ descricao = "Aumenta limite de times para 20."
 efeitos = { LimiteTimesPokemon = 20 }
 
 [skills.times_5]
+id = 90
 nome = "Times V"
 ramo = "direita"
 grupo = "times"
@@ -835,6 +925,7 @@ descricao = "Aumenta limite de times para 25."
 efeitos = { LimiteTimesPokemon = 25 }
 
 [skills.conhecimento_1]
+id = 91
 nome = "Conhecimento I"
 ramo = "direita"
 grupo = "conhecimento"
@@ -844,6 +935,7 @@ descricao = "Aumenta limite de conhecimento para 500."
 efeitos = { LimiteConhecimento = 500 }
 
 [skills.conhecimento_2]
+id = 92
 nome = "Conhecimento II"
 ramo = "direita"
 grupo = "conhecimento"
@@ -853,6 +945,7 @@ descricao = "Aumenta limite de conhecimento para 700."
 efeitos = { LimiteConhecimento = 700 }
 
 [skills.conhecimento_3]
+id = 93
 nome = "Conhecimento III"
 ramo = "direita"
 grupo = "conhecimento"
@@ -862,6 +955,7 @@ descricao = "Aumenta limite de conhecimento para 1000."
 efeitos = { LimiteConhecimento = 1000 }
 
 [skills.conhecimento_4]
+id = 94
 nome = "Conhecimento IV"
 ramo = "direita"
 grupo = "conhecimento"
@@ -871,6 +965,7 @@ descricao = "Aumenta limite de conhecimento para 1200."
 efeitos = { LimiteConhecimento = 1200 }
 
 [skills.conhecimento_5]
+id = 95
 nome = "Conhecimento V"
 ramo = "direita"
 grupo = "conhecimento"
@@ -880,6 +975,7 @@ descricao = "Aumenta limite de conhecimento para 1500."
 efeitos = { LimiteConhecimento = 1500 }
 
 [skills.conhecimento_6]
+id = 96
 nome = "Conhecimento VI"
 ramo = "direita"
 grupo = "conhecimento"
@@ -889,6 +985,7 @@ descricao = "Aumenta limite de conhecimento para 1800."
 efeitos = { LimiteConhecimento = 1800 }
 
 [skills.conhecimento_7]
+id = 97
 nome = "Conhecimento VII"
 ramo = "direita"
 grupo = "conhecimento"
@@ -898,6 +995,7 @@ descricao = "Aumenta limite de conhecimento para 2000."
 efeitos = { LimiteConhecimento = 2000 }
 
 [skills.conhecimento_8]
+id = 98
 nome = "Conhecimento VIII"
 ramo = "direita"
 grupo = "conhecimento"
@@ -907,6 +1005,7 @@ descricao = "Aumenta limite de conhecimento para 2500."
 efeitos = { LimiteConhecimento = 2500 }
 
 [skills.acumulador_1]
+id = 99
 nome = "Acumulador I"
 ramo = "direita"
 grupo = "acumulador"
@@ -916,6 +1015,7 @@ descricao = "Aumenta stacks base 50 para 55 e base 10 para 12."
 efeitos = { NivelAcumulador = 1 }
 
 [skills.acumulador_2]
+id = 100
 nome = "Acumulador II"
 ramo = "direita"
 grupo = "acumulador"

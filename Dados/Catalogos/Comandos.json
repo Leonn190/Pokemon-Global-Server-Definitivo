@@ -2,166 +2,285 @@
   "versao": 1,
   "comandos": [
     {
+      "id": 1,
       "nome": "help",
-      "aliases": ["ajuda"],
+      "aliases": [
+        "ajuda"
+      ],
       "contexto": "geral",
       "nivel": 1,
       "uso": "/help [mundo|batalha|geral|all|comando]",
       "descricao": "Mostra comandos disponiveis ou detalhes de um comando.",
-      "argumentos": ["filtro opcional: mundo, batalha, geral, all ou nome/alias de comando"],
-      "exemplos": ["/help", "/help batalha", "/help give"]
+      "argumentos": [
+        "filtro opcional: mundo, batalha, geral, all ou nome/alias de comando"
+      ],
+      "exemplos": [
+        "/help",
+        "/help batalha",
+        "/help give"
+      ]
     },
     {
+      "id": 2,
       "nome": "gamerule",
       "aliases": [],
       "contexto": "geral",
       "nivel": 1,
       "uso": "/gamerule list|search|nome [valor|reset]",
       "descricao": "Consulta ou altera regras sobrescritas do servidor ativo.",
-      "argumentos": ["nome: regra namespaced ou unica", "valor: bool/int/float/str"],
-      "exemplos": ["/gamerule list", "/gamerule player.StaminaMax 120", "/gamerule player.StaminaMax reset"]
+      "argumentos": [
+        "nome: regra namespaced ou unica",
+        "valor: bool/int/float/str"
+      ],
+      "exemplos": [
+        "/gamerule list",
+        "/gamerule player.StaminaMax 120",
+        "/gamerule player.StaminaMax reset"
+      ]
     },
     {
+      "id": 3,
       "nome": "kick",
       "aliases": [],
       "contexto": "geral",
       "nivel": 2,
       "uso": "/kick jogador",
       "descricao": "Desconecta jogador sem banir.",
-      "argumentos": ["jogador"],
-      "exemplos": ["/kick Leon19"]
+      "argumentos": [
+        "jogador"
+      ],
+      "exemplos": [
+        "/kick Leon19"
+      ]
     },
     {
+      "id": 4,
       "nome": "ban",
       "aliases": [],
       "contexto": "geral",
       "nivel": 2,
       "uso": "/ban jogador",
       "descricao": "Bane e desconecta jogador.",
-      "argumentos": ["jogador"],
-      "exemplos": ["/ban Leon19"]
+      "argumentos": [
+        "jogador"
+      ],
+      "exemplos": [
+        "/ban Leon19"
+      ]
     },
     {
+      "id": 5,
       "nome": "desban",
-      "aliases": ["unban"],
+      "aliases": [
+        "unban"
+      ],
       "contexto": "geral",
       "nivel": 2,
       "uso": "/desban jogador",
       "descricao": "Remove jogador da lista de banidos.",
-      "argumentos": ["jogador"],
-      "exemplos": ["/desban Leon19", "/unban Leon19"]
+      "argumentos": [
+        "jogador"
+      ],
+      "exemplos": [
+        "/desban Leon19",
+        "/unban Leon19"
+      ]
     },
     {
+      "id": 6,
       "nome": "op",
       "aliases": [],
       "contexto": "geral",
       "nivel": 2,
       "uso": "/op nivel jogador",
       "descricao": "Define nivel de permissao 0, 1 ou 2.",
-      "argumentos": ["nivel: 0..2", "jogador"],
-      "exemplos": ["/op 2 Leon19", "/op 1 Jogador"]
+      "argumentos": [
+        "nivel: 0..2",
+        "jogador"
+      ],
+      "exemplos": [
+        "/op 2 Leon19",
+        "/op 1 Jogador"
+      ]
     },
     {
+      "id": 7,
       "nome": "give",
       "aliases": [],
       "contexto": "mundo",
       "nivel": 1,
       "uso": "/give [alvo] item quantidade | /give item quantidade | /give alvo=y item=1 qtd=5",
       "descricao": "Entrega item respeitando regras de inventario, stacks e slots.",
-      "argumentos": ["alvo: y, r, todos ou jogador", "item: code ou nome", "quantidade/qtd: inteiro"],
-      "exemplos": ["/give y 1 5", "/give item=Potion qtd=3", "/give alvo=todos item=1 quantidade=2"]
+      "argumentos": [
+        "alvo: y, r, todos ou jogador",
+        "item: code ou nome",
+        "quantidade/qtd: inteiro"
+      ],
+      "exemplos": [
+        "/give y 1 5",
+        "/give item=Potion qtd=3",
+        "/give alvo=todos item=1 quantidade=2"
+      ]
     },
     {
+      "id": 8,
       "nome": "tp",
       "aliases": [],
       "contexto": "mundo",
       "nivel": 1,
       "uso": "/tp alvo x y | /tp destino",
       "descricao": "Teleporta jogador(es) para coordenadas ou o autor para player/NPC/estadio.",
-      "argumentos": ["alvo: y, r, todos ou jogador", "destino aceita acento, espaco, _ e case-insensitive"],
-      "exemplos": ["/tp y 50 80", "/tp Edward Newgate", "/tp Estadio_Planta"]
+      "argumentos": [
+        "alvo: y, r, todos ou jogador",
+        "destino aceita acento, espaco, _ e case-insensitive"
+      ],
+      "exemplos": [
+        "/tp y 50 80",
+        "/tp Edward Newgate",
+        "/tp Estadio_Planta"
+      ]
     },
     {
+      "id": 9,
       "nome": "locate",
       "aliases": [],
       "contexto": "mundo",
       "nivel": 1,
       "uso": "/locate nome | /locate dungeon code",
       "descricao": "Mostra coordenadas de player, NPC, estadio ou porta de dungeon.",
-      "argumentos": ["nome aceita acento, espaco, _ e case-insensitive"],
-      "exemplos": ["/locate Josefa", "/locate dungeon D1"]
+      "argumentos": [
+        "nome aceita acento, espaco, _ e case-insensitive"
+      ],
+      "exemplos": [
+        "/locate Josefa",
+        "/locate dungeon D1"
+      ]
     },
     {
+      "id": 10,
       "nome": "spawn",
-      "aliases": ["summon"],
+      "aliases": [
+        "summon"
+      ],
       "contexto": "mundo",
       "nivel": 1,
       "uso": "/spawn pokemon [x y] [iv=80|atk=30|ivatk=50]",
       "descricao": "Cria Pokemon no mundo usando o gerador oficial.",
-      "argumentos": ["pokemon: code ou nome", "nao permite estagio FF nem raridade fora de 1..10"],
-      "exemplos": ["/spawn Pikachu", "/spawn Pikachu iv=80", "/spawn 25 40 60"]
+      "argumentos": [
+        "pokemon: code ou nome",
+        "nao permite estagio FF nem raridade fora de 1..10"
+      ],
+      "exemplos": [
+        "/spawn Pikachu",
+        "/spawn Pikachu iv=80",
+        "/spawn 25 40 60"
+      ]
     },
     {
+      "id": 11,
       "nome": "chest",
-      "aliases": ["bau", "baú"],
+      "aliases": [
+        "bau",
+        "baú"
+      ],
       "contexto": "mundo",
       "nivel": 1,
       "uso": "/chest tipo [x y]",
       "descricao": "Cria bau usando os dados sorteados pelo gerador oficial.",
-      "argumentos": ["tipo: 1..6, comum, incomum, raro, epico, lendario ou mitico"],
-      "exemplos": ["/chest raro", "/bau 3 40 50"]
+      "argumentos": [
+        "tipo: 1..6, comum, incomum, raro, epico, lendario ou mitico"
+      ],
+      "exemplos": [
+        "/chest raro",
+        "/bau 3 40 50"
+      ]
     },
     {
+      "id": 12,
       "nome": "count",
-      "aliases": ["contar"],
+      "aliases": [
+        "contar"
+      ],
       "contexto": "mundo",
       "nivel": 1,
       "uso": "/count chunks|chests|pokemons",
       "descricao": "Mostra contagens rapidas do servidor.",
-      "argumentos": ["alvo: chunks, chests ou pokemons"],
-      "exemplos": ["/count pokemons", "/contar chunks"]
+      "argumentos": [
+        "alvo: chunks, chests ou pokemons"
+      ],
+      "exemplos": [
+        "/count pokemons",
+        "/contar chunks"
+      ]
     },
     {
+      "id": 13,
       "nome": "xp",
       "aliases": [],
       "contexto": "mundo",
       "nivel": 1,
       "uso": "/xp quantidade [jogador]",
       "descricao": "Adiciona XP ao autor ou jogador informado.",
-      "argumentos": ["quantidade: inteiro maior que 0"],
-      "exemplos": ["/xp 100", "/xp 250 Leon19"]
+      "argumentos": [
+        "quantidade: inteiro maior que 0"
+      ],
+      "exemplos": [
+        "/xp 100",
+        "/xp 250 Leon19"
+      ]
     },
     {
+      "id": 14,
       "nome": "chuva",
       "aliases": [],
       "contexto": "mundo",
       "nivel": 1,
       "uso": "/chuva [intensidade]",
       "descricao": "Alterna a chuva global ou define intensidade alvo.",
-      "argumentos": ["intensidade opcional: 0..100"],
-      "exemplos": ["/chuva", "/chuva 60"]
+      "argumentos": [
+        "intensidade opcional: 0..100"
+      ],
+      "exemplos": [
+        "/chuva",
+        "/chuva 60"
+      ]
     },
     {
+      "id": 15,
       "nome": "win",
-      "aliases": ["vencer"],
+      "aliases": [
+        "vencer"
+      ],
       "contexto": "batalha",
       "nivel": 1,
       "uso": "/win",
       "descricao": "Forca vitoria matando todos os Pokemon adversarios.",
       "argumentos": [],
-      "exemplos": ["/win", "/vencer"]
+      "exemplos": [
+        "/win",
+        "/vencer"
+      ]
     },
     {
+      "id": 16,
       "nome": "lose",
-      "aliases": ["loose", "perder"],
+      "aliases": [
+        "loose",
+        "perder"
+      ],
       "contexto": "batalha",
       "nivel": 1,
       "uso": "/lose",
       "descricao": "Forca derrota matando todos os Pokemon aliados.",
       "argumentos": [],
-      "exemplos": ["/lose", "/loose", "/perder"]
+      "exemplos": [
+        "/lose",
+        "/loose",
+        "/perder"
+      ]
     },
     {
+      "id": 17,
       "nome": "revert",
       "aliases": [],
       "contexto": "batalha",
@@ -169,47 +288,79 @@
       "uso": "/revert",
       "descricao": "Restaura o snapshot anterior da batalha.",
       "argumentos": [],
-      "exemplos": ["/revert"]
+      "exemplos": [
+        "/revert"
+      ]
     },
     {
+      "id": 18,
       "nome": "test",
       "aliases": [],
       "contexto": "batalha",
       "nivel": 1,
       "uso": "/test [on|off|status]",
       "descricao": "Alterna o modo teste existente da partida.",
-      "argumentos": ["on/off/status opcionais"],
-      "exemplos": ["/test", "/test on", "/test status"]
+      "argumentos": [
+        "on/off/status opcionais"
+      ],
+      "exemplos": [
+        "/test",
+        "/test on",
+        "/test status"
+      ]
     },
     {
+      "id": 19,
       "nome": "heal",
       "aliases": [],
       "contexto": "batalha",
       "nivel": 1,
       "uso": "/heal valor [A1]",
       "descricao": "Cura alvo ou um Pokemon vivo aleatorio.",
-      "argumentos": ["valor: numero ou full", "alvo: area_id opcional"],
-      "exemplos": ["/heal 50 A1", "/heal full"]
+      "argumentos": [
+        "valor: numero ou full",
+        "alvo: area_id opcional"
+      ],
+      "exemplos": [
+        "/heal 50 A1",
+        "/heal full"
+      ]
     },
     {
+      "id": 20,
       "nome": "dmg",
       "aliases": [],
       "contexto": "batalha",
       "nivel": 1,
       "uso": "/dmg valor [N|E|V] [A1]",
       "descricao": "Aplica dano normal, especial ou verdadeiro.",
-      "argumentos": ["valor numerico", "tipo opcional: N/E/V", "alvo opcional"],
-      "exemplos": ["/dmg 40 V I1", "/dmg 50"]
+      "argumentos": [
+        "valor numerico",
+        "tipo opcional: N/E/V",
+        "alvo opcional"
+      ],
+      "exemplos": [
+        "/dmg 40 V I1",
+        "/dmg 50"
+      ]
     },
     {
+      "id": 21,
       "nome": "kill",
-      "aliases": ["matar"],
+      "aliases": [
+        "matar"
+      ],
       "contexto": "batalha",
       "nivel": 1,
       "uso": "/kill A1",
       "descricao": "Mata o Pokemon ativo na area informada.",
-      "argumentos": ["area_id: A1..A9 ou I1..I9"],
-      "exemplos": ["/kill I1", "/matar a2"]
+      "argumentos": [
+        "area_id: A1..A9 ou I1..I9"
+      ],
+      "exemplos": [
+        "/kill I1",
+        "/matar a2"
+      ]
     }
   ]
 }

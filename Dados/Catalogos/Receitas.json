@@ -1,0 +1,719 @@
+{
+  "Pokeball": {
+    "id": 1,
+    "receita": [
+      [
+        null,
+        "Cobre",
+        null
+      ],
+      [
+        "Cobre",
+        null,
+        "Cobre"
+      ],
+      [
+        null,
+        "Cobre",
+        null
+      ]
+    ]
+  },
+  "Greatball": {
+    "id": 2,
+    "receita": [
+      [
+        null,
+        "Pokeball",
+        null
+      ],
+      [
+        "Pokeball",
+        null,
+        "Pokeball"
+      ],
+      [
+        null,
+        "Pokeball",
+        null
+      ]
+    ]
+  },
+  "Ultraball": {
+    "id": 3,
+    "receita": [
+      [
+        null,
+        "Greatball",
+        null
+      ],
+      [
+        "Greatball",
+        null,
+        "Greatball"
+      ],
+      [
+        null,
+        "Greatball",
+        null
+      ]
+    ]
+  },
+  "Premierball": {
+    "id": 4,
+    "receita": [
+      [
+        null,
+        "Cobre",
+        null
+      ],
+      [
+        "Cobre",
+        "Ultraball",
+        "Cobre"
+      ],
+      [
+        null,
+        "Cobre",
+        null
+      ]
+    ]
+  },
+  "Aquaball": {
+    "id": 5,
+    "receita": [
+      [
+        "Agua",
+        "Agua",
+        "Agua"
+      ],
+      [
+        "Agua",
+        "Greatball",
+        "Agua"
+      ],
+      [
+        "Agua",
+        "Agua",
+        "Agua"
+      ]
+    ]
+  },
+  "Furyball": {
+    "id": 6,
+    "receita": [
+      [
+        null,
+        "Greatball",
+        null
+      ],
+      [
+        "Greatball",
+        "Lava",
+        "Greatball"
+      ],
+      [
+        null,
+        "Greatball",
+        null
+      ],
+      4
+    ]
+  },
+  "Picareta de Madeira": {
+    "id": 7,
+    "receita": [
+      [
+        [
+          "Madeira",
+          2
+        ],
+        "Madeira",
+        [
+          "Madeira",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ]
+    ]
+  },
+  "Picareta de Pedra": {
+    "id": 8,
+    "receita": [
+      [
+        [
+          "Pedra",
+          2
+        ],
+        "Picareta de Madeira",
+        [
+          "Pedra",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ]
+    ]
+  },
+  "Picareta de Ouro": {
+    "id": 9,
+    "receita": [
+      [
+        [
+          "Ouro",
+          2
+        ],
+        "Picareta de Pedra",
+        [
+          "Ouro",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ]
+    ]
+  },
+  "Picareta de Diamante": {
+    "id": 10,
+    "receita": [
+      [
+        [
+          "Diamante",
+          2
+        ],
+        "Picareta de Ouro",
+        [
+          "Diamante",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ]
+    ]
+  },
+  "Picareta de Ametista": {
+    "id": 11,
+    "receita": [
+      [
+        [
+          "Ametista",
+          2
+        ],
+        "Picareta de Diamante",
+        [
+          "Ametista",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ]
+    ]
+  },
+  "Picareta de Rubi": {
+    "id": 12,
+    "receita": [
+      [
+        [
+          "Rubi",
+          2
+        ],
+        "Picareta de Ametista",
+        [
+          "Rubi",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ]
+    ]
+  },
+  "Machado de Madeira": {
+    "id": 13,
+    "receita": [
+      [
+        null,
+        "Madeira",
+        [
+          "Madeira",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        [
+          "Madeira",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ]
+    ]
+  },
+  "Machado de Pedra": {
+    "id": 14,
+    "receita": [
+      [
+        null,
+        "Machado de Madeira",
+        [
+          "Pedra",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        [
+          "Pedra",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ]
+    ]
+  },
+  "Machado de Ouro": {
+    "id": 15,
+    "receita": [
+      [
+        null,
+        "Machado de Pedra",
+        [
+          "Ouro",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        [
+          "Ouro",
+          2
+        ]
+      ],
+      [
+        null,
+        "Madeira",
+        null
+      ]
+    ]
+  },
+  "Machado de Diamante": {
+    "id": 16,
+    "receita": [
+      [
+        null,
+        "Machado de Ouro",
+        [
+          "Diamante",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        [
+          "Diamante",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ]
+    ]
+  },
+  "Machado de Ametista": {
+    "id": 17,
+    "receita": [
+      [
+        null,
+        "Machado de Diamante",
+        [
+          "Ametista",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        [
+          "Ametista",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ]
+    ]
+  },
+  "Machado de Rubi": {
+    "id": 18,
+    "receita": [
+      [
+        null,
+        "Machado de Ametista",
+        [
+          "Rubi",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        [
+          "Rubi",
+          2
+        ]
+      ],
+      [
+        null,
+        "Pedra",
+        null
+      ]
+    ]
+  },
+  "Poção": {
+    "id": 19,
+    "receita": [
+      [
+        null,
+        "Agua",
+        null
+      ],
+      [
+        "Agua",
+        "Simp Berry",
+        "Agua"
+      ],
+      [
+        null,
+        "Agua",
+        null
+      ]
+    ]
+  },
+  "Super Poção": {
+    "id": 20,
+    "receita": [
+      [
+        null,
+        "Agua",
+        null
+      ],
+      [
+        "Poção",
+        "Simp Berry",
+        "Poção"
+      ],
+      [
+        null,
+        "Agua",
+        null
+      ]
+    ]
+  },
+  "Hiper Poção": {
+    "id": 21,
+    "receita": [
+      [
+        null,
+        "Agua",
+        null
+      ],
+      [
+        "Super Poção",
+        "Simp Berry",
+        "Super Poção"
+      ],
+      [
+        null,
+        "Agua",
+        null
+      ]
+    ]
+  },
+  "Mega Poção": {
+    "id": 22,
+    "receita": [
+      [
+        null,
+        "Agua",
+        null
+      ],
+      [
+        "Hiper Poção",
+        "Simp Berry",
+        "Hiper Poção"
+      ],
+      [
+        null,
+        "Agua",
+        null
+      ]
+    ]
+  },
+  "Max Poção": {
+    "id": 23,
+    "receita": [
+      [
+        "Diamante",
+        "Diamante",
+        "Diamante"
+      ],
+      [
+        "Diamante",
+        "Mega Poção",
+        "Diamante"
+      ],
+      [
+        "Diamante",
+        "Diamante",
+        "Diamante"
+      ]
+    ]
+  },
+  "Revival": {
+    "id": 24,
+    "receita": [
+      [
+        null,
+        "Ouro",
+        null
+      ],
+      [
+        "Ouro",
+        "Poção",
+        "Ouro"
+      ],
+      [
+        null,
+        "Ouro",
+        null
+      ]
+    ]
+  },
+  "Max Revival": {
+    "id": 25,
+    "receita": [
+      [
+        [
+          "Ouro",
+          4
+        ],
+        [
+          "Ouro",
+          4
+        ],
+        [
+          "Ouro",
+          4
+        ]
+      ],
+      [
+        [
+          "Ouro",
+          4
+        ],
+        "Revival",
+        [
+          "Ouro",
+          4
+        ]
+      ],
+      [
+        [
+          "Ouro",
+          4
+        ],
+        [
+          "Ouro",
+          4
+        ],
+        [
+          "Ouro",
+          4
+        ]
+      ]
+    ]
+  },
+  "Elixir": {
+    "id": 26,
+    "receita": [
+      [
+        null,
+        "Agua",
+        null
+      ],
+      [
+        "Agua",
+        "Poção",
+        "Agua"
+      ],
+      [
+        null,
+        "Agua",
+        null
+      ]
+    ]
+  },
+  "Super Elixir": {
+    "id": 27,
+    "receita": [
+      [
+        null,
+        "Elixir",
+        null
+      ],
+      [
+        "Elixir",
+        null,
+        "Elixir"
+      ],
+      [
+        null,
+        "Elixir",
+        null
+      ]
+    ]
+  },
+  "Hiper Elixir": {
+    "id": 28,
+    "receita": [
+      [
+        "Esmeralda",
+        "Esmeralda",
+        "Esmeralda"
+      ],
+      [
+        "Esmeralda",
+        "Super Elixir",
+        "Esmeralda"
+      ],
+      [
+        "Esmeralda",
+        "Esmeralda",
+        "Esmeralda"
+      ]
+    ]
+  },
+  "Mega Elixir": {
+    "id": 29,
+    "receita": [
+      [
+        "Ametista",
+        "Esmeralda",
+        "Ametista"
+      ],
+      [
+        "Esmeralda",
+        "Hiper Elixir",
+        "Esmeralda"
+      ],
+      [
+        "Ametista",
+        "Esmeralda",
+        "Ametista"
+      ]
+    ]
+  },
+  "Balde": {
+    "id": 30,
+    "receita": [
+      [
+        null,
+        null,
+        null
+      ],
+      [
+        "Cobre",
+        null,
+        "Cobre"
+      ],
+      [
+        null,
+        "Cobre",
+        null
+      ]
+    ]
+  },
+  "Chave": {
+    "id": 31,
+    "receita": [
+      [
+        null,
+        "Ouro",
+        null
+      ],
+      [
+        null,
+        "Ouro",
+        null
+      ],
+      [
+        null,
+        "Ouro",
+        null
+      ]
+    ]
+  }
+}

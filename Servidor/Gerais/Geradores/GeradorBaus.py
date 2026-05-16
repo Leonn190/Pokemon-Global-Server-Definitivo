@@ -40,7 +40,7 @@ def _escolher_por_peso(rng: random.Random, pesos: Dict[object, float]):
 
 
 def _carregar_tabela_baus() -> Dict[int, Dict[str, object]]:
-    dados = carregar_catalogo("Pokemon Global Server - Baus")
+    dados = carregar_catalogo("Baus")
     return {
         int(dia): {
             "chance_tipos": {tipo: _fnum(info.get("chance")) for tipo, info in bloco.items()},

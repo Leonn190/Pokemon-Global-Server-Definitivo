@@ -39,7 +39,7 @@ const opcoesNivel = [{ value: "", label: "Todos" }, ...resumo.niveis.map((nivel)
     directionAttrs={{ "data-habilidades-direction": true }}
     clearAttrs={{ "data-habilidades-clear": true }}
     clearAriaLabel="Limpar busca e filtros de habilidades"
-    gridClass="catalogo-grid habilidades-grid"
+    gridClass="itens-grid habilidades-grid"
     gridAttrs={{ "data-habilidades-grid": true }}
     gridRotulo="Lista de habilidades"
     vazioAttrs={{ "data-habilidades-empty": true }}
@@ -71,7 +71,7 @@ const opcoesNivel = [{ value: "", label: "Todos" }, ...resumo.niveis.map((nivel)
       closeAttrs={{ "data-skill-close": true }}
     />
     <header class="catalogo-detalhe-topo">
-      <span class="catalogo-detalhe-icone habilidade-detalhe-icone" aria-hidden="true">✦</span>
+      <span class="catalogo-detalhe-icone habilidade-detalhe-icone" aria-hidden="true" data-skill-icon>✦</span>
       <div>
         <p class="selo">Skill</p>
         <h2 id="skill-detalhe-nome" data-skill-name>Habilidade</h2>
@@ -89,8 +89,9 @@ const opcoesNivel = [{ value: "", label: "Todos" }, ...resumo.niveis.map((nivel)
         <div class="catalogo-codigos" data-skill-parents></div>
       </PainelDetalhe>
     </div>
-    <PainelDetalhe titulo="Informações técnicas" class="item-info-painel catalogo-texto-painel">
-      <dl class="item-info-lista" data-skill-info></dl>
+    <PainelDetalhe titulo="Grupo" class="item-info-painel catalogo-texto-painel habilidade-grupo-painel">
+      <p class="habilidade-grupo-ajuda">Habilidades do mesmo grupo, para comparar a progressão como Velocista I, II, III...</p>
+      <div class="habilidade-grupo-lista" data-skill-group></div>
     </PainelDetalhe>
   </ModalDetalhe>
 

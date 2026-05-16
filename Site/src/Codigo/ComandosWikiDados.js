@@ -72,8 +72,15 @@ function nivelTexto(nivel) {
   return Number(nivel) >= 2 ? "Avançado" : "Básico";
 }
 
+function idCatalogo(item, indice) {
+  const bruto = item?.id ?? item?.ID ?? item?.Id;
+  const texto = limparTexto(bruto);
+  return texto || String(indice + 1);
+}
+
 function normalizarComando(item, indice) {
   const nome = normalizarChave(limparTexto(item?.nome).replace(/^\//, "")) || `comando${indice + 1}`;
+  const codigo = idCatalogo(item, indice);
   const aliases = listaTexto(item?.aliases).map((alias) => limparTexto(alias).replace(/^\//, ""));
   const contexto = contextoCanonico(item?.contexto);
   const nivel = Math.max(1, Math.trunc(numero(item?.nivel, 1)));
@@ -84,7 +91,8 @@ function normalizarComando(item, indice) {
   const localRotulo = CONTEXTOS[contexto] ?? "Geral";
   const nivelRotulo = nivelTexto(nivel);
   return {
-    id: nome,
+    id: codigo,
+    codigo,
     ordem: indice + 1,
     nome,
     titulo: `/${nome}`,
@@ -99,7 +107,7 @@ function normalizarComando(item, indice) {
     descricao,
     argumentos,
     exemplos,
-    busca: normalizarChave(`${nome} ${aliases.join(" ")} ${contexto} ${localRotulo} ${nivelRotulo} ${uso} ${descricao} ${argumentos.join(" ")} ${exemplos.join(" ")}`),
+    busca: normalizarChave(`${codigo} ${nome} ${aliases.join(" ")} ${contexto} ${localRotulo} ${nivelRotulo} ${uso} ${descricao} ${argumentos.join(" ")} ${exemplos.join(" ")}`),
   };
 }
 

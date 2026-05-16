@@ -3,15 +3,14 @@ import { abrirModalDetalhe, criarWikiCatalogo, fecharModalDetalhe, html, infoHtm
 function criarCardComando(comando) {
   const card = document.createElement("button");
   card.type = "button";
-  card.className = `catalogo-card comando-card comando-${comando.local} nivel-${comando.nivel >= 2 ? "avancado" : "basico"}`;
+  card.className = `item-card comando-card comando-${comando.local} nivel-${comando.nivel >= 2 ? "avancado" : "basico"}`;
   card.dataset.comandoId = comando.id;
   card.innerHTML = `
-    <span class="catalogo-card-codigo">${html(comando.nivelRotulo)}</span>
-    <span class="catalogo-card-arte comando-card-icone" aria-hidden="true">⌨</span>
-    <span class="catalogo-card-nome">/${html(comando.nome)}</span>
-    <span class="catalogo-card-meta">${html(comando.localRotulo)}</span>
-    <span class="catalogo-card-linha"><strong>${html(comando.uso)}</strong><small>Uso</small></span>
-    <span class="comando-card-descricao">${html(comando.descricao)}</span>
+    <span class="item-card-codigo">#${html(comando.codigo || comando.id)}</span>
+    <span class="item-card-arte comando-card-arte" aria-hidden="true"><span class="item-card-sem-arte comando-card-emoji">💻</span></span>
+    <span class="item-card-nome">/${html(comando.nome)}</span>
+    <span class="item-card-meta">${html(comando.localRotulo)}</span>
+    <span class="item-card-linha"><strong>${html(comando.nivelRotulo)}</strong><small>Permissão</small></span>
   `;
   return card;
 }
@@ -75,9 +74,10 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     }
     if (info) {
       info.innerHTML = infoHtml([
-        ["Nome interno", comando.nome],
-        ["Local", comando.localRotulo],
-        ["Nível de acesso", `${comando.nivel} · ${comando.nivelRotulo}`],
+        ["ID", `#${comando.codigo || comando.id}`],
+        ["Tipo de uso", comando.localRotulo],
+        ["Permissão", comando.nivelRotulo],
+        ["Uso", comando.uso],
         ["Aliases", (comando.aliases || []).map((alias) => `/${alias}`).join(", ") || "Nenhum"],
       ]);
     }

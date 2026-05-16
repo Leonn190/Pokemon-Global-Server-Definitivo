@@ -15,6 +15,28 @@ const RAMOS_DADOS = {
   direita: "Rota direita",
 };
 const GRUPOS_ARMAZENAMENTO = new Set(["mochila", "slots", "pokemons", "times", "conhecimento", "acumulador"]);
+const EMOJIS_GRUPOS_FIXOS = {
+  velocista: "🏃",
+  corredor: "💨",
+  acelerador: "⚡",
+  pulmao: "🫁",
+  respirador: "🌬️",
+  nadador: "🏊",
+  forca: "💪",
+  combate: "🥊",
+  tapa: "👊",
+  maestria: "🎯",
+  captura: "🧲",
+  dungeon: "🗺️",
+  coracoes: "❤️",
+  mochila: "🎒",
+  slots: "🧩",
+  pokemons: "🐾",
+  times: "👥",
+  conhecimento: "📚",
+  acumulador: "🧪",
+};
+const EMOJIS_GRUPOS_FALLBACK = ["✨", "🌟", "🔹", "🔸", "🔮", "🧬", "🛠️", "🪄", "🌀", "💎", "🧭", "🔥", "🌊", "🌿", "🪨", "⚙️", "🧠", "🛡️", "🚀", "🎲"];
 
 function limparTexto(valor) {
   return String(valor ?? "").trim();
@@ -181,23 +203,43 @@ function categoriaRamo(skill) {
   return "fisico";
 }
 
+function idCatalogoSkill(skill, indice) {
+  const bruto = skill?.id ?? skill?.ID ?? skill?.Id;
+  const texto = limparTexto(bruto);
+  return texto || String(indice + 1);
+}
+
+function emojiFallbackGrupo(grupo) {
+  const chave = normalizarChave(grupo || "geral");
+  const soma = [...chave].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return EMOJIS_GRUPOS_FALLBACK[soma % EMOJIS_GRUPOS_FALLBACK.length];
+}
+
 function normalizarSkill([id, skill], indice) {
   const nome = limparTexto(skill?.nome) || id;
+  const codigo = idCatalogoSkill(skill, indice);
   const grupo = limparTexto(skill?.grupo) || "geral";
+  const grupoChave = normalizarChave(grupo || "geral");
+  const grupoRotulo = grupo.replace(/_/g, " ").replace(/^./, (letra) => letra.toUpperCase());
   const ramoDado = normalizarChave(skill?.ramo || "");
   const categoria = categoriaRamo(skill);
   const pais = listaTexto(skill?.pais);
   const efeitos = formatarEfeitos(skill?.efeitos);
   const nivel = nivelPorSkill(id, skill);
-  const sigla = limparTexto(skill?.sigla);
+  const sigla = limparTexto(skill?.sigla) || `${grupo.slice(0, 1).toUpperCase()}${nivel}`;
   const descricao = limparTexto(skill?.descricao) || "Habilidade cadastrada na regra de skills.";
+  const grupoEmoji = EMOJIS_GRUPOS_FIXOS[grupoChave] ?? emojiFallbackGrupo(grupoChave);
   return {
-    id,
+    id: codigo,
+    codigo,
+    chave: id,
     ordem: indice + 1,
     nome,
     sigla,
     grupo,
-    grupoRotulo: grupo.replace(/_/g, " ").replace(/^./, (letra) => letra.toUpperCase()),
+    grupoChave,
+    grupoRotulo,
+    grupoEmoji,
     ramoDado,
     rotaRotulo: RAMOS_DADOS[ramoDado] ?? "Rota não definida",
     ramo: categoria,
@@ -206,7 +248,7 @@ function normalizarSkill([id, skill], indice) {
     pais,
     descricao,
     efeitos,
-    busca: normalizarChave(`${id} ${nome} ${sigla} ${grupo} ${ramoDado} ${RAMOS_DADOS[ramoDado] ?? ""} ${categoria} ${RAMOS_ROTULOS[categoria] ?? ""} ${nivel} ${pais.join(" ")} ${descricao} ${efeitos.map((e) => e.texto).join(" ")}`),
+    busca: normalizarChave(`${codigo} ${id} ${nome} ${sigla} ${grupo} ${grupoRotulo} ${ramoDado} ${RAMOS_DADOS[ramoDado] ?? ""} ${categoria} ${RAMOS_ROTULOS[categoria] ?? ""} ${nivel} ${pais.join(" ")} ${descricao} ${efeitos.map((e) => e.texto).join(" ")}`),
   };
 }
 

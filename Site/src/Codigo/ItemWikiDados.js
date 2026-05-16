@@ -1,6 +1,10 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { carregarCsvWiki, limparTexto } from "./WikiCsv.js";
 import { normalizarChave } from "./PokemonWikiDados.js";
 const NOME_CSV = "Pokemon Global Server - Itens.csv";
+const ARQUIVO_RECEITAS = "Receitas.json";
 const RARIDADES = {
   1: { nome: "Comum", classe: "raridade-comum" },
   2: { nome: "Incomum", classe: "raridade-incomum" },
@@ -43,6 +47,90 @@ function rotuloEstilo(valor) {
   };
   return nomes[texto] ?? (texto ? texto.replace(/^./, (letra) => letra.toUpperCase()) : "Sem estilo");
 }
+function diretorioAtual() {
+  return path.dirname(fileURLToPath(import.meta.url));
+}
+function caminhosReceitas() {
+  const atual = diretorioAtual();
+  return [
+    path.resolve(atual, "../../../Dados/Catalogos", ARQUIVO_RECEITAS),
+    path.resolve(atual, "../../../Dados/Catalogo", ARQUIVO_RECEITAS),
+    path.resolve(atual, "../../Dados/Catalogos", ARQUIVO_RECEITAS),
+    path.resolve(atual, "../../Dados/Catalogo", ARQUIVO_RECEITAS),
+    path.resolve(process.cwd(), "../Dados/Catalogos", ARQUIVO_RECEITAS),
+    path.resolve(process.cwd(), "../Dados/Catalogo", ARQUIVO_RECEITAS),
+    path.resolve(process.cwd(), "Dados/Catalogos", ARQUIVO_RECEITAS),
+    path.resolve(process.cwd(), "Dados/Catalogo", ARQUIVO_RECEITAS),
+    path.resolve(process.cwd(), "../Pokemon-Global-Server-Definitivo/Dados/Catalogos", ARQUIVO_RECEITAS),
+  ];
+}
+function lerCatalogoReceitas() {
+  const caminhos = caminhosReceitas();
+  const caminho = caminhos.find((item) => existsSync(item));
+  if (!caminho) {
+    console.warn(`[Wiki Itens] Catalogo de receitas não encontrado. Procurei por: ${caminhos.join(" | ")}`);
+    return {};
+  }
+  try {
+    const dados = JSON.parse(readFileSync(caminho, "utf8").replace(/^﻿/, ""));
+    return dados && typeof dados === "object" ? dados : {};
+  } catch (erro) {
+    console.warn(`[Wiki Itens] Falha ao ler ${caminho}: ${erro}`);
+    return {};
+  }
+}
+function normalizarCelulaReceita(celula) {
+  if (celula === null || celula === undefined || celula === "") return null;
+  if (Array.isArray(celula)) {
+    const nome = limparTexto(celula[0]);
+    if (!nome) return null;
+    const quantidade = Math.max(1, Math.trunc(numero(celula[1]) ?? 1));
+    return { nome, quantidade, slug: normalizarChave(nome) };
+  }
+  const nome = limparTexto(celula);
+  return nome ? { nome, quantidade: 1, slug: normalizarChave(nome) } : null;
+}
+function linhasReceita(valor) {
+  const receita = Array.isArray(valor) ? valor : [];
+  const linhas = receita.filter(Array.isArray).slice(0, 3).map((linha) => {
+    const celulas = linha.slice(0, 3).map(normalizarCelulaReceita);
+    while (celulas.length < 3) celulas.push(null);
+    return celulas;
+  });
+  while (linhas.length < 3) linhas.push([null, null, null]);
+  return linhas;
+}
+function quantidadeResultadoReceita(valor) {
+  const receita = Array.isArray(valor) ? valor : [];
+  const extra = receita.find((item) => !Array.isArray(item) && Number.isFinite(Number(item)));
+  const quantidade = Number(extra);
+  return Number.isFinite(quantidade) && quantidade > 0 ? Math.trunc(quantidade) : 1;
+}
+function anexarReceitas(itens) {
+  const receitas = lerCatalogoReceitas();
+  const itensPorNome = new Map(itens.map((item) => [normalizarChave(item.nome), item]));
+  Object.entries(receitas).forEach(([nomeResultado, dados]) => {
+    const item = itensPorNome.get(normalizarChave(nomeResultado));
+    const receitaBruta = Array.isArray(dados?.receita) ? dados.receita : null;
+    if (!item || !receitaBruta) return;
+    const matriz = linhasReceita(receitaBruta).map((linha) => linha.map((celula) => {
+      if (!celula) return null;
+      const itemCelula = itensPorNome.get(celula.slug);
+      return {
+        ...celula,
+        nome: itemCelula?.nome || celula.nome,
+        itemId: itemCelula?.id || null,
+      };
+    }));
+    item.receita = {
+      id: String(dados?.id ?? item.id),
+      resultado: item.nome,
+      quantidadeResultado: quantidadeResultadoReceita(receitaBruta),
+      matriz,
+    };
+  });
+  return itens;
+}
 function normalizarItem(linha, indice) {
   const nome = limparTexto(linha.Nome) || `Item ${indice + 1}`;
   const code = numero(linha.Code) ?? indice + 1;
@@ -75,7 +163,8 @@ function normalizarItem(linha, indice) {
   };
 }
 export function carregarItens() {
-  return carregarCsvWiki([NOME_CSV], "Wiki Itens").map((linha, indice) => normalizarItem(linha, indice));
+  const itens = carregarCsvWiki([NOME_CSV], "Wiki Itens").map((linha, indice) => normalizarItem(linha, indice));
+  return anexarReceitas(itens);
 }
 function arquivoSemExtensao(caminho) {
   const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;

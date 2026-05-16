@@ -149,3 +149,105 @@
   background: color-mix(in srgb, var(--raridade-cor) 24%, rgba(255, 255, 255, 0.07));
   box-shadow: 0 0 18px color-mix(in srgb, var(--raridade-cor) 20%, transparent);
 }
+
+/* Receita dentro do modal de itens */
+.item-receita-painel[hidden] {
+  display: none;
+}
+.item-receita-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--texto-fraco);
+}
+.item-receita-topo span {
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.item-receita-topo strong {
+  color: var(--texto);
+  font-size: 1rem;
+}
+.item-receita-topo em {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: var(--amarelo);
+  background: rgba(255, 217, 52, 0.11);
+  font-style: normal;
+  font-weight: 950;
+}
+.item-receita-grade {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(74px, 1fr));
+  gap: 9px;
+  max-width: 360px;
+}
+.item-receita-celula {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 88px;
+  padding: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+}
+.item-receita-celula.vazia {
+  opacity: 0.42;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0 6px, rgba(255, 255, 255, 0.02) 6px 12px);
+}
+.item-receita-celula img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.38));
+}
+.item-receita-celula i {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  color: #061123;
+  background: linear-gradient(135deg, var(--amarelo), #ff9d00);
+  font-size: 1.2rem;
+  font-style: normal;
+  font-weight: 1000;
+}
+.item-receita-celula small {
+  width: 100%;
+  overflow: hidden;
+  color: var(--texto-fraco);
+  font-size: 0.66rem;
+  font-weight: 850;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-receita-celula b {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  min-width: 24px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: #061123;
+  background: var(--amarelo);
+  font-size: 0.7rem;
+  font-weight: 1000;
+}
+@media (max-width: 520px) {
+  .item-receita-grade {
+    grid-template-columns: repeat(3, minmax(66px, 1fr));
+  }
+  .item-receita-celula {
+    min-height: 78px;
+  }
+}

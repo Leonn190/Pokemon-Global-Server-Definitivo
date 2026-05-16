@@ -20,6 +20,33 @@ function criarCardItem(item, dados) {
   `;
   return card;
 }
+function itemPorId(dados, id) {
+  return (dados.itens || []).find((item) => String(item.id) === String(id));
+}
+function imagemCelulaReceita(celula, dados) {
+  if (!celula?.itemId) return null;
+  return assetItem({ id: celula.itemId }, dados.assetsItens).imagem;
+}
+function receitaCelulaHtml(celula, dados) {
+  if (!celula) return `<span class="item-receita-celula vazia" aria-hidden="true"></span>`;
+  const item = itemPorId(dados, celula.itemId);
+  const imagem = imagemCelulaReceita(celula, dados);
+  const nome = item?.nome || celula.nome;
+  const quantidade = Number(celula.quantidade) > 1 ? `<b>x${html(celula.quantidade)}</b>` : "";
+  return `
+    <span class="item-receita-celula preenchida" title="${html(nome)}">
+      ${imagem ? `<img src="${imagem}" alt="" loading="lazy" decoding="async" />` : `<i>${html(nome.slice(0, 1))}</i>`}
+      <small>${html(nome)}</small>
+      ${quantidade}
+    </span>
+  `;
+}
+function receitaHtml(item, dados) {
+  const linhas = item.receita?.matriz || [];
+  const celulas = linhas.flat().slice(0, 9);
+  while (celulas.length < 9) celulas.push(null);
+  return celulas.map((celula) => receitaCelulaHtml(celula, dados)).join("");
+}
 function criarControladorDetalhe(dados, obterListaAtual) {
   const detalhe = document.querySelector("[data-item-detail]");
   let itemAberto = null;
@@ -48,6 +75,9 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const raridade = detalhe.querySelector("[data-item-rarity]");
     const descricao = detalhe.querySelector("[data-item-description]");
     const info = detalhe.querySelector("[data-item-info]");
+    const receitaPainel = detalhe.querySelector("[data-item-recipe-panel]");
+    const receitaResumo = detalhe.querySelector("[data-item-recipe-summary]");
+    const receitaGrade = detalhe.querySelector("[data-item-recipe-grid]");
     if (codigo) codigo.textContent = `#${item.id}`;
     if (nome) nome.textContent = item.nome;
     if (raridade) {
@@ -66,6 +96,18 @@ function criarControladorDetalhe(dados, obterListaAtual) {
         ["Raridade", item.raridadeNome],
       ];
       info.innerHTML = infoHtml(linhas);
+    }
+    if (receitaPainel && receitaGrade && receitaResumo) {
+      const temReceita = !!item.receita?.matriz;
+      receitaPainel.hidden = !temReceita;
+      if (temReceita) {
+        const quantidade = Number(item.receita.quantidadeResultado || 1);
+        receitaResumo.innerHTML = `<span>Resultado</span><strong>${html(item.nome)}</strong>${quantidade > 1 ? `<em>x${html(quantidade)}</em>` : ""}`;
+        receitaGrade.innerHTML = receitaHtml(item, dados);
+      } else {
+        receitaResumo.innerHTML = "";
+        receitaGrade.innerHTML = "";
+      }
     }
     abrirModalDetalhe(detalhe);
   }

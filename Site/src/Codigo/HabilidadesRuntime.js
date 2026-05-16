@@ -1,19 +1,30 @@
-import { abrirModalDetalhe, criarWikiCatalogo, fecharModalDetalhe, html, infoHtml, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { abrirModalDetalhe, criarWikiCatalogo, fecharModalDetalhe, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
 function criarCardHabilidade(skill) {
   const card = document.createElement("button");
   card.type = "button";
-  card.className = `catalogo-card habilidade-card habilidade-${skill.ramo}`;
+  card.className = `item-card habilidade-card habilidade-${skill.ramo}`;
   card.dataset.skillId = skill.id;
   card.innerHTML = `
-    <span class="catalogo-card-codigo">${html(skill.sigla || `N${skill.nivel}`)}</span>
-    <span class="catalogo-card-arte habilidade-card-icone" aria-hidden="true">✦</span>
-    <span class="catalogo-card-nome">${html(skill.nome)}</span>
-    <span class="catalogo-card-meta">${html(skill.ramoRotulo)} · Nível ${html(skill.nivel)}</span>
-    <span class="catalogo-card-linha"><strong>${html(skill.grupoRotulo)}</strong><small>Grupo</small></span>
-    <span class="comando-card-descricao">${html(skill.descricao)}</span>
+    <span class="item-card-codigo">#${html(skill.codigo || skill.id)}</span>
+    <span class="item-card-arte habilidade-card-arte" aria-hidden="true"><span class="item-card-sem-arte habilidade-card-emoji">${html(skill.grupoEmoji || "✦")}</span></span>
+    <span class="item-card-nome">${html(skill.nome)}</span>
+    <span class="item-card-meta">${html(skill.sigla || `N${skill.nivel}`)}</span>
+    <span class="item-card-linha"><strong>${html(skill.grupoRotulo)}</strong><small>Grupo</small></span>
   `;
   return card;
+}
+
+function criarCardGrupoHabilidade(skill, atualId) {
+  const selecionada = String(skill.id) === String(atualId);
+  return `
+    <button type="button" class="habilidade-grupo-card${selecionada ? " atual" : ""}" data-skill-related-id="${html(skill.id)}">
+      <span class="habilidade-grupo-id">#${html(skill.codigo || skill.id)}</span>
+      <span class="habilidade-grupo-icone" aria-hidden="true">${html(skill.grupoEmoji || "✦")}</span>
+      <strong>${html(skill.nome)}</strong>
+      <small>${html(skill.sigla || `N${skill.nivel}`)}</small>
+    </button>
+  `;
 }
 
 function criarControladorDetalhe(dados, obterListaAtual) {
@@ -40,13 +51,15 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const skill = (dados.habilidades || []).find((item) => item.id === String(id));
     if (!skill || !detalhe) return;
     skillAberta = skill;
+    const icone = detalhe.querySelector("[data-skill-icon]");
     const nome = detalhe.querySelector("[data-skill-name]");
     const descricao = detalhe.querySelector("[data-skill-description]");
     const tags = detalhe.querySelector("[data-skill-tags]");
     const efeitos = detalhe.querySelector("[data-skill-effects]");
     const pais = detalhe.querySelector("[data-skill-parents]");
-    const info = detalhe.querySelector("[data-skill-info]");
+    const grupo = detalhe.querySelector("[data-skill-group]");
 
+    if (icone) icone.textContent = skill.grupoEmoji || "✦";
     if (nome) nome.textContent = skill.nome;
     if (descricao) descricao.textContent = skill.descricao || "Descrição ainda não cadastrada.";
     if (tags) {
@@ -66,15 +79,16 @@ function criarControladorDetalhe(dados, obterListaAtual) {
         ? skill.pais.map((pai) => `<code>${html(pai)}</code>`).join("")
         : `<code>root</code>`;
     }
-    if (info) {
-      info.innerHTML = infoHtml([
-        ["ID", skill.id],
-        ["Sigla", skill.sigla || "-"],
-        ["Tipo", skill.ramoRotulo],
-        ["Rota no dado", skill.rotaRotulo],
-        ["Grupo", skill.grupoRotulo],
-        ["Nível", skill.nivel],
-      ]);
+    if (grupo) {
+      const mesmoGrupo = (dados.habilidades || [])
+        .filter((item) => item.grupoChave === skill.grupoChave)
+        .sort((a, b) => (a.nivel - b.nivel) || (a.ordem - b.ordem));
+      grupo.innerHTML = mesmoGrupo.length
+        ? mesmoGrupo.map((item) => criarCardGrupoHabilidade(item, skill.id)).join("")
+        : `<p class="wiki-vazio-texto">Nenhuma outra habilidade cadastrada no grupo ${html(skill.grupoRotulo)}.</p>`;
+      grupo.querySelectorAll("[data-skill-related-id]").forEach((botao) => {
+        botao.addEventListener("click", () => abrirDetalhe(botao.dataset.skillRelatedId));
+      });
     }
     abrirModalDetalhe(detalhe);
   }

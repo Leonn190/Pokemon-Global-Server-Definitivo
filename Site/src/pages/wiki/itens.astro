@@ -110,6 +110,10 @@ const opcoesVenda = [{ value: "", label: "Todos" }, ...Object.entries(OPCOES_VEN
     <PainelDetalhe titulo="Informações" class="item-info-painel">
       <dl class="pokemon-info-lista" data-item-info></dl>
     </PainelDetalhe>
+    <PainelDetalhe titulo="Receita" class="item-info-painel item-receita-painel" hidden data-item-recipe-panel>
+      <div class="item-receita-topo" data-item-recipe-summary></div>
+      <div class="item-receita-grade" data-item-recipe-grid></div>
+    </PainelDetalhe>
   </ModalDetalhe>
   <JsonPayload id="itens-data" dados={payloadItens} />
   <script>

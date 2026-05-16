@@ -38,7 +38,7 @@ const opcoesLocal = [{ value: "", label: "Todos" }, ...resumo.locais.map((local)
     directionAttrs={{ "data-comandos-direction": true }}
     clearAttrs={{ "data-comandos-clear": true }}
     clearAriaLabel="Limpar busca e filtros de comandos"
-    gridClass="catalogo-grid comandos-grid"
+    gridClass="itens-grid comandos-grid"
     gridAttrs={{ "data-comandos-grid": true }}
     gridRotulo="Lista de comandos"
     vazioAttrs={{ "data-comandos-empty": true }}
@@ -70,7 +70,7 @@ const opcoesLocal = [{ value: "", label: "Todos" }, ...resumo.locais.map((local)
       closeAttrs={{ "data-comando-close": true }}
     />
     <header class="catalogo-detalhe-topo">
-      <span class="catalogo-detalhe-icone" aria-hidden="true">⌨</span>
+      <span class="catalogo-detalhe-icone" aria-hidden="true">💻</span>
       <div>
         <p class="selo">Comando</p>
         <h2 id="comando-detalhe-nome" data-comando-name>/comando</h2>
@@ -82,8 +82,8 @@ const opcoesLocal = [{ value: "", label: "Todos" }, ...resumo.locais.map((local)
       <p class="item-descricao-melhor" data-comando-description></p>
     </PainelDetalhe>
     <div class="catalogo-detalhe-duplo">
-      <PainelDetalhe titulo="Aliases" class="item-info-painel catalogo-texto-painel">
-        <div class="catalogo-chips" data-comando-aliases></div>
+      <PainelDetalhe titulo="Uso e permissão" class="item-info-painel catalogo-texto-painel">
+        <dl class="item-info-lista" data-comando-info></dl>
       </PainelDetalhe>
       <PainelDetalhe titulo="Exemplos" class="item-info-painel catalogo-texto-painel">
         <div class="catalogo-codigos" data-comando-examples></div>
@@ -92,8 +92,8 @@ const opcoesLocal = [{ value: "", label: "Todos" }, ...resumo.locais.map((local)
     <PainelDetalhe titulo="Argumentos" class="item-info-painel catalogo-texto-painel">
       <div class="catalogo-lista" data-comando-args></div>
     </PainelDetalhe>
-    <PainelDetalhe titulo="Informações técnicas" class="item-info-painel catalogo-texto-painel">
-      <dl class="item-info-lista" data-comando-info></dl>
+    <PainelDetalhe titulo="Aliases" class="item-info-painel catalogo-texto-painel">
+      <div class="catalogo-chips" data-comando-aliases></div>
     </PainelDetalhe>
   </ModalDetalhe>
 

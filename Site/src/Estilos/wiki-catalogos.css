@@ -255,3 +255,97 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Cartuchos de comandos e habilidades alinhados ao padrão das demais wikis */
+.comandos-grid,
+.habilidades-grid {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+}
+.comando-card,
+.habilidade-card {
+  --catalogo-acento: rgba(255, 217, 52, 0.88);
+  border-color: color-mix(in srgb, var(--catalogo-acento) 42%, rgba(255, 255, 255, 0.12));
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.24), 0 0 26px color-mix(in srgb, var(--catalogo-acento) 13%, transparent);
+}
+.comando-card:hover,
+.comando-card:focus-visible,
+.habilidade-card:hover,
+.habilidade-card:focus-visible {
+  border-color: color-mix(in srgb, var(--catalogo-acento) 66%, rgba(255, 255, 255, 0.12));
+  box-shadow: 0 24px 62px rgba(0, 0, 0, 0.34), 0 0 32px color-mix(in srgb, var(--catalogo-acento) 18%, transparent);
+}
+.comando-card .item-card-sem-arte,
+.habilidade-card .item-card-sem-arte {
+  color: #061123;
+  background: linear-gradient(135deg, var(--catalogo-acento), rgba(255, 255, 255, 0.86));
+  font-size: 1.72rem;
+  line-height: 1;
+}
+.comando-card .item-card-linha strong,
+.habilidade-card .item-card-linha strong {
+  color: var(--catalogo-acento);
+}
+.comando-geral { --catalogo-acento: #ffd934; }
+.comando-mundo { --catalogo-acento: #40c6ef; }
+.comando-batalha { --catalogo-acento: #ff3650; }
+.habilidade-fisico { --catalogo-acento: #ff9d00; }
+.habilidade-tecnicas { --catalogo-acento: #8be0ff; }
+.habilidade-armazenamento { --catalogo-acento: #9dff7a; }
+.habilidade-grupo-ajuda {
+  margin: 0 0 12px;
+  color: var(--texto-fraco);
+  line-height: 1.55;
+}
+.habilidade-grupo-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(154px, 1fr));
+  gap: 10px;
+}
+.habilidade-grupo-card {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  min-height: 118px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  color: var(--texto);
+  background: rgba(255, 255, 255, 0.055);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.habilidade-grupo-card:hover,
+.habilidade-grupo-card:focus-visible,
+.habilidade-grupo-card.atual {
+  outline: none;
+  transform: translateY(-2px);
+  border-color: rgba(255, 217, 52, 0.38);
+  background: rgba(255, 217, 52, 0.09);
+}
+.habilidade-grupo-card.atual {
+  cursor: default;
+}
+.habilidade-grupo-id {
+  color: var(--texto-fraco);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+.habilidade-grupo-icone {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 1.25rem;
+}
+.habilidade-grupo-card strong {
+  line-height: 1.15;
+}
+.habilidade-grupo-card small {
+  color: var(--texto-fraco);
+  font-weight: 900;
+}

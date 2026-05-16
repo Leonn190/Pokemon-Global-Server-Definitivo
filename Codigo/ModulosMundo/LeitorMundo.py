@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 import threading
 import time
 from collections import deque
@@ -11,7 +10,9 @@ from typing import Callable, Dict, List, Optional, Tuple
 import pygame
 
 from Codigo.ModulosGerais.GerenciadorTiles import GerenciadorTiles
+from Codigo.ModulosMundo.CacheChunksMundo import CacheChunksMundo
 from Codigo.ModulosMundo.Geradores.EstruturaNaturais import definir_limites_escala_estrutura_natural
+from Codigo.ModulosMundo.RenderizadorChunksMundo import RenderizadorChunksMundo
 
 Vector2 = Tuple[float, float]
 PacoteMundo = Dict[str, object]
@@ -59,6 +60,8 @@ class LeitorMundo:
         self._ultima_versao_chunks_regras = -1
         self._ultimo_seed_tiles: Optional[int] = None
         self.RenderizadorTiles = GerenciadorTiles(cores_blocos=self.CoresBlocos)
+        self.CacheChunks = CacheChunksMundo(self)
+        self.RenderizadorChunks = RenderizadorChunksMundo(self)
 
     def _aplicar_paleta_dimensao(self, dimensao: str) -> None:
         modo = "dungeon" if str(dimensao or "").startswith("Dungeon_") else "mundo"
@@ -220,16 +223,7 @@ class LeitorMundo:
             return None
 
     def descartar_chunks_fora_do_anel(self) -> None:
-        with self._lock:
-            chaves_anel = set(self.Chunks.keys())
-            for chave in list(self._cache_superficies_chunks.keys()):
-                if chave not in chaves_anel:
-                    self._cache_superficies_chunks.pop(chave, None)
-            for chave in list(self._cache_assinaturas_chunks.keys()):
-                if chave not in chaves_anel:
-                    self._cache_assinaturas_chunks.pop(chave, None)
-            self._fila_preaquecimento_chunks = deque(chave for chave in self._fila_preaquecimento_chunks if chave in chaves_anel)
-            self._fila_preaquecimento_set = set(self._fila_preaquecimento_chunks)
+        return self.CacheChunks.descartar_chunks_fora_do_anel()
 
     def processar_pacote_chunks(self, pacote: PacoteMundo) -> None:
         if not isinstance(pacote, dict):
@@ -306,30 +300,7 @@ class LeitorMundo:
             self.preaquecer_chunks_visiveis()
 
     def _obter_superficie_chunk(self, chave_chunk: Tuple[int, int], grid: List[List[int]], tile_px: int) -> Optional[pygame.Surface]:
-        if not grid:
-            return None
-        largura_chunk = max((len(linha) for linha in grid), default=0)
-        altura_chunk = len(grid)
-        if largura_chunk <= 0 or altura_chunk <= 0:
-            return None
-        if tile_px != self._cache_tile_px:
-            self._cache_superficies_chunks.clear()
-            self.RenderizadorTiles.limpar_cache()
-            self._cache_tile_px = tile_px
-        superficie = self._cache_superficies_chunks.get(chave_chunk)
-        if superficie is not None:
-            return superficie
-        superficie = self.RenderizadorTiles.renderizar_chunk(
-            chave_chunk=chave_chunk,
-            grid=grid,
-            tile_px=tile_px,
-            tamanho_chunk=self.TamanhoChunkBlocos,
-        )
-        if superficie is None:
-            return None
-        superficie = superficie.convert()
-        self._cache_superficies_chunks[chave_chunk] = superficie
-        return superficie
+        return self.CacheChunks.obter_superficie_chunk(chave_chunk, grid, tile_px)
 
     @staticmethod
     def _intervalo_chunks_visiveis(
@@ -339,13 +310,7 @@ class LeitorMundo:
         tamanho_chunk: int,
         margem_chunks: int = 0,
     ) -> range:
-        alcance_tiles = float(tela_px) / max(1.0, float(tile_px))
-        tamanho_chunk = max(1, int(tamanho_chunk))
-        margem = max(0, int(margem_chunks))
-        inicio = int(math.floor(float(cam_tile) / float(tamanho_chunk))) - margem
-        limite_fim = float(cam_tile) + max(0.0, alcance_tiles) - 1e-6
-        fim = int(math.floor(limite_fim / float(tamanho_chunk))) + margem
-        return range(inicio, fim + 1)
+        return RenderizadorChunksMundo.intervalo_chunks_visiveis(cam_tile, tela_px, tile_px, tamanho_chunk, margem_chunks)
 
     def _chaves_chunks_visiveis(
         self,
@@ -361,187 +326,25 @@ class LeitorMundo:
         chunks_y: int,
         margem_chunks: int = 1,
     ) -> List[Tuple[int, int]]:
-        intervalo_x = self._intervalo_chunks_visiveis(cam_x, tela_w, tile_px, tamanho_chunk, margem_chunks=margem_chunks)
-        intervalo_y = self._intervalo_chunks_visiveis(cam_y, tela_h, tile_px, tamanho_chunk, margem_chunks=margem_chunks)
-        if toroidal and chunks_x > 0 and chunks_y > 0:
-            vistos = set()
-            chaves = []
-            for chunk_x in intervalo_x:
-                for chunk_y in intervalo_y:
-                    chave = (int(chunk_x) % chunks_x, int(chunk_y) % chunks_y)
-                    if chave in vistos:
-                        continue
-                    vistos.add(chave)
-                    chaves.append(chave)
-            return chaves
-        return [
-            (int(chunk_x), int(chunk_y))
-            for chunk_x in intervalo_x
-            for chunk_y in intervalo_y
-            if (int(chunk_x), int(chunk_y)) in chunks_ref
-        ]
+        return self.RenderizadorChunks.chaves_chunks_visiveis(
+            cam_x,
+            cam_y,
+            tela_w,
+            tela_h,
+            tile_px,
+            tamanho_chunk,
+            chunks_ref,
+            toroidal,
+            chunks_x,
+            chunks_y,
+            margem_chunks,
+        )
 
     def preaquecer_chunks_visiveis(self) -> None:
-        tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
-        with self._lock:
-            tamanho_chunk = max(1, int(self.TamanhoChunkBlocos))
-            meta = dict(self.MetaMundo)
-            chunks_ref = dict(self.Chunks)
-        dimensao_meta = str(meta.get("dimensao") or "Mundo")
-        if dimensao_meta.startswith("Estadio") or not chunks_ref:
-            return
-
-        largura_blocos = int(meta.get("largura_blocos", 0) or 0)
-        altura_blocos = int(meta.get("altura_blocos", 0) or 0)
-        chunks_x = max(1, int((largura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if largura_blocos > 0 else 0
-        chunks_y = max(1, int((altura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if altura_blocos > 0 else 0
-        toroidal = bool(getattr(self.Camera, "LimitesToroidais", False)) and chunks_x > 0 and chunks_y > 0
-
-        cam_x, cam_y = map(float, getattr(self.Camera, "PosicaoTiles", (0.0, 0.0)))
-        if toroidal:
-            if largura_blocos > 0:
-                cam_x %= float(largura_blocos)
-            if altura_blocos > 0:
-                cam_y %= float(altura_blocos)
-
-        tela_w, tela_h = getattr(self.Camera, "TamanhoTelaPx", (1280.0, 720.0))
-        chaves_visiveis = self._chaves_chunks_visiveis(
-            cam_x=cam_x,
-            cam_y=cam_y,
-            tela_w=float(tela_w),
-            tela_h=float(tela_h),
-            tile_px=tile_px,
-            tamanho_chunk=tamanho_chunk,
-            chunks_ref=chunks_ref,
-            toroidal=toroidal,
-            chunks_x=chunks_x,
-            chunks_y=chunks_y,
-            margem_chunks=0,
-        )
-        chaves_margem = self._chaves_chunks_visiveis(
-            cam_x=cam_x,
-            cam_y=cam_y,
-            tela_w=float(tela_w),
-            tela_h=float(tela_h),
-            tile_px=tile_px,
-            tamanho_chunk=tamanho_chunk,
-            chunks_ref=chunks_ref,
-            toroidal=toroidal,
-            chunks_x=chunks_x,
-            chunks_y=chunks_y,
-            margem_chunks=1,
-        )
-        chaves_visiveis_set = set(chaves_visiveis)
-
-        for chave_chunk in chaves_visiveis:
-            grid = chunks_ref.get(chave_chunk, [])
-            if grid:
-                self._obter_superficie_chunk(chave_chunk, grid, tile_px)
-        for chave_chunk in chaves_margem:
-            if (
-                chave_chunk in chaves_visiveis_set
-                or chave_chunk not in chunks_ref
-                or chave_chunk in self._cache_superficies_chunks
-                or chave_chunk in self._fila_preaquecimento_set
-            ):
-                continue
-            self._fila_preaquecimento_chunks.append(chave_chunk)
-            self._fila_preaquecimento_set.add(chave_chunk)
+        return self.CacheChunks.preaquecer_chunks_visiveis()
 
     def bombear_preaquecimento(self, max_chunks: int = 1) -> None:
-        limite = max(0, int(max_chunks or 0))
-        if limite <= 0:
-            return
-        tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
-        processados = 0
-        while processados < limite and self._fila_preaquecimento_chunks:
-            chave_chunk = self._fila_preaquecimento_chunks.popleft()
-            self._fila_preaquecimento_set.discard(chave_chunk)
-            processados += 1
-            with self._lock:
-                grid = self.Chunks.get(chave_chunk, [])
-            if not grid or chave_chunk in self._cache_superficies_chunks:
-                continue
-            self._obter_superficie_chunk(chave_chunk, grid, tile_px)
+        return self.CacheChunks.bombear_preaquecimento(max_chunks)
 
     def renderizar_mundo(self, tela) -> None:
-        tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
-        with self._lock:
-            tamanho_chunk = max(1, int(self.TamanhoChunkBlocos)); meta = self.MetaMundo; chunks_ref = self.Chunks
-            dimensao_meta = str(meta.get("dimensao") or "Mundo")
-            largura_blocos = int(meta.get("largura_blocos", 0) or 0) if isinstance(meta, dict) else 0
-            altura_blocos = int(meta.get("altura_blocos", 0) or 0) if isinstance(meta, dict) else 0
-        if dimensao_meta.startswith("Estadio"):
-            return
-        if not chunks_ref:
-            return
-
-        largura_mundo = float(largura_blocos)
-        altura_mundo = float(altura_blocos)
-        chunks_x = max(1, int((largura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if largura_blocos > 0 else 0
-        chunks_y = max(1, int((altura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if altura_blocos > 0 else 0
-        toroidal = bool(getattr(self.Camera, "LimitesToroidais", False)) and chunks_x > 0 and chunks_y > 0
-
-        cam_x, cam_y = map(float, getattr(self.Camera, "PosicaoTiles", (0.0, 0.0)))
-        if toroidal:
-            if largura_mundo > 0.0:
-                cam_x %= largura_mundo
-            if altura_mundo > 0.0:
-                cam_y %= altura_mundo
-
-        tela_w, tela_h = tela.get_size()
-        fila_blits = []
-        intervalo_x = self._intervalo_chunks_visiveis(cam_x, tela_w, tile_px, tamanho_chunk, margem_chunks=0)
-        intervalo_y = self._intervalo_chunks_visiveis(cam_y, tela_h, tile_px, tamanho_chunk, margem_chunks=0)
-        for chunk_x in intervalo_x:
-            origem_base_x = int(chunk_x) * tamanho_chunk
-            chave_x = (int(chunk_x) % chunks_x) if toroidal and chunks_x > 0 else int(chunk_x)
-            for chunk_y in intervalo_y:
-                origem_base_y = int(chunk_y) * tamanho_chunk
-                chave_real = (
-                    chave_x,
-                    (int(chunk_y) % chunks_y) if toroidal and chunks_y > 0 else int(chunk_y),
-                )
-                grid = chunks_ref.get(chave_real)
-                if not grid:
-                    continue
-                superficie = self._obter_superficie_chunk(chave_real, grid, tile_px)
-                if superficie is None:
-                    continue
-
-                largura_superficie = superficie.get_width()
-                altura_superficie = superficie.get_height()
-                px = (float(origem_base_x) - cam_x) * tile_px
-                py = (float(origem_base_y) - cam_y) * tile_px
-                if px > tela_w or py > tela_h or (px + largura_superficie) < 0 or (py + altura_superficie) < 0:
-                    continue
-                destino_x = int(px)
-                destino_y = int(py)
-                clip_x = max(0, -destino_x)
-                clip_y = max(0, -destino_y)
-                largura_visivel = min(largura_superficie - clip_x, int(tela_w) - max(0, destino_x))
-                altura_visivel = min(altura_superficie - clip_y, int(tela_h) - max(0, destino_y))
-                if largura_visivel <= 0 or altura_visivel <= 0:
-                    continue
-                if clip_x > 0 or clip_y > 0 or largura_visivel != largura_superficie or altura_visivel != altura_superficie:
-                    fila_blits.append((
-                        superficie,
-                        (destino_x + clip_x, destino_y + clip_y),
-                        (clip_x, clip_y, largura_visivel, altura_visivel),
-                    ))
-                else:
-                    fila_blits.append((superficie, (destino_x, destino_y)))
-        if not fila_blits:
-            return
-        blits = getattr(tela, "blits", None)
-        if callable(blits):
-            try:
-                blits(fila_blits, doreturn=False)
-            except TypeError:
-                blits(fila_blits)
-            return
-        for item in fila_blits:
-            if len(item) >= 3:
-                tela.blit(item[0], item[1], item[2])
-            else:
-                tela.blit(item[0], item[1])
+        return self.RenderizadorChunks.renderizar_mundo(tela)

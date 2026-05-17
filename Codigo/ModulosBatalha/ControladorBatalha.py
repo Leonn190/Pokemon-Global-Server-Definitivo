@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import copy
-import math
 from types import SimpleNamespace
 
 import pygame
 
-from Codigo.ModulosMundo.Geradores.Ator import Ator
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.ControladorAnimacoes import ControladorAnimacoes
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
 from Codigo.ModulosBatalha.FinalizadorBatalha import FinalizadorBatalha
+from Codigo.ModulosBatalha.FluxoBatalha import FluxoBatalha
 from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.MontadorJogadas import MontadorJogadas
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
 from Codigo.ModulosBatalha.PokemonBatalha import PokemonBatalha
+from Codigo.ModulosBatalha.RenderizadorBatalha import RenderizadorBatalha
 from Codigo.ModulosMundo.Geradores.Player.Inventario import Inventario
 from Codigo.ModulosMundo.Geradores.Player.Perfil import Perfil
 from Codigo.ModulosGerais.Camera import CameraBatalha
@@ -38,6 +38,8 @@ class ControladorBatalha:
         self.controlador_animacoes = None
         self.leitor_logs = None
         self.finalizador = FinalizadorBatalha(self)
+        self.fluxo = FluxoBatalha(self)
+        self.renderizador = RenderizadorBatalha(self)
 
         self.rodada_atual = 1
         self.lado_jogador = 50
@@ -241,83 +243,7 @@ class ControladorBatalha:
         self.sincronizar_perfil_local()
 
     def desenhar(self, surface):
-        if self.arena is None:
-            return
-        if self.hud is not None:
-            self.hud.preparar_layout(surface)
-        self.arena.renderizar(surface, self.camera)
-        areas_destacadas = []
-        reservas_destacadas = []
-        if self.montador_jogadas is not None:
-            areas_destacadas = self.montador_jogadas.areas_destacadas()
-            reservas_destacadas = self.montador_jogadas.reservas_destacadas()
-        self.arena.desenhar_areas(
-            surface,
-            self.camera,
-            area_hover=self._area_hover,
-            area_selecionada=self.area_selecionada,
-            areas_destacadas=areas_destacadas,
-        )
-        if self.montador_jogadas is not None:
-            self.montador_jogadas.desenhar_pulso_previa(surface)
-            self.montador_jogadas.desenhar_fantasmas_movimento(surface)
-        for indicador in list(getattr(self.montador_jogadas, "indicadores_alvos_parciais", []) or []):
-            indicador.atualizar(dt=self._ultimo_dt)
-            indicador.desenhar(surface, self.camera)
-        for indicador in list(getattr(self.montador_jogadas, "indicadores_preparados", []) or []):
-            indicador.atualizar(dt=self._ultimo_dt)
-            indicador.desenhar(surface, self.camera)
-        if getattr(self.montador_jogadas, "indicador_previa", None) is not None:
-            self.montador_jogadas.indicador_previa.atualizar(dt=self._ultimo_dt)
-            self.montador_jogadas.indicador_previa.desenhar(surface, self.camera)
-
-        self._desenhar_atores_visuais_batalha(surface)
-
-        for pokemon in self.pokemons:
-            if pokemon.esta_ativo() and not pokemon.esta_na_reserva():
-                if not self.pokemon_visivel(pokemon):
-                    pokemon.RectAtual = pygame.Rect(0, 0, 0, 0)
-                    continue
-                hover = pokemon.contem_ponto(pygame.mouse.get_pos())
-                pokemon.desenhar(surface, self.camera, self.arena, selecionado=(self.area_selecionada == pokemon.AreaId), hover=hover)
-
-        reservas_destacadas_set = set(reservas_destacadas)
-        for lado in ("jogador", "inimigo"):
-            for slot in self.arena.obter_slots_reserva(lado):
-                poke = self.pokemons_por_id.get(slot.get("pokemon_id"))
-                if poke is None:
-                    continue
-                if not self.pokemon_visivel(poke):
-                    poke.RectAtual = pygame.Rect(0, 0, 0, 0)
-                    continue
-                rect = slot.get("rect_tela")
-                hover = rect.collidepoint(pygame.mouse.get_pos()) if rect else False
-                selecionado = self.area_selecionada in {slot.get("id_slot"), slot.get("pokemon_id")}
-                if rect:
-                    destacado = str(slot.get("id_slot")) in reservas_destacadas_set
-                    if selecionado:
-                        borda = (255, 235, 90, 245)
-                    elif destacado:
-                        pulso = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 180.0)
-                        borda = (255, 225, 70, int(80 + 150 * pulso))
-                    elif hover:
-                        borda = (204, 212, 228, 170)
-                    else:
-                        borda = (0, 0, 0, 225)
-                    overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
-                    pygame.draw.rect(overlay, (0, 0, 0, 235), overlay.get_rect(), 4)
-                    pygame.draw.rect(overlay, borda, overlay.get_rect().inflate(-4, -4), 3)
-                    surface.blit(overlay, rect.topleft)
-                poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover, camera=self.camera)
-
-        if self.controlador_animacoes is not None:
-            self.controlador_animacoes.desenhar(surface)
-        self.hud.desenhar(surface, self._ultimos_eventos, self._ultimo_dt)
-        alpha = max(0, min(255, int(round(self._fuga_alpha))))
-        if alpha > 0:
-            overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, alpha))
-            surface.blit(overlay, (0, 0))
+        return self.renderizador.desenhar(surface)
 
     def selecionar_pokemon(self, pokemon):
         if pokemon is not None and not self.pokemon_visivel(pokemon):
@@ -374,166 +300,46 @@ class ControladorBatalha:
             self.hud.ficha.limpar_ataque_selecionado()
 
     def passar_rodada_local(self):
-        self.estado_batalha = "passando_rodada"
-        self.rodada_atual += 1
-        self.limpar_ataque()
-        self.timer_rodada = self.timer_rodada_max
-        self.logs_locais.append({"rodada": self.rodada_atual, "texto": f"Rodada {self.rodada_atual} iniciada."})
-        self.estado_batalha = "montando_jogada"
+        return self.fluxo.passar_rodada_local()
 
     def enviar_jogada_pronta(self):
-        if self.estado_batalha != "montando_jogada":
-            return
-        if self.montador_jogadas is None:
-            return
-        if self.modo_teste:
-            pacote = self.montador_jogadas.gerar_pacote_jogadas_modo_teste()
-        else:
-            pacote = self.montador_jogadas.gerar_pacote_jogada()
-            if not self.batalha_usa_ia():
-                pacote["resolver_lados_ausentes"] = True
-        self._ocultar_montagem_visual()
-        self.estado_batalha = "aguardando_servidor"
-        resposta = self.server_batalha.enviar_jogada(self.id_partida, self.lado_jogador, pacote)
-        self.tratar_resposta_jogada(resposta)
+        return self.fluxo.enviar_jogada_pronta()
 
     def tratar_resposta_jogada(self, resposta):
-        status = str((resposta or {}).get("status") or "erro")
-        if status == "ok":
-            self.estado_batalha = str((resposta or {}).get("estado_batalha") or "recebido_stub")
-            self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Jogada aceita"))
-            log = (resposta or {}).get("log") if isinstance((resposta or {}).get("log"), dict) else {}
-            if isinstance(log, dict) and list(log.get("historico") or []):
-                self.receber_log(log)
-                return
-            resultado = (resposta or {}).get("resultado")
-            if not isinstance(resultado, dict):
-                resultado = log.get("resultado") if isinstance(log.get("resultado"), dict) else None
-            if isinstance(resultado, dict):
-                self.aplicar_resultado_final(resultado)
-                self.limpar_jogada_confirmada()
-                if bool(resultado.get("finalizada")) and self.finalizador is not None:
-                    self.finalizador.finalizar_por_resultado(resultado)
-                return
-            if self.estado_batalha != "aguardando":
-                self.limpar_jogada_confirmada()
-                self.estado_batalha = "montando_jogada"
-            return
-        self.estado_batalha = "montando_jogada"
-        self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Falha ao enviar jogada"))
+        return self.fluxo.tratar_resposta_jogada(resposta)
 
     def aplicar_resultado_batalha(self, resultado):
-        return self.aplicar_resultado_final(resultado)
+        return self.fluxo.aplicar_resultado_batalha(resultado)
 
     def aplicar_resultado_final(self, resultado):
-        pokemons = resultado.get("pokemons") if isinstance(resultado.get("pokemons"), dict) else {}
-        for pid, diff in pokemons.items():
-            pokemon = self.pokemons_por_id.get(str(pid))
-            if pokemon is not None:
-                pokemon.atualizar_por_diff(diff)
-        if self.arena is not None:
-            self.arena.atualizar_ocupacao(self.pokemons)
-        if self.pokemon_selecionado is not None and ((not self.pokemon_selecionado.esta_vivo()) or (not self.pokemon_visivel(self.pokemon_selecionado))):
-            self.desselecionar_pokemon()
-        self.rodada_atual = int(resultado.get("rodada_atual", self.rodada_atual) or self.rodada_atual)
-        if "clima_atual" in resultado:
-            self.clima_atual = resultado.get("clima_atual")
-        if isinstance(resultado.get("inventario_jogador"), dict):
-            self.aplicar_inventario_batalha(resultado.get("inventario_jogador"))
-        self.estado_batalha = str(resultado.get("estado_batalha") or ("finalizada" if resultado.get("finalizada") else "montando_jogada"))
-        if bool(resultado.get("finalizada")):
-            self.estado_batalha = "finalizada"
-        self.timer_rodada = self.timer_rodada_max
+        return self.fluxo.aplicar_resultado_final(resultado)
 
     def batalha_usa_ia(self):
-        tipo = str(self.tipo_batalha or "").strip().lower()
-        return tipo in {"confronto", "treinador", "trainer", "servo", "boss"} and not bool(self.modo_teste)
+        return self.fluxo.batalha_usa_ia()
 
     def fuga_disponivel(self):
-        tipo = str(self.tipo_batalha or "").strip().lower()
-        if tipo == "boss":
-            return False
-        if tipo == "servo":
-            return int(self.rodada_atual or 1) > 5
-        return True
+        return self.fluxo.fuga_disponivel()
 
     def posicao_captura_lado_tela(self, lado_id=None):
-        pos = self.posicao_captura_lado_mundo(lado_id)
-        if pos is None or self.camera is None:
-            return None
-        try:
-            return self.camera.mundo_para_tela_px(pos)
-        except Exception:
-            return None
+        return self.renderizador.posicao_captura_lado_tela(lado_id)
 
     def posicao_captura_lado_mundo(self, lado_id=None):
-        if self.arena is None:
-            return None
-        lado = int(lado_id if lado_id is not None else self.lado_jogador)
-        aliado = int(lado) == int(self.lado_jogador)
-        area_id = "A7" if aliado else "I3"
-        area = self.arena.obter_area_por_id(area_id)
-        if not area or not isinstance(area.get("rect"), pygame.Rect):
-            return self.arena.centro_area(area_id)
-        rect = area["rect"]
-        margem = float(self.MARGEM_ATOR_CAPTURA_TILES)
-        if aliado:
-            return (float(rect.left) - margem, float(rect.centery))
-        return (float(rect.right) + margem, float(rect.centery))
+        return self.renderizador.posicao_captura_lado_mundo(lado_id)
 
     def _preparar_atores_visuais_batalha(self):
-        tile = max(1, int(getattr(self.camera, "TilePx", 40) or 40)) if self.camera is not None else 40
-        self._ator_visual_player = Ator(nome_skin=self._skin_player_batalha(), posicao=(0.0, 0.0), escala_skin_tiles=self.ESCALA_ATOR_BATALHA, tile_px=tile)
-        npc_skin = self._skin_npc_batalha()
-        self._ator_visual_npc = Ator(nome_skin=npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=self.ESCALA_ATOR_BATALHA, tile_px=tile) if npc_skin else None
+        return self.renderizador.preparar_atores_visuais_batalha()
 
     def _skin_player_batalha(self):
-        if self.ator is not None and getattr(self.ator, "NomeSkin", None):
-            return str(getattr(self.ator, "NomeSkin"))
-        jogo = getattr(self, "jogo", None)
-        dados = getattr(jogo, "INFO", {}).get("PlayerDadosServer") if jogo is not None and isinstance(getattr(jogo, "INFO", None), dict) else {}
-        for chave in ("skin", "nome_skin", "NomeSkin"):
-            if isinstance(dados, dict) and dados.get(chave):
-                return str(dados.get(chave))
-        perfil = self.perfil_local()
-        skins = list(getattr(perfil, "SkinsLiberadas", []) or [])
-        return str(skins[0] if skins else "S1.png")
+        return self.renderizador.skin_player_batalha()
 
     def _skin_npc_batalha(self):
-        tipo = str(self.tipo_batalha or "").strip().lower()
-        if tipo not in {"treinador", "trainer"}:
-            return ""
-        ctx = dict(getattr(self, "contexto_batalha", {}) or {})
-        npc = ctx.get("npc_contexto") if isinstance(ctx.get("npc_contexto"), dict) else {}
-        estado = npc.get("estado") if isinstance(npc.get("estado"), dict) else {}
-        return str(npc.get("skin") or estado.get("skin") or "1.png")
+        return self.renderizador.skin_npc_batalha()
 
     def _desenhar_atores_visuais_batalha(self, surface):
-        tipo = str(self.tipo_batalha or "").strip().lower()
-        if tipo not in {"confronto", "treinador", "trainer"} or bool(self.modo_teste):
-            return
-        if self._ator_visual_player is None:
-            self._preparar_atores_visuais_batalha()
-        self._desenhar_ator_captura(surface, self._ator_visual_player, self.lado_jogador)
-        if tipo in {"treinador", "trainer"}:
-            self._desenhar_ator_captura(surface, self._ator_visual_npc, self.obter_lado_ia())
+        return self.renderizador.desenhar_atores_visuais_batalha(surface)
 
     def _desenhar_ator_captura(self, surface, ator, lado_id):
-        if ator is None or not hasattr(ator, "Desenhador"):
-            return
-        pos_mundo = self.posicao_captura_lado_mundo(lado_id)
-        pos_tela = self.posicao_captura_lado_tela(lado_id)
-        if pos_mundo is None or pos_tela is None:
-            return
-        if self.camera is not None and hasattr(ator, "set_tile_px"):
-            ator.set_tile_px(max(1, int(getattr(self.camera, "TilePx", 40) or 40)))
-        ator.definir_posicao(float(pos_mundo[0]), float(pos_mundo[1]))
-        mouse = pygame.mouse.get_pos()
-        dx = float(mouse[0]) - float(pos_tela[0])
-        dy = float(mouse[1]) - float(pos_tela[1])
-        if abs(dx) + abs(dy) > 0.001:
-            ator.definir_angulo_olhar((math.degrees(math.atan2(-dy, dx)) + 360.0) % 360.0)
-        ator.Desenhador.desenhar(surface, pos_tela, mouse_pos=mouse, angulo_graus=getattr(ator, "AnguloOlhar", 0.0), respiracao_tempo=self._respiracao_atores_batalha)
+        return self.renderizador.desenhar_ator_captura(surface, ator, lado_id)
 
     def nome_jogador_batalha(self):
         ator = self.ator_local()
@@ -564,79 +370,40 @@ class ControladorBatalha:
 
     @staticmethod
     def _resposta_aguardando(resposta):
-        return str((resposta or {}).get("status") or "").lower() == "ok" and str((resposta or {}).get("estado_batalha") or "").lower() == "aguardando"
+        return FluxoBatalha._resposta_aguardando(resposta)
 
     def receber_log(self, log):
-        rodada = int((log or {}).get("rodada") or self.rodada_atual or 1)
-        self.logs_por_rodada[rodada] = dict(log or {})
-        self.logs_visiveis_por_rodada[rodada] = []
-        self.replay_log_atual = {"ativo": True, "turno_atual": rodada, "tick_atual": 0, "tick_final": len(list((log or {}).get("historico") or []))}
-        self._ocultar_montagem_visual()
-        self.bloquear_input_durante_log()
-        self.estado_batalha = "animando_rodada"
-        if self.leitor_logs is not None:
-            self.leitor_logs.carregar_log(log)
-            self.leitor_logs.iniciar_leitura()
+        return self.fluxo.receber_log(log)
 
     def registrar_evento_visual(self, evento):
-        rodada = int((evento or {}).get("rodada") or (self.replay_log_atual or {}).get("turno_atual") or self.rodada_atual or 1)
-        self.logs_visiveis_por_rodada.setdefault(rodada, []).append(dict(evento or {}))
-        if isinstance(self.replay_log_atual, dict) and int(self.replay_log_atual.get("turno_atual", 0) or 0) == rodada:
-            self.replay_log_atual["tick_atual"] = len(self.logs_visiveis_por_rodada.get(rodada, []))
+        return self.fluxo.registrar_evento_visual(evento)
 
     def voltar_para_montagem(self):
-        self.desbloquear_input_apos_log()
-        self.estado_batalha = "montando_jogada"
-        self.timer_rodada = self.timer_rodada_max
-        if isinstance(self.replay_log_atual, dict):
-            self.replay_log_atual["ativo"] = False
+        return self.fluxo.voltar_para_montagem()
 
     def bloquear_input_durante_log(self):
-        self.limpar_ataque()
-        self.area_selecionada = None
-        self.pokemon_selecionado = None
+        return self.fluxo.bloquear_input_durante_log()
 
     def _ocultar_montagem_visual(self):
-        if self.montador_jogadas is not None:
-            self.montador_jogadas.limpar_jogada()
-            self.montador_jogadas.cancelar_previa()
-        hud = getattr(self, "hud", None)
-        painel = getattr(hud, "painel_acoes", None)
-        if painel is not None and hasattr(painel, "sincronizar"):
-            painel.sincronizar([], None)
+        return self.fluxo._ocultar_montagem_visual()
 
     def desbloquear_input_apos_log(self):
-        if isinstance(self.replay_log_atual, dict):
-            self.replay_log_atual["ativo"] = False
+        return self.fluxo.desbloquear_input_apos_log()
 
     def adicionar_log_local(self, texto):
-        self.logs_locais.append({"rodada": self.rodada_atual, "texto": str(texto or "")})
+        return self.fluxo.adicionar_log_local(texto)
 
     def limpar_jogada_confirmada(self):
-        if self.montador_jogadas is not None:
-            self.montador_jogadas.limpar_jogada()
-        self.atualizar_previsoes_hud()
+        return self.fluxo.limpar_jogada_confirmada()
 
     def atualizar_previsoes_hud(self):
-        if self.montador_jogadas is not None:
-            self.montador_jogadas.recalcular_previsao_energia()
+        return self.fluxo.atualizar_previsoes_hud()
 
     def iniciar_fuga(self):
-        if not self.fuga_disponivel():
-            self.adicionar_log_local("Fuga liberada apos 5 turnos." if str(self.tipo_batalha or "").strip().lower() == "servo" else "Fuga bloqueada nesta batalha.")
-            return
-        self._fuga_alpha = min(255.0, self._fuga_alpha + self._fuga_incremento_clique)
-        self.estado_batalha = "fugindo"
-        if self._fuga_alpha >= self._fuga_limite_saida:
-            if self.finalizador is not None:
-                self.finalizador.finalizar_por_fuga()
-            else:
-                self.solicitou_encerrar_batalha = True
+        return self.fluxo.iniciar_fuga()
 
     def _atualizar_fuga(self, dt: float):
-        dt = max(0.0, float(dt or 0.0))
-        if self._fuga_alpha > 0.0:
-            self._fuga_alpha = max(0.0, self._fuga_alpha - self._fuga_clarear_por_segundo * dt)
+        return self.fluxo.atualizar_fuga(dt)
 
     def definir_modo_teste(self, ativo: bool):
         self.modo_teste = bool(ativo)
@@ -652,29 +419,7 @@ class ControladorBatalha:
         return self.definir_modo_teste(not self.modo_teste)
 
     def estado_visualizador_logs(self):
-        ultimo = max([1, self.rodada_atual, *list(self.logs_por_rodada.keys() or [1]), *list(self.logs_visiveis_por_rodada.keys() or [1])])
-        return {
-            "ultimo_turno_com_log": ultimo,
-            "rodada_atual": self.rodada_atual,
-            "replay": dict(self.replay_log_atual or {"ativo": False}),
-        }
+        return self.fluxo.estado_visualizador_logs()
 
     def obter_log_publico(self, rodada):
-        alvo = int(rodada or 1)
-        if alvo in self.logs_visiveis_por_rodada:
-            return {"historico": [dict(e) for e in self.logs_visiveis_por_rodada.get(alvo, [])]}
-        historico = []
-        for idx, item in enumerate(self.logs_locais):
-            if int(item.get("rodada", 0) or 0) != alvo:
-                continue
-            historico.append(
-                {
-                    "tick": idx,
-                    "fase": "inicializacao",
-                    "evento": {
-                        "tipo": "acao",
-                        "texto": str(item.get("texto") or ""),
-                    },
-                }
-            )
-        return {"historico": historico}
+        return self.fluxo.obter_log_publico(rodada)

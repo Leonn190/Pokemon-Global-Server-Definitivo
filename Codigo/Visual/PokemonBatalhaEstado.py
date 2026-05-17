@@ -31,23 +31,26 @@ def _normalizar_nome(valor: object) -> str:
 
 
 ESTILOS_VISUAIS_EFEITOS: dict[str, dict[str, object]] = {
-    "envenenado": {"cor": (150, 70, 190), "intensidade": 0.55, "particulas": "sobe", "densidade": 0.65, "vel": 0.85},
-    "queimado": {"cor": (245, 116, 42), "intensidade": 0.68, "particulas": "sobe", "densidade": 1.35, "vel": 1.45},
-    "encharcado": {"cor": (34, 86, 170), "intensidade": 0.55, "particulas": "desce", "densidade": 0.75, "vel": 1.05, "idle": "lento"},
-    "encantado": {"cor": (238, 104, 185), "intensidade": 0.50, "particulas": "sobe", "densidade": 0.75, "vel": 0.92},
-    "intoxicado": {"cor": (150, 52, 194), "intensidade": 0.82, "particulas": "sobe", "densidade": 1.15, "vel": 1.10},
-    "congelado": {"cor": (145, 220, 255), "intensidade": 0.64, "particulas": None, "idle": "trava"},
-    "amaldicoado": {"cor": (8, 8, 12), "intensidade": 0.62, "particulas": None},
-    "amaldiçoado": {"cor": (8, 8, 12), "intensidade": 0.62, "particulas": None},
-    "abencoado": {"cor": (250, 250, 245), "intensidade": 0.48, "particulas": None},
-    "abençoado": {"cor": (250, 250, 245), "intensidade": 0.48, "particulas": None},
-    "energizado": {"cor": (245, 212, 54), "intensidade": 0.54, "particulas": None, "idle": "rapido"},
+    # Fallback Pygame e base conceitual dos shaders ModernGL. Mantem somente
+    # efeitos que alteram o visual/cor do Pokemon de forma persistente.
+    "envenenado": {"cor": (150, 70, 190), "intensidade": 0.64, "particulas": "sobe", "densidade": 0.82, "vel": 0.92},
+    "queimado": {"cor": (245, 116, 42), "intensidade": 0.78, "particulas": "sobe", "densidade": 1.48, "vel": 1.56},
+    "cauterizado": {"cor": (235, 92, 38), "intensidade": 0.62, "particulas": "sobe", "densidade": 1.05, "vel": 1.36},
+    "encharcado": {"cor": (34, 86, 170), "intensidade": 0.64, "particulas": "desce", "densidade": 0.94, "vel": 1.14, "idle": "lento"},
+    "encantado": {"cor": (238, 104, 185), "intensidade": 0.58, "particulas": "sobe", "densidade": 0.84, "vel": 0.96},
+    "intoxicado": {"cor": (150, 52, 194), "intensidade": 0.90, "particulas": "sobe", "densidade": 1.28, "vel": 1.14},
+    "congelado": {"cor": (145, 220, 255), "intensidade": 0.76, "particulas": None, "idle": "trava"},
+    "amaldicoado": {"cor": (22, 18, 34), "intensidade": 0.72, "particulas": None},
+    "amaldiçoado": {"cor": (22, 18, 34), "intensidade": 0.72, "particulas": None},
+    "abencoado": {"cor": (250, 250, 220), "intensidade": 0.56, "particulas": None},
+    "abençoado": {"cor": (250, 250, 220), "intensidade": 0.56, "particulas": None},
+    "energizado": {"cor": (245, 212, 54), "intensidade": 0.66, "particulas": None, "idle": "rapido"},
 }
 
 EFEITOS_TRAVAM_FRAME = {"congelado", "dormindo", "paralisado"}
 EFEITOS_IDLE_LENTO = {"encharcado"}
 EFEITOS_IDLE_RAPIDO = {"energizado"}
-EFEITO_VISUAL_INTENSIDADE_MULT = 0.45
+EFEITO_VISUAL_INTENSIDADE_MULT = 0.54
 
 
 class PokemonBatalhaEstado:

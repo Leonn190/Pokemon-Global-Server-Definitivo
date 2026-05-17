@@ -193,6 +193,7 @@ class CompositorModernGL:
 
 
     def _aplicar_uniformes_estados_batalha(self, estados_batalha) -> None:
+        # 12 alvos mantem custo baixo e cobre ate 6 Pokemon com 2 estados visuais fortes.
         max_estados = 12
         for i in range(max_estados):
             self._uniform(f"u_estado_batalha_{i}", (0.0, 0.0, 0.0, 0.0))

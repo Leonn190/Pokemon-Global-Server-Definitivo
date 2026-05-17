@@ -284,15 +284,37 @@ class CenaCombate:
 
     @staticmethod
     def _codigo_estado_shader(nome_normalizado):
+        # Apenas estados que mudam visual/cor do Pokemon de forma persistente.
+        # Nao entram aqui estados puramente mecanicos/movimento, como dormindo,
+        # confuso, flutuando, voando, furtivo, provocado etc.
         codigos = {
             "envenenado": 1,
             "queimado": 2,
+            "cauterizado": 2,
             "energizado": 3,
             "intoxicado": 4,
             "encharcado": 5,
             "abencoado": 6,
+            "congelado": 7,
+            "amaldicoado": 8,
+            "encantado": 9,
         }
         return codigos.get(str(nome_normalizado or ""), 0)
+
+    @staticmethod
+    def _prioridade_estado_shader(codigo):
+        prioridades = {
+            2: 100,  # queimado/cauterizado precisa ser bem perceptivel
+            7: 96,   # congelado muda a leitura do alvo
+            4: 94,   # intoxicado e mais pesado que veneno comum
+            1: 88,
+            5: 82,
+            3: 80,
+            8: 78,
+            6: 74,
+            9: 70,
+        }
+        return prioridades.get(int(codigo or 0), 0)
 
     def _coletar_estados_shader_batalha(self, tamanho_tela):
         controlador = getattr(self, "ControladorBatalha", None)
@@ -306,8 +328,9 @@ class CenaCombate:
             largura, altura = 1, 1
 
         saida = []
+        max_estados_shader = 12
         for pokemon in pokemons:
-            if len(saida) >= 12:
+            if len(saida) >= max_estados_shader:
                 break
             if not bool(getattr(pokemon, "Ativo", False)) or bool(getattr(pokemon, "EmReserva", False)):
                 continue
@@ -320,13 +343,16 @@ class CenaCombate:
             cy = float(rect.centery) / float(altura)
             if cx < -0.10 or cx > 1.10 or cy < -0.10 or cy > 1.10:
                 continue
-            raio = max(float(rect.width), float(rect.height)) / float(altura) * 0.68
-            raio = max(0.025, min(0.14, raio))
+
+            # Raio em UV vertical. Usa a altura para manter a escala consistente
+            # mesmo em telas wide. O shader corrige aspect no eixo X.
+            raio = max(float(rect.width), float(rect.height)) / float(altura) * 0.76
+            raio = max(0.030, min(0.165, raio))
+
             animacoes_entrada = getattr(pokemon, "AnimacoesEfeitos", {}) if isinstance(getattr(pokemon, "AnimacoesEfeitos", {}), dict) else {}
             animacoes_saida = getattr(pokemon, "EfeitosSaindo", {}) if isinstance(getattr(pokemon, "EfeitosSaindo", {}), dict) else {}
+            efeitos_preparados = []
             for efeito in list(getattr(pokemon, "EfeitosFormais", []) or []):
-                if len(saida) >= 12:
-                    break
                 if not isinstance(efeito, dict):
                     continue
                 nome_norm = self._normalizar_estado_shader(efeito.get("code") or efeito.get("nome"))
@@ -335,14 +361,20 @@ class CenaCombate:
                     continue
                 entrada = max(0.0, min(1.0, float(animacoes_entrada.get(nome_norm, 1.0) or 0.0)))
                 saida_anim = max(0.0, min(1.0, float(animacoes_saida.get(nome_norm, 0.0) or 0.0)))
-                power = (0.50 + 0.50 * entrada) * (1.0 - saida_anim)
-                if codigo == 4:
-                    power *= 1.10
-                elif codigo in (5, 6):
-                    power *= 0.86
-                power = max(0.0, min(1.0, power * 0.82))
+                power = (0.54 + 0.46 * entrada) * (1.0 - saida_anim)
+                if codigo in (2, 4, 7):
+                    power *= 1.12
+                elif codigo in (5, 6, 9):
+                    power *= 0.92
+                power = max(0.0, min(1.0, power * 0.96))
                 if power <= 0.001:
                     continue
+                efeitos_preparados.append((self._prioridade_estado_shader(codigo), codigo, power, nome_norm))
+
+            efeitos_preparados.sort(reverse=True)
+            for _, codigo, power, _nome_norm in efeitos_preparados:
+                if len(saida) >= max_estados_shader:
+                    break
                 saida.append({"pos_uv": (cx, cy), "radius": raio, "tipo": codigo, "power": power})
         return saida
 

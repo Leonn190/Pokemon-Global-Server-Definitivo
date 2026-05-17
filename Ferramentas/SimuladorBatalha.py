@@ -23,24 +23,8 @@ from Servidor.Gerais.LoaderTabelas import carregar_csv_dict
 from Servidor.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
-PERMITIR_ATAQUES_FORA_DA_LISTA_OBRIGATORIA = False
+PERMITIR_ATAQUES_FORA_DA_LISTA_OBRIGATORIA = True
 ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
-    "Som Atordoante",
-    "Voz Desarmadora",
-    "Grito",
-    "Ataque Hipersônico",
-    "Canto Prolongador",
-    "Melodia Anticlimática",
-    "Volume Máximo",
-    "Flutuante",
-    "Flutuar",
-    "Raio Cósmico",
-    "Gravidade",
-    "Estrela Cadente",
-    "Radiação",
-    "Dança Gravitacional",
-    "Supernova",
-    "Explosão Lunar",
 
 ]
 

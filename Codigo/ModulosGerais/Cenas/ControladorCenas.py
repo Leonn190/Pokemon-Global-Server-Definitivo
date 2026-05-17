@@ -343,11 +343,18 @@ class ControladorCenas:
         meta = getattr(leitor, "MetaMundo", {}) if leitor is not None else {}
         layout_meta = meta.get("layout_dungeon") if isinstance(meta, dict) else {}
         layout_objetos = getattr(objetos, "LayoutDungeonAtual", {}) if objetos is not None else {}
-        chaves = ("nome", "nome_dungeon", "dungeon_nome", "titulo", "id", "dungeon_id")
+        chaves_nome = ("nome", "nome_dungeon", "dungeon_nome", "titulo")
+        chaves_id = ("id", "dungeon_id")
+        layout_meta = layout_meta if isinstance(layout_meta, dict) else {}
+        layout_objetos = layout_objetos if isinstance(layout_objetos, dict) else {}
         nome = (
-            self._primeiro_valor_dict(layout_meta if isinstance(layout_meta, dict) else {}, chaves)
-            or self._primeiro_valor_dict(layout_objetos if isinstance(layout_objetos, dict) else {}, chaves)
+            self._primeiro_valor_dict(layout_meta, chaves_nome)
+            or self._primeiro_valor_dict(layout_objetos, chaves_nome)
         )
+        if not nome:
+            dungeon_id = self._texto_limpo(next((layout.get(chave) for layout in (layout_meta, layout_objetos) for chave in chaves_id if self._texto_limpo(layout.get(chave))), ""))
+            if dungeon_id.isdigit():
+                nome = f"#{dungeon_id}"
         return f"Explorando a dungeon {nome}" if nome else "Explorando uma dungeon"
 
     def _resolver_discord_estadio(self, objetos):
@@ -397,7 +404,8 @@ class ControladorCenas:
         elif getattr(self.Cena, "TelaAtual", None) == "Mapa":
             state = "Vendo o mapa"
         else:
-            state = f"Explorando o bioma {self._descricao_bioma(tile_mundo_atual(self.Cena))}"
+            tile = tile_mundo_atual(self.Cena)
+            state = f"Explorando o bioma {self._descricao_bioma(tile)}" if tile is not None else "Explorando o mundo"
 
         return {"details": "Explorando mundo", "state": state, "local": "mundo"}
 
@@ -424,7 +432,8 @@ class ControladorCenas:
             else:
                 state = f"Lutando com {nome}" if nome else "Confronto de dungeon"
         else:
-            state = self._texto_confronto_bioma(contexto.get("tile_bioma"))
+            tile_bioma = contexto.get("tile_bioma")
+            state = self._texto_confronto_bioma(tile_bioma) if tile_bioma not in (None, "") else "Confronto selvagem"
 
         return {"details": "Em combate", "state": state, "local": "combate"}
 

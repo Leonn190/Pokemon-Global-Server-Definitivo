@@ -73,7 +73,7 @@ class DiscordPresence:
     def _state_padrao(local):
         return {
             "menu": "Menu principal",
-            "mundo": "Explorando o bioma Vale",
+            "mundo": "Explorando o mundo",
             "combate": "Confronto selvagem",
             "login": "Tela de login",
             "carregamento": "Preparando o jogo",
@@ -106,7 +106,7 @@ class DiscordPresence:
         if texto == DiscordPresence._details_padrao(local):
             return DiscordPresence._state_padrao(local)
         if local == "mundo" and texto == "Explorando o mundo":
-            return "Explorando o bioma Vale"
+            return "Explorando o mundo"
         return texto
 
     def atualizar(self, local="menu", acao=None, details=None, state=None):

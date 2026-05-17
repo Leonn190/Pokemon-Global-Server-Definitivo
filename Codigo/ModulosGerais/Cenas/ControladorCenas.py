@@ -4,16 +4,19 @@ from Codigo.ModulosGerais.Cenas.CenaCombate import CenaCombate
 from Codigo.ModulosGerais.Cenas.CenaCarregamento import CenaCarregamento
 from Codigo.ModulosGerais.Cenas.CenaLogin import CenaLogin
 import pygame
+import re
 import time
 import threading
 import shutil
 from pathlib import Path
 
-from Codigo.ModulosGerais.Sonoridades import SISTEMA_MUSICAS
+from Codigo.ModulosGerais.Auxiliares import bioma_por_tile
+from Codigo.ModulosGerais.Sonoridades import SISTEMA_MUSICAS, tile_mundo_atual
 from Codigo.ModulosGerais.EfeitosTela import aplicar_claridade, Escurecer
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosGerais.Discord import DiscordPresence
 from Codigo.Telas.Subtelas.Subtela import GerenciadorSubtelas
+from Codigo.Telas.Subtelas.SubtelaDialogo import SubtelaDialogo
 from Codigo.ModulosGerais.PipelineGrafica import PipelineGrafica
 
 class ControladorCenas:
@@ -209,24 +212,246 @@ class ControladorCenas:
 
         self.Encerrar()
 
+    @staticmethod
+    def _texto_limpo(valor, fallback=""):
+        texto = str(valor or "").strip()
+        texto = " ".join(texto.replace("\n", " ").replace("\r", " ").split())
+        return texto or str(fallback or "").strip()
+
+    @staticmethod
+    def _titulo_simples(valor):
+        texto = ControladorCenas._texto_limpo(valor)
+        if not texto:
+            return ""
+        texto = re.sub(r"[_\-]+", " ", texto)
+        texto = re.sub(r"(?<=[a-záàâãéêíóôõúç])(?=[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ])", " ", texto)
+        texto = " ".join(texto.split())
+        return texto[:1].upper() + texto[1:].lower() if texto else ""
+
+    @staticmethod
+    def _primeiro_valor_dict(dados, chaves):
+        if not isinstance(dados, dict):
+            return ""
+        for chave in chaves:
+            valor = dados.get(chave)
+            texto = ControladorCenas._texto_limpo(valor)
+            if texto and not texto.isdigit():
+                return texto
+        mapa = {str(k or "").strip().lower(): v for k, v in dados.items()}
+        for chave in chaves:
+            valor = mapa.get(str(chave or "").strip().lower())
+            texto = ControladorCenas._texto_limpo(valor)
+            if texto and not texto.isdigit():
+                return texto
+        return ""
+
+    @staticmethod
+    def _inteiro_seguro(valor, fallback=0):
+        try:
+            return int(valor)
+        except (TypeError, ValueError):
+            return int(fallback or 0)
+
+    @staticmethod
+    def _nome_pokemon_payload(payload):
+        if not isinstance(payload, dict):
+            return ""
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        return (
+            ControladorCenas._primeiro_valor_dict(payload, ("pokemon_boss", "nome", "Nome", "especie", "Especie"))
+            or ControladorCenas._primeiro_valor_dict(estado, ("pokemon_boss", "nome", "Nome", "especie", "Especie"))
+        )
+
+    @staticmethod
+    def _nome_npc_dialogo(subtela):
+        return ControladorCenas._texto_limpo(getattr(subtela, "_npc_nome", ""), "")
+
+    @staticmethod
+    def _descricao_bioma(tile):
+        bioma = bioma_por_tile(tile)
+        return {
+            "AguaFunda": "Água",
+            "AguaRasa": "Água",
+            "Magico": "Mágico",
+            "Pantano": "Pântano",
+        }.get(bioma, bioma or "Vale")
+
+    @staticmethod
+    def _texto_confronto_bioma(tile):
+        bioma = bioma_por_tile(tile)
+        return {
+            "Floresta": "Confronto na floresta",
+            "Praia": "Confronto na praia",
+            "Neve": "Confronto na neve",
+            "Deserto": "Confronto no deserto",
+            "Vale": "Confronto no vale",
+            "Vulcão": "Confronto no vulcão",
+            "Pantano": "Confronto no pântano",
+            "Magico": "Confronto no bioma mágico",
+            "AguaFunda": "Confronto na água",
+            "AguaRasa": "Confronto na água",
+        }.get(bioma, "Confronto selvagem")
+
+    @staticmethod
+    def _tipo_estadio_formatado(valor):
+        texto = ControladorCenas._texto_limpo(valor)
+        if not texto:
+            return ""
+        chave = texto.strip().lower().replace("_", " ").replace("-", " ")
+        chave = " ".join(chave.split())
+        return {
+            "agua": "Água",
+            "cosmico": "Cósmico",
+            "dragao": "Dragão",
+            "eletrico": "Elétrico",
+            "fada": "Fada",
+            "fantasma": "Fantasma",
+            "fogo": "Fogo",
+            "gelo": "Gelo",
+            "inseto": "Inseto",
+            "lutador": "Lutador",
+            "metal": "Metal",
+            "normal": "Normal",
+            "pedra": "Pedra",
+            "planta": "Planta",
+            "psiquico": "Psíquico",
+            "sombrio": "Sombrio",
+            "sonoro": "Sonoro",
+            "terrestre": "Terrestre",
+            "terra": "Terrestre",
+            "venenoso": "Venenoso",
+            "voador": "Voador",
+        }.get(chave, ControladorCenas._titulo_simples(texto))
+
+    def _resolver_discord_menu(self):
+        tela = str(getattr(self.Cena, "TelaAtual", "MenuPrincipal") or "MenuPrincipal")
+        estados = {
+            "MenuPrincipal": "Menu principal",
+            "Servers": "Tela de servidores",
+            "Config": "Configurações",
+            "Operador": "Painel do operador",
+        }
+        return {
+            "details": "No menu",
+            "state": estados.get(tela, f"Tela {self._titulo_simples(tela) or 'do menu'}"),
+            "local": "menu",
+        }
+
+    def _resolver_discord_dungeon(self, objetos):
+        controlador = getattr(self.Cena, "ControladorMundo", None)
+        leitor = getattr(controlador, "Leitor", None)
+        meta = getattr(leitor, "MetaMundo", {}) if leitor is not None else {}
+        layout_meta = meta.get("layout_dungeon") if isinstance(meta, dict) else {}
+        layout_objetos = getattr(objetos, "LayoutDungeonAtual", {}) if objetos is not None else {}
+        chaves = ("nome", "nome_dungeon", "dungeon_nome", "titulo", "id", "dungeon_id")
+        nome = (
+            self._primeiro_valor_dict(layout_meta if isinstance(layout_meta, dict) else {}, chaves)
+            or self._primeiro_valor_dict(layout_objetos if isinstance(layout_objetos, dict) else {}, chaves)
+        )
+        return f"Explorando a dungeon {nome}" if nome else "Explorando uma dungeon"
+
+    def _resolver_discord_estadio(self, objetos):
+        player = getattr(getattr(self.Cena, "ControladorMundo", None), "player_local", None)
+        id_player = 0
+        if objetos is not None and callable(getattr(objetos, "id_player_local", None)):
+            id_player = self._inteiro_seguro(objetos.id_player_local())
+        if id_player <= 0:
+            id_player = self._inteiro_seguro(getattr(player, "Id", 0))
+
+        payload_player = objetos.ObjetosPorId.get(id_player, {}) if objetos is not None and isinstance(getattr(objetos, "ObjetosPorId", None), dict) else {}
+        estado_player = payload_player.get("estado") if isinstance(payload_player.get("estado"), dict) else {}
+        estadio_id = self._inteiro_seguro(estado_player.get("estadio_atual_id", payload_player.get("estadio_atual_id", 0)))
+        estadio = objetos.EstadiosPorId.get(estadio_id, {}) if objetos is not None and isinstance(getattr(objetos, "EstadiosPorId", None), dict) else {}
+        estado_estadio = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
+
+        nome = (
+            self._primeiro_valor_dict(estadio, ("nome", "nome_estadio"))
+            or self._primeiro_valor_dict(estado_estadio, ("nome", "nome_estadio"))
+        )
+        if nome:
+            return f"Explorando o estádio {nome}"
+
+        tipo = (
+            self._primeiro_valor_dict(estadio, ("tipo_estadio", "estadio_tipo", "tipo"))
+            or self._primeiro_valor_dict(estado_estadio, ("tipo_estadio", "estadio_tipo", "tipo"))
+        )
+        tipo = self._tipo_estadio_formatado(tipo)
+        return f"Explorando o estádio de {tipo}" if tipo else "Explorando um estádio"
+
+    def _resolver_discord_mundo(self):
+        dialogo = self.GerenciadorSubtelas.obter_por_tipo(SubtelaDialogo)
+        nome_dialogo = self._nome_npc_dialogo(dialogo) if dialogo is not None else ""
+        if nome_dialogo:
+            return {"details": "Explorando mundo", "state": f"Conversando com {nome_dialogo}", "local": "mundo"}
+
+        controlador = getattr(self.Cena, "ControladorMundo", None)
+        objetos = getattr(controlador, "Objetos", None) if controlador is not None else None
+        dimensao = str(objetos.dimensao_atual_client() or "Mundo") if objetos is not None and callable(getattr(objetos, "dimensao_atual_client", None)) else "Mundo"
+
+        if dimensao.startswith("Dungeon_"):
+            state = self._resolver_discord_dungeon(objetos)
+        elif dimensao.startswith("Estadio"):
+            state = self._resolver_discord_estadio(objetos)
+        elif getattr(self.Cena, "TelaAtual", None) == "Config":
+            state = "Configurações"
+        elif getattr(self.Cena, "TelaAtual", None) == "Mapa":
+            state = "Vendo o mapa"
+        else:
+            state = f"Explorando o bioma {self._descricao_bioma(tile_mundo_atual(self.Cena))}"
+
+        return {"details": "Explorando mundo", "state": state, "local": "mundo"}
+
+    def _resolver_discord_combate(self):
+        contexto = self.INFO.get("CombateContexto") if isinstance(self.INFO.get("CombateContexto"), dict) else {}
+        tipo = str(contexto.get("tipo_batalha") or contexto.get("tipo") or "").strip().lower()
+        npc = contexto.get("npc_contexto") if isinstance(contexto.get("npc_contexto"), dict) else {}
+
+        if tipo in {"treinador", "trainer"} or npc:
+            nome = (
+                self._primeiro_valor_dict(npc, ("npc_nome", "nome", "Nome"))
+                or self._primeiro_valor_dict(contexto, ("npc_nome", "nome_treinador", "treinador_nome"))
+            )
+            state = f"Lutando com {nome}" if nome else "Batalha contra treinador"
+        elif tipo in {"boss", "servo"}:
+            nome = self._nome_pokemon_payload(contexto.get("pokemon_colisao") if isinstance(contexto.get("pokemon_colisao"), dict) else {})
+            if not nome:
+                for pokemon in list(contexto.get("pokemons_inimigo") or []):
+                    nome = self._nome_pokemon_payload(pokemon)
+                    if nome:
+                        break
+            if tipo == "boss":
+                state = f"Lutando com {nome}" if nome else "Batalha contra boss"
+            else:
+                state = f"Lutando com {nome}" if nome else "Confronto de dungeon"
+        else:
+            state = self._texto_confronto_bioma(contexto.get("tile_bioma"))
+
+        return {"details": "Em combate", "state": state, "local": "combate"}
+
+    def _resolver_discord_presenca(self):
+        cena_id = str(getattr(self.Cena, "ID", "Menu") or "Menu")
+        if cena_id == "Login":
+            return {"details": "Fazendo login", "state": "Tela de login", "local": "login"}
+        if cena_id == "Carregamento":
+            return {"details": "Carregando", "state": "Preparando o jogo", "local": "carregamento"}
+        if cena_id == "Menu":
+            return self._resolver_discord_menu()
+        if cena_id == "Mundo":
+            return self._resolver_discord_mundo()
+        if cena_id == "Combate":
+            return self._resolver_discord_combate()
+        return {"details": "No menu", "state": f"Tela {self._titulo_simples(cena_id) or 'do jogo'}", "local": "menu"}
+
     def _atualizar_discord_presenca(self):
         if self.Saindo or self.Cena is None:
             self.Discord.desconectar()
             return
 
-        cena_id = str(getattr(self.Cena, "ID", "Menu") or "Menu")
-        if cena_id == "Mundo":
-            local = "mundo"
-            if getattr(self.Cena, "TelaAtual", None) == "Config":
-                acao = "No mundo (configurações)"
-            else:
-                acao = "Explorando o mundo"
-        else:
-            local = "menu"
-            tela = str(getattr(self.Cena, "TelaAtual", "MenuPrincipal"))
-            acao = f"No menu ({tela})"
-
-        self.Discord.atualizar(local=local, acao=acao)
+        try:
+            presenca = self._resolver_discord_presenca()
+        except Exception:
+            presenca = {"details": "No menu", "state": "Menu principal", "local": "menu"}
+        self.Discord.atualizar(**presenca)
 
     def AplicarClaridadeGlobal(self, tela=None):
         bloquear = getattr(self.Cena, "bloquear_claridade_global", None)

@@ -54,17 +54,71 @@ class DiscordPresence:
             self._conectado = False
             return False
 
-    def atualizar(self, local="menu", acao="No menu"):
+    @staticmethod
+    def _texto(valor, fallback="Jogando"):
+        texto = str(valor or "").strip()
+        return texto or str(fallback or "Jogando")
+
+    @staticmethod
+    def _details_padrao(local):
+        return {
+            "menu": "No menu",
+            "mundo": "Explorando mundo",
+            "combate": "Em combate",
+            "login": "Fazendo login",
+            "carregamento": "Carregando",
+        }.get(local, "Jogando")
+
+    @staticmethod
+    def _state_padrao(local):
+        return {
+            "menu": "Menu principal",
+            "mundo": "Explorando o bioma Vale",
+            "combate": "Confronto selvagem",
+            "login": "Tela de login",
+            "carregamento": "Preparando o jogo",
+        }.get(local, "Jogando")
+
+    @staticmethod
+    def _small_text(local):
+        return {
+            "menu": "Menu",
+            "mundo": "Mundo",
+            "combate": "Combate",
+            "login": "Login",
+            "carregamento": "Carregamento",
+        }.get(local, "Jogo")
+
+    @staticmethod
+    def _acao_legada(local, acao):
+        if acao is None:
+            return DiscordPresence._state_padrao(local)
+        texto = DiscordPresence._texto(acao, "Jogando")
+        if local == "menu" and texto.startswith("No menu (") and texto.endswith(")"):
+            tela = texto[len("No menu ("):-1].strip()
+            mapa = {
+                "MenuPrincipal": "Menu principal",
+                "Servers": "Tela de servidores",
+                "Config": "Configurações",
+                "Operador": "Painel do operador",
+            }
+            return mapa.get(tela, tela or "Menu principal")
+        if texto == DiscordPresence._details_padrao(local):
+            return DiscordPresence._state_padrao(local)
+        if local == "mundo" and texto == "Explorando o mundo":
+            return "Explorando o bioma Vale"
+        return texto
+
+    def atualizar(self, local="menu", acao=None, details=None, state=None):
         local = str(local or "menu").strip().lower()
-        acao = str(acao or "Jogando")
+        details = self._texto(details, self._details_padrao(local))
+        state = self._texto(state if state is not None else self._acao_legada(local, acao), "Jogando")
 
         if not self.conectar():
             return False
 
-        details = "No menu" if local == "menu" else "No mundo"
-        state = acao
         large_text = "Pokemon Global Server"
-        small_text = "Menu" if local == "menu" else "Mundo"
+        small_text = self._small_text(local)
         payload = {
             "details": details,
             "state": state,

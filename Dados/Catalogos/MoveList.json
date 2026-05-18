@@ -1,0 +1,388 @@
+{
+  "Bulbasaur": {
+    "regulares": {
+      "Investida": 2,
+      "Tiro de Semente": 3,
+      "Chicote de Vinhas": 3,
+      "Absorver": 2,
+      "Síntese": 2,
+      "Raizes": 2,
+      "Crescimento": 2,
+      "Envenenar": 1,
+      "Farpa": 1
+    },
+    "artificiais": {
+      "Casco Vivo": 2,
+      "Trevo da Sorte": 1,
+      "Dreno": 2,
+      "Seiva Misteriosa": 1,
+      "Contaminar": 1,
+      "Ácido": 1,
+      "Bomba de Sementes": 1
+    }
+  },
+  "Ivysaur": {
+    "regulares": {
+      "Investida": 2,
+      "Tiro de Semente": 3,
+      "Chicote de Vinhas": 3,
+      "Absorver": 2,
+      "Síntese": 2,
+      "Dreno": 2,
+      "Raizes": 2,
+      "Crescimento": 2,
+      "Envenenar": 1,
+      "Farpa": 1,
+      "Folha Navalha": 1,
+      "Bomba de Sementes": 1
+    },
+    "artificiais": {
+      "Casco Vivo": 2,
+      "Trevo da Sorte": 1,
+      "Seiva Misteriosa": 1,
+      "Fumaça Tóxica": 1,
+      "Ácido": 1,
+      "Contaminar": 1,
+      "Dança das Pétalas": 1,
+      "Flor Mágica": 1,
+      "Murchar": 1
+    }
+  },
+  "Venusaur": {
+    "regulares": {
+      "Investida": 1,
+      "Tiro de Semente": 2,
+      "Chicote de Vinhas": 3,
+      "Absorver": 2,
+      "Síntese": 2,
+      "Dreno": 2,
+      "Raizes": 2,
+      "Crescimento": 2,
+      "Folha Navalha": 2,
+      "Bomba de Sementes": 2,
+      "Seiva Misteriosa": 1,
+      "Dança das Pétalas": 1,
+      "Raio Solar": 1,
+      "Envenenar": 1,
+      "Bomba de Lodo": 1
+    },
+    "artificiais": {
+      "Casco Vivo": 2,
+      "Trevo da Sorte": 1,
+      "Flor Mágica": 1,
+      "Murchar": 1,
+      "Fumaça Tóxica": 1,
+      "Contaminar": 1,
+      "Gás Venenoso": 1,
+      "Gás Corrosivo": 1,
+      "Vórtex Venenoso": 1,
+      "Poço": 1,
+      "Extração": 1,
+      "Dança do Sol": 1,
+      "Poder Ancião": 1
+    }
+  },
+  "Charmander": {
+    "regulares": {
+      "Arranhar": 3,
+      "Foguinho": 3,
+      "Queimar": 2,
+      "Chama Interior": 2,
+      "Ataque Rápido": 2,
+      "Investida Flamejante": 2,
+      "Labareda": 2,
+      "Bola de Fogo": 1,
+      "Aquecer": 1
+    },
+    "artificiais": {
+      "Estouro Solar": 1,
+      "Dança do Sol": 1,
+      "Ferver": 1,
+      "Superaquecer": 1,
+      "Estocada": 1,
+      "Enraivecer": 1,
+      "Garra do Dragão": 1
+    }
+  },
+  "Charmeleon": {
+    "regulares": {
+      "Arranhar": 2,
+      "Foguinho": 3,
+      "Queimar": 2,
+      "Chama Interior": 2,
+      "Ataque Rápido": 2,
+      "Investida Flamejante": 2,
+      "Labareda": 2,
+      "Bola de Fogo": 2,
+      "Rugido": 1,
+      "Garra do Dragão": 1,
+      "Estouro Solar": 1
+    },
+    "artificiais": {
+      "Aquecer": 1,
+      "Ferver": 1,
+      "Superaquecer": 1,
+      "Laser de Fogo": 1,
+      "Raio de Fogo": 1,
+      "Sopro do Dragão": 1,
+      "Investida Dracônica": 1,
+      "Dança do Sol": 1,
+      "Erupção": 1
+    }
+  },
+  "Charizard": {
+    "regulares": {
+      "Arranhar": 1,
+      "Foguinho": 2,
+      "Queimar": 1,
+      "Chama Interior": 2,
+      "Investida Flamejante": 2,
+      "Labareda": 2,
+      "Bola de Fogo": 2,
+      "Estouro Solar": 1,
+      "Ondas de Calor": 1,
+      "Laser de Fogo": 1,
+      "Raio de Fogo": 1,
+      "Garra do Dragão": 2,
+      "Sopro do Dragão": 1,
+      "Voar": 2,
+      "Golpe de Asa": 2
+    },
+    "artificiais": {
+      "Dança do Sol": 1,
+      "Inferno": 1,
+      "Fluxo Infernal": 1,
+      "Queimadura Eterna": 1,
+      "Jato de Lava": 1,
+      "Erupção": 1,
+      "Explosão Ardente": 1,
+      "Tornado": 1,
+      "Ciclone": 1,
+      "Ataque Aéreo": 1,
+      "Rasante": 1,
+      "Bico Broca": 1,
+      "Investida Dracônica": 1,
+      "Sem Fraquezas": 1,
+      "Hiper Raio": 1,
+      "Bola Climática": 1
+    }
+  },
+  "Squirtle": {
+    "regulares": {
+      "Investida": 2,
+      "Bola de Agua": 3,
+      "Gota Pesada": 2,
+      "Bolhas": 3,
+      "Jato de Água": 2,
+      "Golpe de Concha": 2,
+      "Proteger": 2,
+      "Recarga": 1,
+      "Correnteza": 1
+    },
+    "artificiais": {
+      "Esguicho Suave": 2,
+      "Mergulho": 1,
+      "Cachoeira": 1,
+      "Pele Aquática": 1,
+      "Martelo Caranguejo": 1,
+      "Dança da Chuva": 1,
+      "Águas Mágicas": 1
+    }
+  },
+  "Wartortle": {
+    "regulares": {
+      "Investida": 1,
+      "Bola de Agua": 3,
+      "Gota Pesada": 2,
+      "Bolhas": 2,
+      "Jato de Água": 2,
+      "Jato Duplo": 2,
+      "Golpe de Concha": 2,
+      "Cachoeira": 1,
+      "Mergulho": 1,
+      "Proteger": 2,
+      "Correnteza": 1,
+      "Torrente Vital": 1
+    },
+    "artificiais": {
+      "Esguicho Suave": 2,
+      "Jato Triplo": 1,
+      "Surfar": 1,
+      "Lança de Água": 1,
+      "Redemoinho": 1,
+      "Fonte Termal": 1,
+      "Dança da Chuva": 1,
+      "Reservatório": 1,
+      "Controle do Oceano": 1
+    }
+  },
+  "Blastoise": {
+    "regulares": {
+      "Bola de Agua": 2,
+      "Gota Pesada": 2,
+      "Bolhas": 1,
+      "Jato de Água": 2,
+      "Jato Duplo": 2,
+      "Jato Triplo": 1,
+      "Golpe de Concha": 2,
+      "Cachoeira": 1,
+      "Surfar": 2,
+      "Lança de Água": 1,
+      "Torrente Vital": 1,
+      "Redemoinho": 1,
+      "Pele Aquática": 1,
+      "Proteger": 2,
+      "Dança da Chuva": 1
+    },
+    "artificiais": {
+      "Esguicho Suave": 1,
+      "Esfera Hidrocaótica": 1,
+      "Gêiser": 1,
+      "Dilúvio": 1,
+      "Tsunami": 1,
+      "Golpe Abissal": 1,
+      "Martelo Caranguejo": 1,
+      "Reservatório": 1,
+      "Drenagem Hidrica": 1,
+      "Controle do Oceano": 1,
+      "Bola Climática": 1,
+      "Hiper Raio": 1,
+      "Impacto Rochoso": 1
+    }
+  },
+  "Caterpie": {
+    "regulares": {
+      "Investida": 3,
+      "Seda": 3,
+      "Mordida de Inseto": 2,
+      "Regeneração": 2,
+      "Teia Pegajosa": 2,
+      "Recarga": 1,
+      "Carcomer": 1
+    },
+    "artificiais": {
+      "Casulo Improvisado": 1,
+      "Doação de Energia": 1,
+      "Infestação": 1,
+      "Tiro de Semente": 1,
+      "Proteger": 1
+    }
+  },
+  "Metapod": {
+    "regulares": {
+      "Investida": 2,
+      "Seda": 2,
+      "Casulo Improvisado": 3,
+      "Regeneração": 2,
+      "Proteger": 3,
+      "Tankar": 1,
+      "Teia Pegajosa": 1
+    },
+    "artificiais": {
+      "Doação de Energia": 1,
+      "Casca de Pedra": 1,
+      "Barragem Rochosa": 1,
+      "Inflar": 1,
+      "Mordida de Inseto": 1
+    }
+  },
+  "Butterfree": {
+    "regulares": {
+      "Seda": 2,
+      "Regeneração": 2,
+      "Doação de Energia": 1,
+      "Teia Pegajosa": 2,
+      "Infestação": 1,
+      "Ventinho": 3,
+      "Voar": 2,
+      "Voo Alto": 2,
+      "Tornadinho Amigo": 1,
+      "Vendaval": 1,
+      "Golpe de Asa": 1,
+      "Confusão": 2,
+      "Super Meditação": 1,
+      "Barragem de Vento": 1
+    },
+    "artificiais": {
+      "Ciclone": 1,
+      "Tornado": 1,
+      "Voador": 1,
+      "Ataque Aéreo": 1,
+      "Rasante": 1,
+      "Olho Que Tudo Vê": 1,
+      "Raio Psíquico": 1,
+      "Ultrapsíquico": 1,
+      "Transferência Mental": 1,
+      "Dreno": 1
+    }
+  },
+  "Weedle": {
+    "regulares": {
+      "Investida": 2,
+      "Farpa": 3,
+      "Envenenar": 3,
+      "Seda": 2,
+      "Mordida de Inseto": 2,
+      "Carcomer": 1,
+      "Teia Pegajosa": 1
+    },
+    "artificiais": {
+      "Ácido": 1,
+      "Fumaça Tóxica": 1,
+      "Regeneração": 1,
+      "Infestação": 1,
+      "Armadura Mole": 1
+    }
+  },
+  "Kakuna": {
+    "regulares": {
+      "Farpa": 2,
+      "Envenenar": 3,
+      "Seda": 1,
+      "Casulo Improvisado": 3,
+      "Regeneração": 2,
+      "Proteger": 3,
+      "Tankar": 1,
+      "Teia Pegajosa": 1
+    },
+    "artificiais": {
+      "Ácido": 1,
+      "Fumaça Tóxica": 1,
+      "Armadura Mole": 1,
+      "Casca de Pedra": 1,
+      "Doação de Energia": 1,
+      "Mordida de Inseto": 1
+    }
+  },
+  "Beedrill": {
+    "regulares": {
+      "Farpa": 2,
+      "Envenenar": 2,
+      "Ácido": 1,
+      "Fumaça Tóxica": 1,
+      "Bomba de Lodo": 1,
+      "Mordida de Inseto": 2,
+      "Carcomer": 1,
+      "Corte Serrilhado": 2,
+      "Tesoura X": 1,
+      "Infestação": 1,
+      "Devorar": 1,
+      "Voar": 1,
+      "Golpe de Asa": 1,
+      "Ataque Aéreo": 1
+    },
+    "artificiais": {
+      "Vórtex Venenoso": 1,
+      "Extração": 1,
+      "Gás Venenoso": 1,
+      "Gás Corrosivo": 1,
+      "Armadura Mole": 1,
+      "Canibalismo Filial": 1,
+      "Voo Estratégico": 1,
+      "Rasante": 1,
+      "Tiro de Penas": 1,
+      "Ás dos Ares": 1,
+      "Voador": 1
+    }
+  }
+}

@@ -11,135 +11,137 @@ Elixir,Pequeno frasco que concede experiência extra ao seu Pokémon.,Pequeno fr
 Super Elixir,Uma dose reforçada de experiência para acelerar o treino.,"Dose reforçada de experiência que concede 400 pontos ao Pokémon. Ajuda bastante no treinamento de criaturas de nível baixo ou médio, reduzindo o tempo necessário para evoluir.",400,2,s,15,s,50,poção,10
 Hiper Elixir,Um concentrado de experiência que impulsiona rapidamente o nível.,Concentrado poderoso que concede 1600 pontos de experiência ao Pokémon. É indicado para fortalecer rapidamente um companheiro importante ou aproximá-lo do próximo nível.,1600,4,s,35,s,50,poção,11
 Mega Elixir,A carga máxima de experiência em uma única dose.,Elixir extremamente forte que concede 5000 pontos de experiência em uma única dose. É um recurso valioso para acelerar muito o crescimento de um Pokémon escolhido.,5000,6,s,70,s,50,poção,12
-Pokeball,A esfera clássica para capturar Pokémon comuns.,"Esfera clássica de captura, simples e confiável contra Pokémon comuns. Possui 10 de poder de captura, funcionando melhor em criaturas fracas, tranquilas ou com pouca resistência.",10,1,s,4,s,50,bola,13
-Greatball,Esfera aprimorada com maior taxa de captura.,"Esfera aprimorada, criada para oferecer uma chance maior que a Pokeball comum. Possui 25 de poder de captura, sendo boa para Pokémon medianos ou um pouco mais difíceis.",25,2,s,10,s,50,bola,14
-Ultraball,Esfera de alta performance para capturas difíceis.,"Esfera de alta performance, usada em capturas mais complicadas. Possui 60 de poder de captura, tornando-se uma escolha forte contra Pokémon raros, resistentes ou difíceis de prender.",60,5,s,20,s,50,bola,15
-Masterball,A lendária esfera que garante captura 100%.,"Esfera lendária de captura perfeita. Possui 1000 de poder de captura, garantindo a captura de praticamente qualquer Pokémon sem depender de sorte ou enfraquecimento.",1000,6,n,100,ss,10,bola,16
-Levelball,Aumenta 5 níveis do Pokémon e melhora a captura com base no nível.,"Esfera especial que combina captura e crescimento. Seu poder de captura aumenta com o nível do Pokémon, e a criatura capturada ainda recebe 5 níveis extras ao entrar para a equipe.",1 + nivel,3,s,18,s,50,bola,17
-Furyball,Especializada para capturar Pokémon irritados instantaneamente.,"Esfera agressiva feita para Pokémon irritados. Em situações normais possui 10 de poder de captura, mas contra Pokémon enfurecidos sobe para 90, tornando-se extremamente eficiente.",10/90,4,s,18,s,50,bola,18
-Heavyball,Melhora a captura quanto mais pesado for o Pokémon.,"Esfera reforçada para criaturas pesadas. Seu poder de captura aumenta conforme o peso do Pokémon, chegando até 100, sendo excelente contra alvos grandes, robustos ou muito densos.",1 + peso divido por 3 (max 100),3,s,18,s,50,bola,19
-Aquaball,Maior eficiência na captura de Pokémon aquáticos.,"Esfera especializada em Pokémon aquáticos. Em situações comuns possui 10 de poder de captura, mas contra Pokémon ligados à água sobe para 70, facilitando bastante esse tipo de captura.",10/70,2,s,18,s,50,bola,20
-Attemptball,Aumenta a chance de captura a cada tentativa falha anterior.,"Esfera insistente que melhora a cada tentativa falha. Começa com 5 de poder de captura e ganha mais 10 a cada erro anterior, ficando cada vez mais útil contra alvos difíceis.",5 + 10 por tentativa,4,s,16,s,50,bola,21
-Premierball,Melhora a captura durante batalhas ativas.,"Esfera elegante que se destaca durante batalhas ativas. Fora dessas condições possui 22 de poder de captura, mas em combate sobe para 85, tornando-se muito mais eficiente.",22/85,5,s,25,s,50,bola,22
-Candyball,Faz o Pokémon capturado dropar o triplo de doces.,"Esfera voltada para recompensas após a captura. Possui 10 de poder de captura e faz o Pokémon capturado entregar o triplo de doces, tornando cada sucesso muito mais valioso.",10,3,s,25,s,50,bola,23
-Loveball,Aumenta a amizade do Pokémon após a captura.,Esfera afetiva usada para fortalecer o vínculo com o Pokémon capturado. Possui 10 de poder de captura e aumenta a amizade da criatura ao entrar para a equipe.,10,3,s,15,s,50,bola,24
-Secretball,Aumenta 10% do IV do Pokémon ao capturar.,"Esfera rara feita para melhorar a qualidade do Pokémon capturado. Possui 20 de poder de captura e aumenta em 10% o IV da criatura, tornando o resultado mais especial.",20,6,s,40,s,50,bola,25
-Fastball,Mais rápida e eficiente quanto maior a velocidade do Pokémon.,"Esfera veloz feita para lidar com Pokémon rápidos. Seu poder de captura cresce de acordo com a velocidade do alvo, ficando mais eficiente quanto mais ágil for a criatura.",1 + vel,3,s,16,s,50,bola,26
-Fruitball,Aumenta as chances conforme a quantidade de frutas oferecidas.,"Esfera que aproveita frutas oferecidas antes da captura. Começa com 5 de poder de captura e ganha mais 20 por fruta, recompensando o preparo antes da tentativa.",5 + 20 por fruta,3,s,25,s,50,bola,27
-Tallball,Melhora a captura quanto mais alto for o Pokémon.,"Esfera ideal para Pokémon muito altos. Seu poder de captura aumenta conforme a altura da criatura, chegando até 100, sendo ótima contra alvos grandes e imponentes.",1 + altura (cm) divido por 5 (max 100),2,s,18,s,50,bola,28
-Sniperball,Arremessa mais longe e captura melhor à distância.,"Esfera de arremesso distante, feita para capturas de longo alcance. Seu poder de captura aumenta em 10 por metro, favorecendo jogadores que acertam o Pokémon de longe.",1  + 10 por metro,4,s,18,s,50,bola,29
-Beastball,Especializada para capturar Pokémon raros e não spawnáveis.,"Esfera rara para Pokémon especiais, difíceis de encontrar ou que normalmente não aparecem no mundo. Possui 15 de poder de captura comum e 85 contra esses alvos raros.",15/85,4,s,25,s,50,bola,30
-Caxi Berry,Dobra a quantidade de doces obtidos.,"Fruta usada para aumentar as recompensas da captura. Quando aplicada corretamente, dobra a quantidade de doces obtidos, tornando cada Pokémon capturado muito mais lucrativo.",2,3,s,12,s,50,fruta,31
-Frambo Berry,Melhora levemente a chance de captura.,"Fruta simples que melhora a chance de captura. Adiciona 10 de poder de captura, sendo uma ajuda leve, barata e útil contra Pokémon comuns ou pouco resistentes.",10,1,s,5,s,50,fruta,32
-Super Frambo Berry,Melhora muito a chance de captura.,"Fruta mais forte que melhora bastante a chance de captura. Adiciona 25 de poder de captura, sendo uma boa escolha contra Pokémon mais teimosos ou valiosos.",25,4,s,16,s,50,fruta,33
-Simp Berry,Aumenta a amizade do Pokémon ao capturar.,"Fruta afetiva que fortalece a relação com o Pokémon capturado. Aumenta a amizade em 10, ajudando a criar um vínculo melhor logo após a captura.",10,1,s,3,s,50,fruta,34
-Secret Berry,Aumenta 5% o IV do Pokémon ao capturar.,"Fruta especial que melhora a qualidade do Pokémon capturado. Aumenta em 5% o IV da criatura, sendo útil quando o objetivo é conseguir um Pokémon mais forte.",5,6,s,30,s,10,fruta,35
-Lum Berry,Aumenta 3 níveis do Pokémon.,Fruta de crescimento rápido que aumenta o Pokémon em 3 níveis. É ótima para fortalecer uma captura nova sem precisar passar imediatamente por vários combates de treino.,3,3,s,10,s,50,fruta,36
-Tomper Berry,Amplia a barra de captura crítica do Pokémon.,"Fruta que amplia a área da captura crítica. Aumenta a barra crítica em 25, facilitando o acerto do momento perfeito durante a tentativa de captura.",25,2,s,8,s,50,fruta,37
-Abbajuur Berry,Reduz a velocidade da barra de captura crítica.,"Fruta que deixa a captura crítica mais controlável. Reduz a velocidade da barra em 25, dando mais tempo para mirar, reagir e acertar o ponto ideal.",25,2,s,8,s,50,fruta,38
-Jujuca Berry,Aumenta o número de frutas que um Pokémon pode consumir.,"Fruta especial que aumenta a quantidade de frutas que um Pokémon pode consumir. Permite usar 2 frutas a mais, ampliando as estratégias antes da captura.",2,2,s,16,s,50,fruta,39
-Jungle Berry,Melhora a captura em áreas de floresta.,"Fruta adaptada a ambientes de floresta. Adiciona 26 de poder de captura nesse tipo de região, sendo excelente para Pokémon encontrados entre árvores e vegetação densa.",26,2,s,10,s,50,fruta,40
-Desert Berry,Melhora a captura em áreas desérticas.,"Fruta adaptada a ambientes desérticos. Adiciona 26 de poder de captura nesse tipo de região, ajudando contra Pokémon encontrados em areia, calor e áreas secas.",26,2,s,10,s,50,fruta,41
-Frozen Berry,Melhora a captura em regiões geladas.,"Fruta própria para regiões geladas. Adiciona 26 de poder de captura nesse tipo de ambiente, facilitando capturas em neve, gelo ou áreas de frio intenso.",26,2,s,10,s,50,fruta,42
-Field Berry,Melhora a captura em campos abertos.,"Fruta comum de campos abertos. Adiciona 26 de poder de captura nesse tipo de região, sendo muito útil em planícies, gramados e áreas naturais simples.",26,2,s,12,s,50,fruta,43
-Water Berry,Melhora a captura em ambientes aquáticos.,"Fruta ligada a ambientes aquáticos. Adiciona 26 de poder de captura perto da água, ajudando contra Pokémon encontrados em rios, lagos, mares ou regiões úmidas.",26,2,s,12,s,50,fruta,44
-Lava Berry,Melhora a captura em terras vulcanicas,"Fruta resistente ao calor de terras vulcânicas. Adiciona 26 de poder de captura nesse tipo de região, sendo ideal para Pokémon encontrados perto de lava e rochas quentes.",26,2,s,10,s,50,fruta,45
-Magic Berry,Melhora a captura no bioma magico,"Fruta rara ligada ao bioma mágico. Adiciona 26 de poder de captura nesse tipo de região, facilitando a captura de Pokémon encontrados em áreas encantadas.",26,2,s,10,s,50,fruta,46
-Madeira,Recurso básico usado em construções e na criação de ferramentas simples.,"Recurso básico e essencial para o início da sobrevivência. É usado em construções simples, fabricação de ferramentas iniciais e várias receitas importantes da fase inicial.",-,1,n,2,n,50,recurso,47
-Carvão,"Recurso combustível usado para alimentar fornalhas, gerar calor e fabricar itens básicos.","Combustível comum usado para gerar calor, alimentar fornalhas e transformar materiais. Também pode servir em receitas simples que exigem energia, queima ou produção básica.",-,2,n,2,n,50,recurso,48
-Pedra,Recurso comum usado em construções e na criação de ferramentas mais resistentes.,"Recurso resistente e fácil de encontrar, usado em construções e ferramentas melhores que as de madeira. É um material importante para evoluir a fabricação inicial.",-,1,n,3,n,50,recurso,49
-Ferro,"Minério metálico resistente usado na fabricação de ferramentas, equipamentos e estruturas reforçadas.","Minério metálico resistente usado em ferramentas, equipamentos e estruturas reforçadas. É um recurso fundamental para criar itens mais duráveis e avançar para uma fase mais eficiente.",-,2,n,4,n,50,recurso,50
-Cobre,Minério metálico usado na fabricação de itens e ferramentas intermediárias.,"Minério versátil usado em ferramentas, peças e itens intermediários. É útil para fabricações que exigem metal, mas ainda não precisam da força e resistência do ferro.",-,1,s,4,n,50,recurso,51
-Ouro,Minério valioso usado na criação de ferramentas leves e itens especiais.,"Minério valioso usado em itens especiais, ferramentas leves e possíveis trocas. Por ser raro e brilhante, também funciona bem em receitas refinadas ou equipamentos diferenciados.",-,3,s,5,s,50,recurso,52
-Diamante,Gema rara usada para fabricar ferramentas de alta durabilidade.,"Gema rara e extremamente resistente, usada em ferramentas de alta durabilidade. É um material precioso para criar equipamentos avançados, fortes e difíceis de substituir.",-,5,s,15,s,50,recurso,53
-Ametista,Cristal raro usado na criação de ferramentas refinadas e itens especiais.,"Cristal refinado usado em ferramentas especiais e itens de maior qualidade. É um recurso raro, associado a fabricações mais delicadas, precisas e avançadas.",-,6,s,18,s,50,recurso,54
-Esmeralda,"Gema valiosa usada em trocas, fabricação e itens raros.","Gema valiosa usada em trocas, fabricação e itens raros. É um material de prestígio, útil tanto como recurso econômico quanto como ingrediente de receitas especiais.",-,6,s,20,s,50,recurso,55
-Rubi,Gema poderosa usada para criar ferramentas avançadas e itens de alto valor.,"Gema intensa e poderosa usada em ferramentas avançadas e itens de alto valor. É um recurso nobre, indicado para fabricações fortes, raras e de grande importância.",-,6,s,20,s,50,recurso,56
-Jade,"Gema resistente usada na criação de itens refinados, ferramentas especiais e objetos de valor.","Gema firme e elegante usada na criação de itens refinados e ferramentas especiais. Combina resistência e valor, sendo útil em receitas avançadas ou objetos raros.",-,6,s,20,s,50,recurso,57
-Topazio,"Cristal brilhante usado na fabricação de itens especiais, ferramentas leves e equipamentos raros.","Cristal brilhante usado em ferramentas leves, itens especiais e equipamentos raros. É um material refinado, bom para receitas que exigem precisão, valor e acabamento.",-,6,s,20,s,50,recurso,58
-Safira,"Gema rara usada para criar ferramentas precisas, itens avançados e equipamentos especiais.","Gema rara usada em ferramentas precisas, itens avançados e equipamentos especiais. É um recurso de alta qualidade, associado a fabricações cuidadosas e eficientes.",-,6,s,20,s,50,recurso,59
-Aquamarine,Cristal azulado usado na criação de itens especiais ligados à água e ferramentas refinadas.,"Cristal azulado ligado à água, usado em ferramentas refinadas e itens especiais. Pode servir em receitas aquáticas, equipamentos de exploração ou criações relacionadas a líquidos.",-,6,s,20,s,50,recurso,60
-Agua,"Recurso líquido usado em receitas, exploração, cultivo e interações com o ambiente.","Recurso líquido essencial para receitas, cultivo, exploração e interação com o ambiente. Pode ser usado em sistemas de criação, resfriamento, transporte ou sobrevivência.",-,1,n,1,s,50,recurso,61
-Lava,"Recurso líquido perigoso usado como fonte de calor, energia e criação de itens especiais.","Líquido perigoso e extremamente quente, usado como fonte de calor, energia e fabricação especial. Apesar do risco, é valioso em receitas avançadas e processos de transformação.",-,3,n,3,s,50,recurso,62
-Chave,"Item usado para abrir baús, portas, passagens ou mecanismos bloqueados.","Item utilitário usado para liberar acessos bloqueados. Pode abrir baús, portas, passagens ou mecanismos específicos, funcionando como recurso importante de exploração e progressão.",-,3,s,6,s,10,ferramenta,63
-ChaveDungeon,,,-,4,n,12,n,10,ferramenta,64
-Balde,Recipiente usado para carregar líquidos como água e lava.,"Recipiente simples usado para carregar líquidos como água e lava. É um item prático para exploração, construção e transporte de recursos líquidos pelo mundo.",2,1,n,2,n,1,ferramenta,65
-Pá,"Ferramenta usada para cavar terra, areia, cascalho e outros blocos macios.","Ferramenta básica usada para cavar terra, areia, cascalho e outros blocos macios. É útil para abrir caminhos, coletar materiais soltos e modificar o terreno.",2,1,n,5,n,1,ferramenta,66
-Picareta de Madeira,Ferramenta simples usada para minerar recursos básicos.,"Picareta inicial feita de madeira, capaz de quebrar dureza 2. É indicada para minérios e blocos simples, servindo como primeira ferramenta de mineração.",2,1,n,4,n,1,ferramenta,67
-Picareta de Pedra,Ferramenta resistente usada para minerar com mais eficiência.,"Picareta de pedra mais resistente, capaz de quebrar dureza 3. Permite minerar materiais melhores que os acessíveis com madeira e torna a coleta mais eficiente.",3,2,n,6,n,1,ferramenta,68
-Machado de Ferro,Ferramenta mais resistente usada para minerar com bem mais eficiência.,"Ferramenta metálica resistente para mineração, capaz de quebrar dureza 4. É uma opção mais forte para extrair recursos intermediários e avançar na exploração de minérios.",4,2,n,8,n,1,ferramenta,69
-Picareta de Ouro,Ferramenta leve usada para minerar rapidamente certos recursos.,"Picareta leve de ouro, capaz de quebrar dureza 4. É útil para mineração rápida de certos recursos, combinando boa eficiência com um material mais raro.",4,3,n,10,n,1,ferramenta,70
-Picareta de Diamante,Ferramenta avançada usada para minerar recursos raros com alta eficiência.,"Picareta avançada de diamante, capaz de quebrar dureza 5. É feita para extrair recursos raros com alta eficiência e suportar uma mineração mais exigente.",5,4,n,24,n,1,ferramenta,71
-Picareta de Ametista,Ferramenta refinada usada para extrair minérios especiais.,"Picareta refinada de ametista, capaz de quebrar dureza 6. É indicada para minérios especiais e materiais mais difíceis, oferecendo uma mineração precisa e poderosa.",6,5,n,28,n,1,ferramenta,72
-Picareta de Rubi,Ferramenta poderosa usada para mineração avançada.,"Picareta poderosa de rubi, capaz de quebrar dureza 7. É uma ferramenta de alto nível, ideal para extrair materiais muito resistentes e recursos valiosos.",7,6,n,30,n,1,ferramenta,73
-Machado de Madeira,Ferramenta simples usada para cortar árvores e coletar madeira.,"Machado simples de madeira, capaz de quebrar dureza 2. É usado para cortar árvores e coletar madeira comum, sendo a primeira opção para recursos naturais.",2,1,n,4,n,1,ferramenta,74
-Machado de Pedra,Ferramenta resistente usada para cortar madeira com mais eficiência.,"Machado de pedra mais firme, capaz de quebrar dureza 3. Corta madeira com mais eficiência que o machado de madeira e ajuda na coleta de recursos naturais.",3,2,n,6,n,1,ferramenta,75
-Machado de Ferro,Ferramenta mais resistente usada para cortar madeira com bem mais eficiência.,"Machado de ferro resistente, capaz de quebrar dureza 4. É uma ferramenta equilibrada para cortar madeira, troncos e recursos naturais com mais força e eficiência.",4,2,n,8,n,1,ferramenta,76
-Machado de Ouro,Ferramenta leve usada para cortes rápidos em recursos naturais.,"Machado leve de ouro, capaz de quebrar dureza 4. É usado para cortes rápidos em recursos naturais, funcionando bem quando velocidade e praticidade são importantes.",4,3,n,10,n,1,ferramenta,77
-Machado de Diamante,Ferramenta avançada usada para extração eficiente de madeira.,"Machado avançado de diamante, capaz de quebrar dureza 5. É excelente para coletar madeira e recursos naturais resistentes com alta eficiência e boa durabilidade.",5,4,n,24,n,1,ferramenta,78
-Machado de Ametista,Ferramenta refinada usada para coleta avançada de recursos naturais.,"Machado refinado de ametista, capaz de quebrar dureza 6. É indicado para coleta avançada de recursos naturais especiais, oferecendo força, precisão e ótimo desempenho.",6,5,n,28,n,1,ferramenta,79
-Machado de Rubi,Ferramenta poderosa usada para corte e extração de alto nível.,"Machado poderoso de rubi, capaz de quebrar dureza 7. É uma ferramenta de alto nível para corte e extração, ideal para recursos naturais muito resistentes.",7,6,n,30,n,1,ferramenta,80
-Lamina Fumegante,,,-,6,n,35,s,1,equipavel,81
-Machadinha Ignea,,,-,6,n,35,s,1,equipavel,82
-Emblema da Chama,,,-,6,n,35,s,1,equipavel,83
-Capa Solari,,,-,6,n,35,s,1,equipavel,84
-Fluxo Aquatico,,,-,6,n,35,s,1,equipavel,85
-Gota Sagrada,,,-,6,n,35,s,1,equipavel,86
-Semblante das Aguas,,,-,6,n,35,s,1,equipavel,87
-Emblema da Semente,,,-,6,n,35,s,1,equipavel,88
-Armadura Natural,,,-,6,n,35,s,1,equipavel,89
-Estilingue das Folhas,,,-,6,n,35,s,1,equipavel,90
-Trovao Encapsulado,,,-,6,n,35,s,1,equipavel,91
-Semblante Congelado,,,-,6,n,35,s,1,equipavel,92
-Coroa do Inverno Eterno,,,-,6,n,35,s,1,equipavel,93
-Coração de Gelo,,,-,6,n,35,s,1,equipavel,94
-Punho Congelado,,,-,6,n,35,s,1,equipavel,95
-Amuleto sintilante,,,-,6,n,35,s,1,equipavel,96
-Idolo Perdido,,,-,6,n,35,s,1,equipavel,97
-Arco dos Ventos,,,-,6,n,35,s,1,equipavel,98
-Espada Envenenada,,,-,6,n,35,s,1,equipavel,99
-Dente do Fim,,,-,6,n,35,s,1,equipavel,100
-Arco de Ossos,,,-,6,n,35,s,1,equipavel,101
-Serra Toxica,,,-,6,n,35,s,1,equipavel,102
-Mao Sinistra,,,-,6,n,35,s,1,equipavel,103
-Maldição,,,-,6,n,35,s,1,equipavel,104
-Capa Assombrada,,,-,6,n,35,s,1,equipavel,105
-Machado Amaldiçoado,,,-,6,n,35,s,1,equipavel,106
-Eternidade,,,-,6,n,35,s,1,equipavel,107
-Elmo Cosmico,,,-,6,n,35,s,1,equipavel,108
-Mascara do Mosquito Gigante,,,-,6,n,35,s,1,equipavel,109
-Espada Mental,,,-,6,n,35,s,1,equipavel,110
-Elmo Psionico,,,-,6,n,35,s,1,equipavel,111
-Mao que Tudo Ve,,,-,6,n,35,s,1,equipavel,112
-Coração de Ferro,,,-,6,n,35,s,1,equipavel,113
-Elmo Abençoado,,,-,6,n,35,s,1,equipavel,114
-Placa defensiva,,,-,6,n,35,s,1,equipavel,115
-Botas Colossais,,,-,6,n,35,s,1,equipavel,116
-Cinto do Gigante,,,-,6,n,35,s,1,equipavel,117
-Faixa da Escolha,,,-,6,n,35,s,1,equipavel,118
-Punho Robusto,,,-,6,n,35,s,1,equipavel,119
-Estaca Terrestre,,,-,6,n,35,s,1,equipavel,120
-Pedra Flutuante,,,-,6,n,35,s,1,equipavel,121
-Sismitarra Marcada,,,-,6,n,35,s,1,equipavel,122
-Cajado do Som,,,-,6,n,35,s,1,equipavel,123
-Sino Dourado,,,-,6,n,35,s,1,equipavel,124
-Emblema das Sombras,,,-,6,n,35,s,1,equipavel,125
-Faca do Dragão,,,-,6,n,35,s,1,equipavel,126
-Ombreira da Escama Ardente,,,-,6,n,35,s,1,equipavel,127
-Capa Alheia,,,-,6,n,35,s,1,equipavel,128
-Chapeu do Bruxo,,,-,6,n,35,s,1,equipavel,129
-Espada Energizada,,,-,6,n,35,s,1,equipavel,130
-Quebra Barreira,,,-,6,n,35,s,1,equipavel,131
-Besta Afiada,,,-,6,n,35,s,1,equipavel,132
-Anjo Guardião,,,-,6,n,35,s,1,equipavel,133
-Bastião Inabalavel,,,-,6,n,35,s,1,equipavel,134
-Botas do Sucesso,,,-,6,n,35,s,1,equipavel,135
-Colete de Espinhos,,,-,6,n,35,s,1,equipavel,136
-Tiara Encantada,,,-,6,n,35,s,1,equipavel,137
-Coroa da Vitória,,,-,6,n,35,s,1,equipavel,138
-Armadura Reforçada,,,-,6,n,35,s,1,equipavel,139
-Centro Espiritual,,,-,6,n,35,s,1,equipavel,140
-Essencia Radiante,,,-,6,n,50,s,1,equipavel,141
-Pedra da Ultra Evolução,,,-,6,n,50,s,1,equipavel,142
-Energia Gigantamax,,,-,6,n,50,s,1,equipavel,143
-Pedra da Mega Evolução,,,-,6,n,50,s,1,equipavel,144
+TM,,,1,4,s,25,s,10,poção,13
+Elite TM,,,2,5,s,40,s,10,poção,14
+Pokeball,A esfera clássica para capturar Pokémon comuns.,"Esfera clássica de captura, simples e confiável contra Pokémon comuns. Possui 10 de poder de captura, funcionando melhor em criaturas fracas, tranquilas ou com pouca resistência.",10,1,s,4,s,50,bola,15
+Greatball,Esfera aprimorada com maior taxa de captura.,"Esfera aprimorada, criada para oferecer uma chance maior que a Pokeball comum. Possui 25 de poder de captura, sendo boa para Pokémon medianos ou um pouco mais difíceis.",25,2,s,10,s,50,bola,16
+Ultraball,Esfera de alta performance para capturas difíceis.,"Esfera de alta performance, usada em capturas mais complicadas. Possui 60 de poder de captura, tornando-se uma escolha forte contra Pokémon raros, resistentes ou difíceis de prender.",60,5,s,20,s,50,bola,17
+Masterball,A lendária esfera que garante captura 100%.,"Esfera lendária de captura perfeita. Possui 1000 de poder de captura, garantindo a captura de praticamente qualquer Pokémon sem depender de sorte ou enfraquecimento.",1000,6,n,100,ss,10,bola,18
+Levelball,Aumenta 5 níveis do Pokémon e melhora a captura com base no nível.,"Esfera especial que combina captura e crescimento. Seu poder de captura aumenta com o nível do Pokémon, e a criatura capturada ainda recebe 5 níveis extras ao entrar para a equipe.",1 + nivel,3,s,18,s,50,bola,19
+Furyball,Especializada para capturar Pokémon irritados instantaneamente.,"Esfera agressiva feita para Pokémon irritados. Em situações normais possui 10 de poder de captura, mas contra Pokémon enfurecidos sobe para 90, tornando-se extremamente eficiente.",10/90,4,s,18,s,50,bola,20
+Heavyball,Melhora a captura quanto mais pesado for o Pokémon.,"Esfera reforçada para criaturas pesadas. Seu poder de captura aumenta conforme o peso do Pokémon, chegando até 100, sendo excelente contra alvos grandes, robustos ou muito densos.",1 + peso divido por 3 (max 100),3,s,18,s,50,bola,21
+Aquaball,Maior eficiência na captura de Pokémon aquáticos.,"Esfera especializada em Pokémon aquáticos. Em situações comuns possui 10 de poder de captura, mas contra Pokémon ligados à água sobe para 70, facilitando bastante esse tipo de captura.",10/70,2,s,18,s,50,bola,22
+Attemptball,Aumenta a chance de captura a cada tentativa falha anterior.,"Esfera insistente que melhora a cada tentativa falha. Começa com 5 de poder de captura e ganha mais 10 a cada erro anterior, ficando cada vez mais útil contra alvos difíceis.",5 + 10 por tentativa,4,s,16,s,50,bola,23
+Premierball,Melhora a captura durante batalhas ativas.,"Esfera elegante que se destaca durante batalhas ativas. Fora dessas condições possui 22 de poder de captura, mas em combate sobe para 85, tornando-se muito mais eficiente.",22/85,5,s,25,s,50,bola,24
+Candyball,Faz o Pokémon capturado dropar o triplo de doces.,"Esfera voltada para recompensas após a captura. Possui 10 de poder de captura e faz o Pokémon capturado entregar o triplo de doces, tornando cada sucesso muito mais valioso.",10,3,s,25,s,50,bola,25
+Loveball,Aumenta a amizade do Pokémon após a captura.,Esfera afetiva usada para fortalecer o vínculo com o Pokémon capturado. Possui 10 de poder de captura e aumenta a amizade da criatura ao entrar para a equipe.,10,3,s,15,s,50,bola,26
+Secretball,Aumenta 10% do IV do Pokémon ao capturar.,"Esfera rara feita para melhorar a qualidade do Pokémon capturado. Possui 20 de poder de captura e aumenta em 10% o IV da criatura, tornando o resultado mais especial.",20,6,s,40,s,50,bola,27
+Fastball,Mais rápida e eficiente quanto maior a velocidade do Pokémon.,"Esfera veloz feita para lidar com Pokémon rápidos. Seu poder de captura cresce de acordo com a velocidade do alvo, ficando mais eficiente quanto mais ágil for a criatura.",1 + vel,3,s,16,s,50,bola,28
+Fruitball,Aumenta as chances conforme a quantidade de frutas oferecidas.,"Esfera que aproveita frutas oferecidas antes da captura. Começa com 5 de poder de captura e ganha mais 20 por fruta, recompensando o preparo antes da tentativa.",5 + 20 por fruta,3,s,25,s,50,bola,29
+Tallball,Melhora a captura quanto mais alto for o Pokémon.,"Esfera ideal para Pokémon muito altos. Seu poder de captura aumenta conforme a altura da criatura, chegando até 100, sendo ótima contra alvos grandes e imponentes.",1 + altura (cm) divido por 5 (max 100),2,s,18,s,50,bola,30
+Sniperball,Arremessa mais longe e captura melhor à distância.,"Esfera de arremesso distante, feita para capturas de longo alcance. Seu poder de captura aumenta em 10 por metro, favorecendo jogadores que acertam o Pokémon de longe.",1  + 10 por metro,4,s,18,s,50,bola,31
+Beastball,Especializada para capturar Pokémon raros e não spawnáveis.,"Esfera rara para Pokémon especiais, difíceis de encontrar ou que normalmente não aparecem no mundo. Possui 15 de poder de captura comum e 85 contra esses alvos raros.",15/85,4,s,25,s,50,bola,32
+Caxi Berry,Dobra a quantidade de doces obtidos.,"Fruta usada para aumentar as recompensas da captura. Quando aplicada corretamente, dobra a quantidade de doces obtidos, tornando cada Pokémon capturado muito mais lucrativo.",2,3,s,12,s,50,fruta,33
+Frambo Berry,Melhora levemente a chance de captura.,"Fruta simples que melhora a chance de captura. Adiciona 10 de poder de captura, sendo uma ajuda leve, barata e útil contra Pokémon comuns ou pouco resistentes.",10,1,s,5,s,50,fruta,34
+Super Frambo Berry,Melhora muito a chance de captura.,"Fruta mais forte que melhora bastante a chance de captura. Adiciona 25 de poder de captura, sendo uma boa escolha contra Pokémon mais teimosos ou valiosos.",25,4,s,16,s,50,fruta,35
+Simp Berry,Aumenta a amizade do Pokémon ao capturar.,"Fruta afetiva que fortalece a relação com o Pokémon capturado. Aumenta a amizade em 10, ajudando a criar um vínculo melhor logo após a captura.",10,1,s,3,s,50,fruta,36
+Secret Berry,Aumenta 5% o IV do Pokémon ao capturar.,"Fruta especial que melhora a qualidade do Pokémon capturado. Aumenta em 5% o IV da criatura, sendo útil quando o objetivo é conseguir um Pokémon mais forte.",5,6,s,30,s,10,fruta,37
+Lum Berry,Aumenta 3 níveis do Pokémon.,Fruta de crescimento rápido que aumenta o Pokémon em 3 níveis. É ótima para fortalecer uma captura nova sem precisar passar imediatamente por vários combates de treino.,3,3,s,10,s,50,fruta,38
+Tomper Berry,Amplia a barra de captura crítica do Pokémon.,"Fruta que amplia a área da captura crítica. Aumenta a barra crítica em 25, facilitando o acerto do momento perfeito durante a tentativa de captura.",25,2,s,8,s,50,fruta,39
+Abbajuur Berry,Reduz a velocidade da barra de captura crítica.,"Fruta que deixa a captura crítica mais controlável. Reduz a velocidade da barra em 25, dando mais tempo para mirar, reagir e acertar o ponto ideal.",25,2,s,8,s,50,fruta,40
+Jujuca Berry,Aumenta o número de frutas que um Pokémon pode consumir.,"Fruta especial que aumenta a quantidade de frutas que um Pokémon pode consumir. Permite usar 2 frutas a mais, ampliando as estratégias antes da captura.",2,2,s,16,s,50,fruta,41
+Jungle Berry,Melhora a captura em áreas de floresta.,"Fruta adaptada a ambientes de floresta. Adiciona 26 de poder de captura nesse tipo de região, sendo excelente para Pokémon encontrados entre árvores e vegetação densa.",26,2,s,10,s,50,fruta,42
+Desert Berry,Melhora a captura em áreas desérticas.,"Fruta adaptada a ambientes desérticos. Adiciona 26 de poder de captura nesse tipo de região, ajudando contra Pokémon encontrados em areia, calor e áreas secas.",26,2,s,10,s,50,fruta,43
+Frozen Berry,Melhora a captura em regiões geladas.,"Fruta própria para regiões geladas. Adiciona 26 de poder de captura nesse tipo de ambiente, facilitando capturas em neve, gelo ou áreas de frio intenso.",26,2,s,10,s,50,fruta,44
+Field Berry,Melhora a captura em campos abertos.,"Fruta comum de campos abertos. Adiciona 26 de poder de captura nesse tipo de região, sendo muito útil em planícies, gramados e áreas naturais simples.",26,2,s,12,s,50,fruta,45
+Water Berry,Melhora a captura em ambientes aquáticos.,"Fruta ligada a ambientes aquáticos. Adiciona 26 de poder de captura perto da água, ajudando contra Pokémon encontrados em rios, lagos, mares ou regiões úmidas.",26,2,s,12,s,50,fruta,46
+Lava Berry,Melhora a captura em terras vulcanicas,"Fruta resistente ao calor de terras vulcânicas. Adiciona 26 de poder de captura nesse tipo de região, sendo ideal para Pokémon encontrados perto de lava e rochas quentes.",26,2,s,10,s,50,fruta,47
+Magic Berry,Melhora a captura no bioma magico,"Fruta rara ligada ao bioma mágico. Adiciona 26 de poder de captura nesse tipo de região, facilitando a captura de Pokémon encontrados em áreas encantadas.",26,2,s,10,s,50,fruta,48
+Madeira,Recurso básico usado em construções e na criação de ferramentas simples.,"Recurso básico e essencial para o início da sobrevivência. É usado em construções simples, fabricação de ferramentas iniciais e várias receitas importantes da fase inicial.",-,1,n,2,n,50,recurso,49
+Carvão,"Recurso combustível usado para alimentar fornalhas, gerar calor e fabricar itens básicos.","Combustível comum usado para gerar calor, alimentar fornalhas e transformar materiais. Também pode servir em receitas simples que exigem energia, queima ou produção básica.",-,2,n,2,n,50,recurso,50
+Pedra,Recurso comum usado em construções e na criação de ferramentas mais resistentes.,"Recurso resistente e fácil de encontrar, usado em construções e ferramentas melhores que as de madeira. É um material importante para evoluir a fabricação inicial.",-,1,n,3,n,50,recurso,51
+Ferro,"Minério metálico resistente usado na fabricação de ferramentas, equipamentos e estruturas reforçadas.","Minério metálico resistente usado em ferramentas, equipamentos e estruturas reforçadas. É um recurso fundamental para criar itens mais duráveis e avançar para uma fase mais eficiente.",-,2,n,4,n,50,recurso,52
+Cobre,Minério metálico usado na fabricação de itens e ferramentas intermediárias.,"Minério versátil usado em ferramentas, peças e itens intermediários. É útil para fabricações que exigem metal, mas ainda não precisam da força e resistência do ferro.",-,1,s,4,n,50,recurso,53
+Ouro,Minério valioso usado na criação de ferramentas leves e itens especiais.,"Minério valioso usado em itens especiais, ferramentas leves e possíveis trocas. Por ser raro e brilhante, também funciona bem em receitas refinadas ou equipamentos diferenciados.",-,3,s,5,s,50,recurso,54
+Diamante,Gema rara usada para fabricar ferramentas de alta durabilidade.,"Gema rara e extremamente resistente, usada em ferramentas de alta durabilidade. É um material precioso para criar equipamentos avançados, fortes e difíceis de substituir.",-,5,s,15,s,50,recurso,55
+Ametista,Cristal raro usado na criação de ferramentas refinadas e itens especiais.,"Cristal refinado usado em ferramentas especiais e itens de maior qualidade. É um recurso raro, associado a fabricações mais delicadas, precisas e avançadas.",-,6,s,18,s,50,recurso,56
+Esmeralda,"Gema valiosa usada em trocas, fabricação e itens raros.","Gema valiosa usada em trocas, fabricação e itens raros. É um material de prestígio, útil tanto como recurso econômico quanto como ingrediente de receitas especiais.",-,6,s,20,s,50,recurso,57
+Rubi,Gema poderosa usada para criar ferramentas avançadas e itens de alto valor.,"Gema intensa e poderosa usada em ferramentas avançadas e itens de alto valor. É um recurso nobre, indicado para fabricações fortes, raras e de grande importância.",-,6,s,20,s,50,recurso,58
+Jade,"Gema resistente usada na criação de itens refinados, ferramentas especiais e objetos de valor.","Gema firme e elegante usada na criação de itens refinados e ferramentas especiais. Combina resistência e valor, sendo útil em receitas avançadas ou objetos raros.",-,6,s,20,s,50,recurso,59
+Topazio,"Cristal brilhante usado na fabricação de itens especiais, ferramentas leves e equipamentos raros.","Cristal brilhante usado em ferramentas leves, itens especiais e equipamentos raros. É um material refinado, bom para receitas que exigem precisão, valor e acabamento.",-,6,s,20,s,50,recurso,60
+Safira,"Gema rara usada para criar ferramentas precisas, itens avançados e equipamentos especiais.","Gema rara usada em ferramentas precisas, itens avançados e equipamentos especiais. É um recurso de alta qualidade, associado a fabricações cuidadosas e eficientes.",-,6,s,20,s,50,recurso,61
+Aquamarine,Cristal azulado usado na criação de itens especiais ligados à água e ferramentas refinadas.,"Cristal azulado ligado à água, usado em ferramentas refinadas e itens especiais. Pode servir em receitas aquáticas, equipamentos de exploração ou criações relacionadas a líquidos.",-,6,s,20,s,50,recurso,62
+Agua,"Recurso líquido usado em receitas, exploração, cultivo e interações com o ambiente.","Recurso líquido essencial para receitas, cultivo, exploração e interação com o ambiente. Pode ser usado em sistemas de criação, resfriamento, transporte ou sobrevivência.",-,1,n,1,s,50,recurso,63
+Lava,"Recurso líquido perigoso usado como fonte de calor, energia e criação de itens especiais.","Líquido perigoso e extremamente quente, usado como fonte de calor, energia e fabricação especial. Apesar do risco, é valioso em receitas avançadas e processos de transformação.",-,3,n,3,s,50,recurso,64
+Chave,"Item usado para abrir baús, portas, passagens ou mecanismos bloqueados.","Item utilitário usado para liberar acessos bloqueados. Pode abrir baús, portas, passagens ou mecanismos específicos, funcionando como recurso importante de exploração e progressão.",-,3,s,6,s,10,ferramenta,65
+ChaveDungeon,,,-,4,n,12,n,10,ferramenta,66
+Balde,Recipiente usado para carregar líquidos como água e lava.,"Recipiente simples usado para carregar líquidos como água e lava. É um item prático para exploração, construção e transporte de recursos líquidos pelo mundo.",2,1,n,2,n,1,ferramenta,67
+Pá,"Ferramenta usada para cavar terra, areia, cascalho e outros blocos macios.","Ferramenta básica usada para cavar terra, areia, cascalho e outros blocos macios. É útil para abrir caminhos, coletar materiais soltos e modificar o terreno.",2,1,n,5,n,1,ferramenta,68
+Picareta de Madeira,Ferramenta simples usada para minerar recursos básicos.,"Picareta inicial feita de madeira, capaz de quebrar dureza 2. É indicada para minérios e blocos simples, servindo como primeira ferramenta de mineração.",2,1,n,4,n,1,ferramenta,69
+Picareta de Pedra,Ferramenta resistente usada para minerar com mais eficiência.,"Picareta de pedra mais resistente, capaz de quebrar dureza 3. Permite minerar materiais melhores que os acessíveis com madeira e torna a coleta mais eficiente.",3,2,n,6,n,1,ferramenta,70
+Machado de Ferro,Ferramenta mais resistente usada para minerar com bem mais eficiência.,"Ferramenta metálica resistente para mineração, capaz de quebrar dureza 4. É uma opção mais forte para extrair recursos intermediários e avançar na exploração de minérios.",4,2,n,8,n,1,ferramenta,71
+Picareta de Ouro,Ferramenta leve usada para minerar rapidamente certos recursos.,"Picareta leve de ouro, capaz de quebrar dureza 4. É útil para mineração rápida de certos recursos, combinando boa eficiência com um material mais raro.",4,3,n,10,n,1,ferramenta,72
+Picareta de Diamante,Ferramenta avançada usada para minerar recursos raros com alta eficiência.,"Picareta avançada de diamante, capaz de quebrar dureza 5. É feita para extrair recursos raros com alta eficiência e suportar uma mineração mais exigente.",5,4,n,24,n,1,ferramenta,73
+Picareta de Ametista,Ferramenta refinada usada para extrair minérios especiais.,"Picareta refinada de ametista, capaz de quebrar dureza 6. É indicada para minérios especiais e materiais mais difíceis, oferecendo uma mineração precisa e poderosa.",6,5,n,28,n,1,ferramenta,74
+Picareta de Rubi,Ferramenta poderosa usada para mineração avançada.,"Picareta poderosa de rubi, capaz de quebrar dureza 7. É uma ferramenta de alto nível, ideal para extrair materiais muito resistentes e recursos valiosos.",7,6,n,30,n,1,ferramenta,75
+Machado de Madeira,Ferramenta simples usada para cortar árvores e coletar madeira.,"Machado simples de madeira, capaz de quebrar dureza 2. É usado para cortar árvores e coletar madeira comum, sendo a primeira opção para recursos naturais.",2,1,n,4,n,1,ferramenta,76
+Machado de Pedra,Ferramenta resistente usada para cortar madeira com mais eficiência.,"Machado de pedra mais firme, capaz de quebrar dureza 3. Corta madeira com mais eficiência que o machado de madeira e ajuda na coleta de recursos naturais.",3,2,n,6,n,1,ferramenta,77
+Machado de Ferro,Ferramenta mais resistente usada para cortar madeira com bem mais eficiência.,"Machado de ferro resistente, capaz de quebrar dureza 4. É uma ferramenta equilibrada para cortar madeira, troncos e recursos naturais com mais força e eficiência.",4,2,n,8,n,1,ferramenta,78
+Machado de Ouro,Ferramenta leve usada para cortes rápidos em recursos naturais.,"Machado leve de ouro, capaz de quebrar dureza 4. É usado para cortes rápidos em recursos naturais, funcionando bem quando velocidade e praticidade são importantes.",4,3,n,10,n,1,ferramenta,79
+Machado de Diamante,Ferramenta avançada usada para extração eficiente de madeira.,"Machado avançado de diamante, capaz de quebrar dureza 5. É excelente para coletar madeira e recursos naturais resistentes com alta eficiência e boa durabilidade.",5,4,n,24,n,1,ferramenta,80
+Machado de Ametista,Ferramenta refinada usada para coleta avançada de recursos naturais.,"Machado refinado de ametista, capaz de quebrar dureza 6. É indicado para coleta avançada de recursos naturais especiais, oferecendo força, precisão e ótimo desempenho.",6,5,n,28,n,1,ferramenta,81
+Machado de Rubi,Ferramenta poderosa usada para corte e extração de alto nível.,"Machado poderoso de rubi, capaz de quebrar dureza 7. É uma ferramenta de alto nível para corte e extração, ideal para recursos naturais muito resistentes.",7,6,n,30,n,1,ferramenta,82
+Lamina Fumegante,,,-,6,n,35,s,1,equipavel,83
+Machadinha Ignea,,,-,6,n,35,s,1,equipavel,84
+Emblema da Chama,,,-,6,n,35,s,1,equipavel,85
+Capa Solari,,,-,6,n,35,s,1,equipavel,86
+Fluxo Aquatico,,,-,6,n,35,s,1,equipavel,87
+Gota Sagrada,,,-,6,n,35,s,1,equipavel,88
+Semblante das Aguas,,,-,6,n,35,s,1,equipavel,89
+Emblema da Semente,,,-,6,n,35,s,1,equipavel,90
+Armadura Natural,,,-,6,n,35,s,1,equipavel,91
+Estilingue das Folhas,,,-,6,n,35,s,1,equipavel,92
+Trovao Encapsulado,,,-,6,n,35,s,1,equipavel,93
+Semblante Congelado,,,-,6,n,35,s,1,equipavel,94
+Coroa do Inverno Eterno,,,-,6,n,35,s,1,equipavel,95
+Coração de Gelo,,,-,6,n,35,s,1,equipavel,96
+Punho Congelado,,,-,6,n,35,s,1,equipavel,97
+Amuleto sintilante,,,-,6,n,35,s,1,equipavel,98
+Idolo Perdido,,,-,6,n,35,s,1,equipavel,99
+Arco dos Ventos,,,-,6,n,35,s,1,equipavel,100
+Espada Envenenada,,,-,6,n,35,s,1,equipavel,101
+Dente do Fim,,,-,6,n,35,s,1,equipavel,102
+Arco de Ossos,,,-,6,n,35,s,1,equipavel,103
+Serra Toxica,,,-,6,n,35,s,1,equipavel,104
+Mao Sinistra,,,-,6,n,35,s,1,equipavel,105
+Maldição,,,-,6,n,35,s,1,equipavel,106
+Capa Assombrada,,,-,6,n,35,s,1,equipavel,107
+Machado Amaldiçoado,,,-,6,n,35,s,1,equipavel,108
+Eternidade,,,-,6,n,35,s,1,equipavel,109
+Elmo Cosmico,,,-,6,n,35,s,1,equipavel,110
+Mascara do Mosquito Gigante,,,-,6,n,35,s,1,equipavel,111
+Espada Mental,,,-,6,n,35,s,1,equipavel,112
+Elmo Psionico,,,-,6,n,35,s,1,equipavel,113
+Mao que Tudo Ve,,,-,6,n,35,s,1,equipavel,114
+Coração de Ferro,,,-,6,n,35,s,1,equipavel,115
+Elmo Abençoado,,,-,6,n,35,s,1,equipavel,116
+Placa defensiva,,,-,6,n,35,s,1,equipavel,117
+Botas Colossais,,,-,6,n,35,s,1,equipavel,118
+Cinto do Gigante,,,-,6,n,35,s,1,equipavel,119
+Faixa da Escolha,,,-,6,n,35,s,1,equipavel,120
+Punho Robusto,,,-,6,n,35,s,1,equipavel,121
+Estaca Terrestre,,,-,6,n,35,s,1,equipavel,122
+Pedra Flutuante,,,-,6,n,35,s,1,equipavel,123
+Sismitarra Marcada,,,-,6,n,35,s,1,equipavel,124
+Cajado do Som,,,-,6,n,35,s,1,equipavel,125
+Sino Dourado,,,-,6,n,35,s,1,equipavel,126
+Emblema das Sombras,,,-,6,n,35,s,1,equipavel,127
+Faca do Dragão,,,-,6,n,35,s,1,equipavel,128
+Ombreira da Escama Ardente,,,-,6,n,35,s,1,equipavel,129
+Capa Alheia,,,-,6,n,35,s,1,equipavel,130
+Chapeu do Bruxo,,,-,6,n,35,s,1,equipavel,131
+Espada Energizada,,,-,6,n,35,s,1,equipavel,132
+Quebra Barreira,,,-,6,n,35,s,1,equipavel,133
+Besta Afiada,,,-,6,n,35,s,1,equipavel,134
+Anjo Guardião,,,-,6,n,35,s,1,equipavel,135
+Bastião Inabalavel,,,-,6,n,35,s,1,equipavel,136
+Botas do Sucesso,,,-,6,n,35,s,1,equipavel,137
+Colete de Espinhos,,,-,6,n,35,s,1,equipavel,138
+Tiara Encantada,,,-,6,n,35,s,1,equipavel,139
+Coroa da Vitória,,,-,6,n,35,s,1,equipavel,140
+Armadura Reforçada,,,-,6,n,35,s,1,equipavel,141
+Centro Espiritual,,,-,6,n,35,s,1,equipavel,142
+Essencia Radiante,,,-,6,n,50,s,1,equipavel,143
+Pedra da Ultra Evolução,,,-,6,n,50,s,1,equipavel,144
+Energia Gigantamax,,,-,6,n,50,s,1,equipavel,145
+Pedra da Mega Evolução,,,-,6,n,50,s,1,equipavel,146

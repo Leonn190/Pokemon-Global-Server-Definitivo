@@ -54,7 +54,7 @@ Os números abaixo são atualizados automaticamente pelo `Ferramentas/Atualizado
 | NPCs cadastrados | **96** |
 | Estruturas naturais | **25** |
 | Trilhas sonoras | **73** |
-| Receitas | **31** |
+| Receitas | **0** |
 | Tipos de Pokémon | **20** |
 | Biomas | **7** |
 | Mundo planejado | **10.000 x 10.000 tiles** |
@@ -65,21 +65,21 @@ Os números abaixo são atualizados automaticamente pelo `Ferramentas/Atualizado
 
 | Categoria | Quantidade atual |
 |---|---:|
-| Pastas | **1.410** |
-| Arquivos | **74.263** |
-| Arquivos de texto | **633** |
-| Peso dos arquivos de texto | **6385.81 KB** |
-| Tamanho total | **1.920 GB (2.061.665.480 bytes)** |
-| Dias desde a criação do projeto | **349** |
-| Linhas totais gerais | **164.664** |
-| Commits (projeto) | **716** |
-| Arquivos .py | **265** |
-| Linhas totais .py | **84.611** |
-| Tamanho total .py | **3761.56 KB** |
-| Classes encontradas | **242** |
-| Funções encontradas | **1.712** |
-| Métodos encontrados | **3.281** |
-| Total funções + métodos | **4.993** |
+| Pastas | **1.388** |
+| Arquivos | **74.269** |
+| Arquivos de texto | **641** |
+| Peso dos arquivos de texto | **6418.47 KB** |
+| Tamanho total | **1.920 GB (2.061.691.970 bytes)** |
+| Dias desde a criação do projeto | **351** |
+| Linhas totais gerais | **167.581** |
+| Commits (projeto) | **725** |
+| Arquivos .py | **270** |
+| Linhas totais .py | **86.068** |
+| Tamanho total .py | **3791.86 KB** |
+| Classes encontradas | **248** |
+| Funções encontradas | **1.744** |
+| Métodos encontrados | **3.354** |
+| Total funções + métodos | **5.098** |
 
 ## 4. Features principais e conceitos
 

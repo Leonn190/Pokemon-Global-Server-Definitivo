@@ -1,0 +1,382 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Ravena ajeita luvas escuras e aponta para a vitrine comum. Comprar e simples. Enxergar alem, nem tanto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Outra visita. Talvez voce esteja aprendendo que a sombra aqui tem ordem."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre a sombra da loja.",
+          "destino": "sombra_intro"
+        },
+        {
+          "texto": "Pedir estoque secreto.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Ir embora.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "A vitrine comum nao morde. Pode olhar.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sombra_intro": {
+      "fala": "A sombra da loja tem quatro cantos. Quem entra pelo canto errado volta para o balcao.",
+      "ao_entrar": {
+        "setor": {
+          "Ravena.EntrouNaSombra": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Canto frio.",
+          "destino": "canto_frio"
+        },
+        {
+          "texto": "Canto gasto.",
+          "destino": "canto_gasto"
+        },
+        {
+          "texto": "Canto novo.",
+          "destino": "canto_novo"
+        },
+        {
+          "texto": "Canto brilhante.",
+          "destino": "canto_brilhante"
+        }
+      ]
+    },
+    "canto_frio": {
+      "fala": "Frio conserva, mas tambem endurece. Nao e por aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar aos quatro cantos.",
+          "destino": "sombra_intro"
+        },
+        {
+          "texto": "Abrir loja comum.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "canto_novo": {
+      "fala": "Novo demais. Segredo antigo nao gosta de cheiro de embalagem.",
+      "opcoes": [
+        {
+          "texto": "Voltar aos quatro cantos.",
+          "destino": "sombra_intro"
+        },
+        {
+          "texto": "Tentar canto gasto.",
+          "destino": "canto_gasto"
+        }
+      ]
+    },
+    "canto_brilhante": {
+      "fala": "Brilhante demais. Quem quer esconder produto nao acende placa.",
+      "opcoes": [
+        {
+          "texto": "Voltar aos quatro cantos.",
+          "destino": "sombra_intro"
+        },
+        {
+          "texto": "Tentar canto gasto.",
+          "destino": "canto_gasto"
+        }
+      ]
+    },
+    "canto_gasto": {
+      "fala": "O canto gasto tem marcas de caixa arrastada. Ravena nota que voce olhou para o chao, nao para a prateleira.",
+      "ao_entrar": {
+        "setor": {
+          "Ravena.CantoGasto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Seguir as marcas.",
+          "destino": "marcas_chao"
+        },
+        {
+          "texto": "Olhar a prateleira.",
+          "destino": "prateleira_errada"
+        },
+        {
+          "texto": "Perguntar direto.",
+          "destino": "checar_loja_secreta"
+        }
+      ]
+    },
+    "prateleira_errada": {
+      "fala": "Prateleira e para quem compra com os olhos. Eu estou testando seus passos.",
+      "opcoes": [
+        {
+          "texto": "Seguir as marcas do chao.",
+          "destino": "marcas_chao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombra_intro"
+        }
+      ]
+    },
+    "marcas_chao": {
+      "fala": "As marcas param em tres riscos pequenos. Um vertical, um torto, um quase apagado.",
+      "ao_entrar": {
+        "setor": {
+          "Ravena.MarcasChao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Escolher o risco vertical.",
+          "destino": "risco_vertical"
+        },
+        {
+          "texto": "Escolher o risco torto.",
+          "destino": "risco_torto"
+        },
+        {
+          "texto": "Escolher o risco quase apagado.",
+          "destino": "risco_apagado"
+        }
+      ]
+    },
+    "risco_vertical": {
+      "fala": "Reto demais. Serve para fila, nao para esconderijo.",
+      "opcoes": [
+        {
+          "texto": "Olhar o risco quase apagado.",
+          "destino": "risco_apagado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "marcas_chao"
+        }
+      ]
+    },
+    "risco_torto": {
+      "fala": "Torto chama curiosos. Curioso demais nao entra.",
+      "opcoes": [
+        {
+          "texto": "Olhar o risco quase apagado.",
+          "destino": "risco_apagado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "marcas_chao"
+        }
+      ]
+    },
+    "risco_apagado": {
+      "fala": "Quase apagado e o unico que ainda tenta sumir. Esse e o sinal certo.",
+      "ao_entrar": {
+        "setor": {
+          "Ravena.RiscoApagado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esperar Ravena falar.",
+          "destino": "espera"
+        },
+        {
+          "texto": "Bater na parede.",
+          "destino": "parede_errada"
+        },
+        {
+          "texto": "Pedir a chave.",
+          "destino": "chave_cedo"
+        }
+      ]
+    },
+    "parede_errada": {
+      "fala": "Parede que abre com batida nao dura uma semana numa feira.",
+      "opcoes": [
+        {
+          "texto": "Esperar em silencio.",
+          "destino": "espera"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombra_intro"
+        }
+      ]
+    },
+    "chave_cedo": {
+      "fala": "Chave pedida cedo demais vira chave nenhuma.",
+      "opcoes": [
+        {
+          "texto": "Esperar em silencio.",
+          "destino": "espera"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombra_intro"
+        }
+      ]
+    },
+    "espera": {
+      "fala": "Ravena deixa o silencio pesar. Depois diz: 'segunda sombra, terceira prateleira, sem tocar na primeira caixa'.",
+      "ao_entrar": {
+        "setor": {
+          "Ravena.Esperou": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Segunda sombra.",
+          "destino": "segunda_sombra"
+        },
+        {
+          "texto": "Primeira caixa.",
+          "destino": "primeira_caixa"
+        },
+        {
+          "texto": "Terceira prateleira direto.",
+          "destino": "terceira_cedo"
+        }
+      ]
+    },
+    "primeira_caixa": {
+      "fala": "Eu disse sem tocar. A caixa range e a sombra fecha.",
+      "opcoes": [
+        {
+          "texto": "Recomecar pela espera.",
+          "destino": "espera"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombra_intro"
+        }
+      ]
+    },
+    "terceira_cedo": {
+      "fala": "Prateleira sem sombra e so madeira.",
+      "opcoes": [
+        {
+          "texto": "Ir pela segunda sombra.",
+          "destino": "segunda_sombra"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombra_intro"
+        }
+      ]
+    },
+    "segunda_sombra": {
+      "fala": "A segunda sombra mostra a terceira prateleira sem denunciar a caixa. Agora o caminho existe.",
+      "ao_entrar": {
+        "setor": {
+          "Ravena.SegundaSombra": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir estoque reservado.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar ao balcao.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Ravena.CantoGasto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Ravena.MarcasChao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Ravena.RiscoApagado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Ravena.Esperou",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Ravena.SegundaSombra",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Nao. No meu nivel, caminho incompleto parece atalho, e atalho parece erro.",
+      "opcoes": [
+        {
+          "texto": "Entrar de novo na sombra.",
+          "destino": "sombra_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Voce atravessou a sombra sem fazer barulho. A loja secreta esta aberta.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo da Ravena.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

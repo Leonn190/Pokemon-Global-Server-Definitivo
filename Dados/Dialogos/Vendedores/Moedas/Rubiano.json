@@ -1,0 +1,380 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Rubiano observa sua bolsa antes de olhar para voce. Loja eu abro sem misterio; confianca, nao.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "De volta, hein? Minha loja continua aberta, mas o cofre de conversa muda de lugar todo dia."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Perguntar pelo cofre reservado.",
+          "destino": "cofre_intro"
+        },
+        {
+          "texto": "Tchau.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Aqui esta o balcao comum. Preco claro, produto claro, sem pegadinha.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Moeda tem duas faces, mas vendedor experiente olha tambem a borda.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Rubiano.NotouBorda",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce ja percebeu a borda. Pouca gente chega nessa parte sem pedir desconto primeiro."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "Rubiano.Conversas": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Falar sobre a borda da moeda.",
+          "destino": "borda",
+          "ao_escolher": {
+            "setor": {
+              "Rubiano.NotouBorda": true
+            }
+          }
+        },
+        {
+          "texto": "Pedir o estoque secreto direto.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Perguntar se ha presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "borda": {
+      "fala": "Boa. A face mostra valor, a borda mostra uso. Mercadoria rara tambem deixa marca onde quase ninguem olha.",
+      "ao_entrar": {
+        "setor": {
+          "Rubiano.Borda": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao o segredo fica na marca?",
+          "destino": "marca"
+        },
+        {
+          "texto": "Entao o segredo fica no brilho?",
+          "destino": "desvio_brilho"
+        },
+        {
+          "texto": "Abrir loja normal.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "desvio_brilho": {
+      "fala": "Brilho engana. Quem compra so pelo brilho volta sem dinheiro e sem historia.",
+      "opcoes": [
+        {
+          "texto": "Entendi, olhar a marca.",
+          "destino": "marca"
+        },
+        {
+          "texto": "Voltar ao inicio.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "marca": {
+      "fala": "Marca certa nao e arranhao. E repeticao: a moeda passa de mao em mao e ainda sabe para onde voltar.",
+      "ao_entrar": {
+        "setor": {
+          "Rubiano.Marca": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Seguir a repeticao.",
+          "destino": "repeticao"
+        },
+        {
+          "texto": "Pedir desconto.",
+          "destino": "desvio_desconto"
+        },
+        {
+          "texto": "Perguntar pelo presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "desvio_desconto": {
+      "fala": "Desconto eu negocio na luz. Segredo eu negocio no silencio.",
+      "opcoes": [
+        {
+          "texto": "Ficar em silencio e continuar.",
+          "destino": "repeticao"
+        },
+        {
+          "texto": "Abrir loja normal.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "repeticao": {
+      "fala": "A repeticao aponta para o terceiro som: moeda na mesa, moeda no bolso, moeda guardada.",
+      "ao_entrar": {
+        "setor": {
+          "Rubiano.Repeticao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Mesa.",
+          "destino": "desvio_mesa"
+        },
+        {
+          "texto": "Bolso.",
+          "destino": "desvio_bolso"
+        },
+        {
+          "texto": "Guardada.",
+          "destino": "cofre_guardado"
+        }
+      ]
+    },
+    "desvio_mesa": {
+      "fala": "Mesa e vitrine. Serve para comprar, nao para descobrir.",
+      "opcoes": [
+        {
+          "texto": "Tentar o som guardado.",
+          "destino": "cofre_guardado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "desvio_bolso": {
+      "fala": "Bolso e pressa. Pressa nunca abre cofre.",
+      "opcoes": [
+        {
+          "texto": "Tentar o som guardado.",
+          "destino": "cofre_guardado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "cofre_guardado": {
+      "fala": "Agora voce chegou perto. Se lembrar da borda, da marca e da repeticao, eu abro o que fica atras do balcao.",
+      "ao_entrar": {
+        "setor": {
+          "Rubiano.CofreGuardado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir o cofre reservado.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Perguntar pelo presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "cofre_intro": {
+      "fala_condicional": {
+        "padrao": "Cofre reservado nao abre por pergunta. Abre por caminho.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Rubiano.CofreGuardado",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce ja conhece o caminho. Borda, marca, repeticao e guarda."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Comecar pelo caminho.",
+          "destino": "borda"
+        },
+        {
+          "texto": "Tentar abrir mesmo assim.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Rubiano.Borda",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Rubiano.Marca",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Rubiano.Repeticao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Rubiano.CofreGuardado",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Ainda falta uma parte do caminho. Nivel alto de mercadoria exige memoria alta tambem.",
+      "opcoes": [
+        {
+          "texto": "Voltar para a conversa.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Recomecar pelo cofre.",
+          "destino": "cofre_intro"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Muito bem. A parte reservada esta aberta, mas nao toque em nada antes de olhar o preco.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Rubiano.CofreGuardado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Rubiano.Conversas",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente eu dou para quem entende o caminho, nao para quem so pergunta pelo pacote.",
+      "opcoes": [
+        {
+          "texto": "Entao me ensine o caminho.",
+          "destino": "borda"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Voce prestou atencao na borda da conversa. Pegue isto antes que eu mude de ideia.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do Rubiano.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

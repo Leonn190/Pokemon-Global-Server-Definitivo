@@ -1,0 +1,667 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Clarice fecha um livro de contas antes de falar. Loja comum fica aberta; o resto depende de leitura fina.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voce voltou. Bom. Certos capitulos so aparecem para quem relê."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Ler o livro de contas.",
+          "destino": "livro_intro"
+        },
+        {
+          "texto": "Perguntar pela loja secreta.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Perguntar por presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "A loja comum esta aqui. Compras simples nao precisam de interpretacao.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "livro_intro": {
+      "fala": "O livro tem seis abas: entrada, saida, perda, ganho, silencio e rodape. Duas sao falsas, quatro importam.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.LivroAberto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entrada.",
+          "destino": "aba_entrada"
+        },
+        {
+          "texto": "Saida.",
+          "destino": "aba_saida"
+        },
+        {
+          "texto": "Perda.",
+          "destino": "aba_perda"
+        },
+        {
+          "texto": "Ganho.",
+          "destino": "aba_ganho"
+        },
+        {
+          "texto": "Silencio.",
+          "destino": "aba_silencio"
+        },
+        {
+          "texto": "Rodape.",
+          "destino": "aba_rodape"
+        }
+      ]
+    },
+    "aba_entrada": {
+      "fala": "Entrada mostra quem chegou, mas nao mostra quem mereceu entrar.",
+      "opcoes": [
+        {
+          "texto": "Olhar ganho.",
+          "destino": "aba_ganho"
+        },
+        {
+          "texto": "Olhar silencio.",
+          "destino": "aba_silencio"
+        },
+        {
+          "texto": "Voltar ao livro.",
+          "destino": "livro_intro"
+        }
+      ]
+    },
+    "aba_saida": {
+      "fala": "Saida mostra quem foi embora. Segredo nenhum espera na porta.",
+      "opcoes": [
+        {
+          "texto": "Olhar ganho.",
+          "destino": "aba_ganho"
+        },
+        {
+          "texto": "Olhar rodape.",
+          "destino": "aba_rodape"
+        },
+        {
+          "texto": "Voltar ao livro.",
+          "destino": "livro_intro"
+        }
+      ]
+    },
+    "aba_perda": {
+      "fala": "Perda existe, mas hoje e uma aba falsa. Clarice observa se voce percebe.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao livro.",
+          "destino": "livro_intro"
+        },
+        {
+          "texto": "Olhar silencio.",
+          "destino": "aba_silencio"
+        }
+      ]
+    },
+    "aba_ganho": {
+      "fala": "Ganho tem uma anotacao: 'valor sem contexto vira barulho'.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.AbaGanho": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Procurar o contexto.",
+          "destino": "contexto"
+        },
+        {
+          "texto": "Pedir o ganho como presente.",
+          "destino": "presente_cedo"
+        },
+        {
+          "texto": "Voltar ao livro.",
+          "destino": "livro_intro"
+        }
+      ]
+    },
+    "presente_cedo": {
+      "fala": "Clarice toca a capa do livro. Presente pedido cedo vira anotacao negativa.",
+      "opcoes": [
+        {
+          "texto": "Procurar o contexto.",
+          "destino": "contexto"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "contexto": {
+      "fala": "Contexto aparece quando voce cruza ganho com silencio. Quem lucra falando demais perde acesso.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.Contexto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Cruzar com silencio.",
+          "destino": "aba_silencio"
+        },
+        {
+          "texto": "Cruzar com entrada.",
+          "destino": "entrada_errada"
+        },
+        {
+          "texto": "Cruzar com saida.",
+          "destino": "saida_errada"
+        }
+      ]
+    },
+    "entrada_errada": {
+      "fala": "Entrada registra presenca, nao criterio.",
+      "opcoes": [
+        {
+          "texto": "Cruzar com silencio.",
+          "destino": "aba_silencio"
+        },
+        {
+          "texto": "Voltar ao livro.",
+          "destino": "livro_intro"
+        }
+      ]
+    },
+    "saida_errada": {
+      "fala": "Saida registra ausencia, nao confianca.",
+      "opcoes": [
+        {
+          "texto": "Cruzar com silencio.",
+          "destino": "aba_silencio"
+        },
+        {
+          "texto": "Voltar ao livro.",
+          "destino": "livro_intro"
+        }
+      ]
+    },
+    "aba_silencio": {
+      "fala_condicional": {
+        "padrao": "A aba silencio esta quase vazia. Isso geralmente e o ponto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Clarice.Contexto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "A aba silencio completa o contexto: quem entende o valor fala pouco e escolhe melhor."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "Clarice.AbaSilencio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Procurar a linha vazia.",
+          "destino": "linha_vazia"
+        },
+        {
+          "texto": "Falar alto sobre a loja secreta.",
+          "destino": "alto_errado"
+        },
+        {
+          "texto": "Voltar ao livro.",
+          "destino": "livro_intro"
+        }
+      ]
+    },
+    "alto_errado": {
+      "fala": "Clarice fecha metade do livro. Alto demais para uma pagina silenciosa.",
+      "opcoes": [
+        {
+          "texto": "Baixar o tom e procurar a linha vazia.",
+          "destino": "linha_vazia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "livro_intro"
+        }
+      ]
+    },
+    "linha_vazia": {
+      "fala": "A linha vazia tem uma marca quase invisivel: 'rodape antes da chave'.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.LinhaVazia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ir ao rodape.",
+          "destino": "aba_rodape"
+        },
+        {
+          "texto": "Pedir a chave agora.",
+          "destino": "chave_cedo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "aba_silencio"
+        }
+      ]
+    },
+    "chave_cedo": {
+      "fala": "Chave antes de rodape e so metal sem fechadura.",
+      "opcoes": [
+        {
+          "texto": "Ir ao rodape.",
+          "destino": "aba_rodape"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "aba_silencio"
+        }
+      ]
+    },
+    "aba_rodape": {
+      "fala_condicional": {
+        "padrao": "Rodape costuma ser ignorado. Por isso funciona.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Clarice.LinhaVazia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "No rodape, Clarice deixou tres iniciais: C, L e R. Conta, Leitura, Reserva."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "Clarice.AbaRodape": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Conta.",
+          "destino": "conta"
+        },
+        {
+          "texto": "Leitura.",
+          "destino": "leitura"
+        },
+        {
+          "texto": "Reserva.",
+          "destino": "reserva_cedo"
+        },
+        {
+          "texto": "Voltar ao livro.",
+          "destino": "livro_intro"
+        }
+      ]
+    },
+    "reserva_cedo": {
+      "fala": "Reserva sem conta e leitura vira chute. Clarice nao gosta de chute.",
+      "opcoes": [
+        {
+          "texto": "Comecar por conta.",
+          "destino": "conta"
+        },
+        {
+          "texto": "Voltar ao rodape.",
+          "destino": "aba_rodape"
+        }
+      ]
+    },
+    "conta": {
+      "fala": "Conta: cada moeda tem rastro. Clarice pede que voce escolha o rastro menos obvio.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.Conta": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Rastro brilhante.",
+          "destino": "rastro_brilhante"
+        },
+        {
+          "texto": "Rastro gasto.",
+          "destino": "rastro_gasto"
+        },
+        {
+          "texto": "Rastro novo.",
+          "destino": "rastro_novo"
+        }
+      ]
+    },
+    "rastro_brilhante": {
+      "fala": "Brilho e propaganda. Propaganda nao assina segredo.",
+      "opcoes": [
+        {
+          "texto": "Escolher rastro gasto.",
+          "destino": "rastro_gasto"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conta"
+        }
+      ]
+    },
+    "rastro_novo": {
+      "fala": "Novo demais para ter historia.",
+      "opcoes": [
+        {
+          "texto": "Escolher rastro gasto.",
+          "destino": "rastro_gasto"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conta"
+        }
+      ]
+    },
+    "rastro_gasto": {
+      "fala": "Rastro gasto confirma que a moeda circulou. Agora falta leitura.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.RastroGasto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Leitura.",
+          "destino": "leitura"
+        },
+        {
+          "texto": "Reserva.",
+          "destino": "reserva_cedo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "aba_rodape"
+        }
+      ]
+    },
+    "leitura": {
+      "fala": "Leitura: a margem nao contradiz o texto, ela explica o que o texto nao podia dizer.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.Leitura": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ler a margem.",
+          "destino": "margem"
+        },
+        {
+          "texto": "Ignorar a margem.",
+          "destino": "ignorar_margem"
+        },
+        {
+          "texto": "Pedir reserva.",
+          "destino": "reserva_cedo"
+        }
+      ]
+    },
+    "ignorar_margem": {
+      "fala": "Ignorar margem em livro de Clarice e pedir para comprar item errado.",
+      "opcoes": [
+        {
+          "texto": "Ler a margem.",
+          "destino": "margem"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "leitura"
+        }
+      ]
+    },
+    "margem": {
+      "fala": "Na margem esta escrito: 'reserva so depois de conta gasta e leitura completa'.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.Margem": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Reserva.",
+          "destino": "reserva"
+        },
+        {
+          "texto": "Loja secreta agora.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Perguntar por presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "reserva": {
+      "fala": "Clarice finalmente abre uma fita azul entre as paginas. Ali esta a permissao.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.Reserva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir loja secreta.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Pedir presente com cuidado.",
+          "destino": "presente_cuidado"
+        },
+        {
+          "texto": "Voltar ao inicio.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_cuidado": {
+      "fala": "Voce nao pediu brinde; pediu cuidado. Essa diferenca salva clientes bons.",
+      "ao_entrar": {
+        "setor": {
+          "Clarice.PediuPresenteComCuidado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Aceitar se houver algo guardado.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Abrir loja secreta.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Clarice.AbaGanho",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.Contexto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.AbaSilencio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.LinhaVazia",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.AbaRodape",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.RastroGasto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.Margem",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.Reserva",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Ainda nao. Para mim, nivel alto significa percurso completo: ganho, contexto, silencio, rodape, conta, leitura e reserva.",
+      "opcoes": [
+        {
+          "texto": "Abrir o livro de contas.",
+          "destino": "livro_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "A fita azul abre o catalogo reservado. Escolha com leitura fina.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Clarice.Reserva",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.PediuPresenteComCuidado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.RastroGasto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Clarice.Margem",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente existe para quem leu ate a margem e pediu sem transformar cuidado em cobrança.",
+      "opcoes": [
+        {
+          "texto": "Ler o livro com calma.",
+          "destino": "livro_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Voce leu, esperou e pediu certo. Pegue este presente antes que eu registre como estoque.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo da Clarice.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

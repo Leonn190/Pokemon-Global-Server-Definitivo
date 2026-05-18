@@ -1,0 +1,356 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Selena sorri como quem ja sabe o que voce vai pedir. Loja aberta, segredos fechados.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voce voltou. Talvez agora escolha melhor as palavras."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Perguntar sobre estoque secreto.",
+          "destino": "estoque_secreto_intro"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "O comum fica na frente porque nao precisa se esconder.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Negocio bom tem ritmo: primeiro voce observa, depois pergunta, depois cala.",
+      "ao_entrar": {
+        "setor": {
+          "Selena.ObservouRitmo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Observar.",
+          "destino": "observacao"
+        },
+        {
+          "texto": "Perguntar.",
+          "destino": "pergunta_errada"
+        },
+        {
+          "texto": "Calar.",
+          "destino": "silencio_cedo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "observacao": {
+      "fala": "Voce percebe tres panos no balcao: o claro, o escuro e o dobrado. So um deles cobre algo util.",
+      "ao_entrar": {
+        "setor": {
+          "Selena.ObservouPanos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Levantar o pano claro.",
+          "destino": "pano_claro"
+        },
+        {
+          "texto": "Levantar o pano escuro.",
+          "destino": "pano_escuro"
+        },
+        {
+          "texto": "Notar o pano dobrado.",
+          "destino": "pano_dobrado"
+        }
+      ]
+    },
+    "pano_claro": {
+      "fala": "O claro e vitrine. Serve para chamar comprador apressado.",
+      "opcoes": [
+        {
+          "texto": "Olhar o dobrado.",
+          "destino": "pano_dobrado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pano_escuro": {
+      "fala": "O escuro e teatro. Quem procura misterio demais acaba comprando sombra.",
+      "opcoes": [
+        {
+          "texto": "Olhar o dobrado.",
+          "destino": "pano_dobrado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pano_dobrado": {
+      "fala": "O dobrado nao cobre produto. Cobre uma anotacao: 'pergunte so depois de contar o troco'.",
+      "ao_entrar": {
+        "setor": {
+          "Selena.PanoDobrado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Contar o troco.",
+          "destino": "contar_troco"
+        },
+        {
+          "texto": "Pedir o segredo agora.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "contar_troco": {
+      "fala": "Selena deixa tres moedas na mesa. Duas fazem barulho, uma quase nao soa.",
+      "ao_entrar": {
+        "setor": {
+          "Selena.ContouTroco": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Escolher a moeda barulhenta.",
+          "destino": "moeda_barulho"
+        },
+        {
+          "texto": "Escolher a moeda silenciosa.",
+          "destino": "moeda_silenciosa"
+        },
+        {
+          "texto": "Desistir.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "moeda_barulho": {
+      "fala": "Barulho chama atencao. Atencao fecha porta.",
+      "opcoes": [
+        {
+          "texto": "Escolher a silenciosa.",
+          "destino": "moeda_silenciosa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "moeda_silenciosa": {
+      "fala": "A moeda silenciosa vale menos para venda e mais para senha. Agora pergunte sem dizer 'secreto'.",
+      "ao_entrar": {
+        "setor": {
+          "Selena.MoedaSilenciosa": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que fica atras do comum?",
+          "destino": "frase_correta"
+        },
+        {
+          "texto": "Mostra a loja secreta.",
+          "destino": "frase_errada"
+        },
+        {
+          "texto": "Abrir loja normal.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "frase_errada": {
+      "fala": "Direto demais. Quem fala 'secreta' no meio da feira assusta ate o produto.",
+      "opcoes": [
+        {
+          "texto": "Perguntar de outro jeito.",
+          "destino": "moeda_silenciosa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "frase_correta": {
+      "fala": "Atras do comum fica o que nao cabe no primeiro preco. Agora sim voce falou baixo o bastante.",
+      "ao_entrar": {
+        "setor": {
+          "Selena.FraseCorreta": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir o estoque reservado.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "estoque_secreto_intro": {
+      "fala_condicional": {
+        "padrao": "Se voce perguntar pelo nome errado, eu nego ate existir.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Selena.FraseCorreta",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce ja sabe o nome certo: o que fica atras do comum."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Fazer o caminho do ritmo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Tentar abrir agora.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Selena.PanoDobrado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Selena.ContouTroco",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Selena.MoedaSilenciosa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Selena.FraseCorreta",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Nao ainda. Voce pulou algum passo: observar, contar, escolher a moeda certa e perguntar baixo.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Silencio comprado, estoque aberto. Veja rapido; segredo parado vira fofoca.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo da Selena.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pergunta_errada": {
+      "fala": "Perguntar antes de observar bagunca o ritmo. Selena aponta de volta para os panos.",
+      "opcoes": [
+        {
+          "texto": "Observar primeiro.",
+          "destino": "observacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "silencio_cedo": {
+      "fala": "Silencio cedo demais vira pose. Primeiro observe o que precisa ser calado.",
+      "opcoes": [
+        {
+          "texto": "Observar.",
+          "destino": "observacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    }
+  }
+}

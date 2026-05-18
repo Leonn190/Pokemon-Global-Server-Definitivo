@@ -1,0 +1,480 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Olavo limpa uma moeda antiga com paciencia. Loja comum, eu mostro. Historia escondida, voce conquista.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou. Moeda antiga gosta de quem retorna sem pressa."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Ouvir a historia da moeda antiga.",
+          "destino": "historia_intro"
+        },
+        {
+          "texto": "Pedir loja secreta.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "O balcao comum e honesto. Nem todo misterio precisa estar em todo canto.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "historia_intro": {
+      "fala": "Esta moeda passou por cinco donos. Cada dono deixou uma escolha. Erre a ordem e ela vira so metal.",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.HistoriaIniciada": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ouvir sobre o primeiro dono.",
+          "destino": "dono_primeiro"
+        },
+        {
+          "texto": "Perguntar pelo quinto dono.",
+          "destino": "quinto_cedo"
+        },
+        {
+          "texto": "Tentar abrir a loja secreta.",
+          "destino": "checar_loja_secreta"
+        }
+      ]
+    },
+    "quinto_cedo": {
+      "fala": "Quinto dono sem primeiro e final sem historia. Assim nao.",
+      "opcoes": [
+        {
+          "texto": "Comecar pelo primeiro dono.",
+          "destino": "dono_primeiro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "dono_primeiro": {
+      "fala": "O primeiro dono vendia barato, mas nunca vendia correndo. O que voce aprende com isso?",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.PrimeiroDono": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Preco baixo sempre vence.",
+          "destino": "lição_errada_preco"
+        },
+        {
+          "texto": "Pressa estraga troca.",
+          "destino": "dono_segundo"
+        },
+        {
+          "texto": "Segredo e comprar tudo.",
+          "destino": "lição_errada_tudo"
+        }
+      ]
+    },
+    "lição_errada_preco": {
+      "fala": "Barato demais compra arrependimento. Tente ouvir melhor.",
+      "opcoes": [
+        {
+          "texto": "Pressa estraga troca.",
+          "destino": "dono_segundo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "historia_intro"
+        }
+      ]
+    },
+    "lição_errada_tudo": {
+      "fala": "Comprar tudo e colecionar problema.",
+      "opcoes": [
+        {
+          "texto": "Pressa estraga troca.",
+          "destino": "dono_segundo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "historia_intro"
+        }
+      ]
+    },
+    "dono_segundo": {
+      "fala": "O segundo dono escondia o melhor item atras do pior embrulho. O que isso ensina?",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.SegundoDono": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Olhar alem do embrulho.",
+          "destino": "dono_terceiro"
+        },
+        {
+          "texto": "Evitar tudo que parece ruim.",
+          "destino": "embrulho_errado"
+        },
+        {
+          "texto": "Pedir embrulho novo.",
+          "destino": "embrulho_novo"
+        }
+      ]
+    },
+    "embrulho_errado": {
+      "fala": "Quem evita toda coisa feia perde metade das raridades.",
+      "opcoes": [
+        {
+          "texto": "Olhar alem do embrulho.",
+          "destino": "dono_terceiro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "dono_segundo"
+        }
+      ]
+    },
+    "embrulho_novo": {
+      "fala": "Embrulho novo denuncia produto velho.",
+      "opcoes": [
+        {
+          "texto": "Olhar alem do embrulho.",
+          "destino": "dono_terceiro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "dono_segundo"
+        }
+      ]
+    },
+    "dono_terceiro": {
+      "fala": "O terceiro dono anotava tudo, menos o valor real. Onde ele guardava a verdade?",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.TerceiroDono": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "No recibo.",
+          "destino": "recibo_errado"
+        },
+        {
+          "texto": "Na margem.",
+          "destino": "margem"
+        },
+        {
+          "texto": "Na vitrine.",
+          "destino": "vitrine_errada"
+        }
+      ]
+    },
+    "recibo_errado": {
+      "fala": "Recibo prova compra, nao prova verdade.",
+      "opcoes": [
+        {
+          "texto": "Procurar na margem.",
+          "destino": "margem"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "dono_terceiro"
+        }
+      ]
+    },
+    "vitrine_errada": {
+      "fala": "Vitrine fala alto demais para guardar verdade.",
+      "opcoes": [
+        {
+          "texto": "Procurar na margem.",
+          "destino": "margem"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "dono_terceiro"
+        }
+      ]
+    },
+    "margem": {
+      "fala": "Na margem estava escrito: 'quem sabe esperar encontra a segunda gaveta'.",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.Margem": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a primeira gaveta.",
+          "destino": "primeira_gaveta"
+        },
+        {
+          "texto": "Esperar pela segunda gaveta.",
+          "destino": "segunda_gaveta"
+        },
+        {
+          "texto": "Perguntar pelo quarto dono.",
+          "destino": "quarto_cedo"
+        }
+      ]
+    },
+    "primeira_gaveta": {
+      "fala": "Primeira gaveta e isca. Fechou antes que fizesse barulho.",
+      "opcoes": [
+        {
+          "texto": "Esperar pela segunda gaveta.",
+          "destino": "segunda_gaveta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "margem"
+        }
+      ]
+    },
+    "quarto_cedo": {
+      "fala": "O quarto dono so aparece quando a gaveta certa abre.",
+      "opcoes": [
+        {
+          "texto": "Esperar pela segunda gaveta.",
+          "destino": "segunda_gaveta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "margem"
+        }
+      ]
+    },
+    "segunda_gaveta": {
+      "fala": "A segunda gaveta range uma vez. Dentro dela ha uma etiqueta sem preco e uma pena seca.",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.SegundaGaveta": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pegar a etiqueta.",
+          "destino": "etiqueta"
+        },
+        {
+          "texto": "Pegar a pena.",
+          "destino": "pena_errada"
+        },
+        {
+          "texto": "Fechar a gaveta.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pena_errada": {
+      "fala": "A pena e lembranca. Bonita, mas nao abre nada.",
+      "opcoes": [
+        {
+          "texto": "Pegar a etiqueta.",
+          "destino": "etiqueta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "segunda_gaveta"
+        }
+      ]
+    },
+    "etiqueta": {
+      "fala": "A etiqueta diz: 'quarto dono: nao diga raro, diga reservado'.",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.Etiqueta": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir algo raro.",
+          "destino": "raro_errado"
+        },
+        {
+          "texto": "Pedir algo reservado.",
+          "destino": "dono_quarto"
+        }
+      ]
+    },
+    "raro_errado": {
+      "fala": "Raro atrai ouvidos. Reservado atrai chave.",
+      "opcoes": [
+        {
+          "texto": "Pedir algo reservado.",
+          "destino": "dono_quarto"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "etiqueta"
+        }
+      ]
+    },
+    "dono_quarto": {
+      "fala": "O quarto dono entregou a chave ao quinto, mas so para quem repetisse a palavra sem pressa: reservado.",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.QuartoDono": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Reservado.",
+          "destino": "dono_quinto"
+        },
+        {
+          "texto": "Secreto.",
+          "destino": "secreto_errado"
+        },
+        {
+          "texto": "Raro.",
+          "destino": "raro_errado"
+        }
+      ]
+    },
+    "secreto_errado": {
+      "fala": "Secreto e palavra de curioso. Reservado e palavra de cliente.",
+      "opcoes": [
+        {
+          "texto": "Reservado.",
+          "destino": "dono_quinto"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "dono_quarto"
+        }
+      ]
+    },
+    "dono_quinto": {
+      "fala": "O quinto dono sorriu e deixou a moeda na caixa de baixo. Agora voce sabe a historia inteira.",
+      "ao_entrar": {
+        "setor": {
+          "Olavo.QuintoDono": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir loja reservada.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Abrir loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Olavo.PrimeiroDono",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Olavo.SegundoDono",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Olavo.TerceiroDono",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Olavo.SegundaGaveta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Olavo.Etiqueta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Olavo.QuartoDono",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Olavo.QuintoDono",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Voce ainda nao conhece todos os donos da moeda. Para nivel alto, historia pela metade nao abre caixa.",
+      "opcoes": [
+        {
+          "texto": "Ouvir desde o inicio.",
+          "destino": "historia_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "A caixa de baixo abre. Olhe com calma: produto reservado nao gosta de maos apressadas.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do Olavo.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

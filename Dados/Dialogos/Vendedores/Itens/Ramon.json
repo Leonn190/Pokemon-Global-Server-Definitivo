@@ -1,0 +1,429 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Ramon. Minha loja de itens é simples de abrir, mas o compartimento reservado só aparece para quem não confunde pressa com necessidade.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou, então talvez já tenha percebido que prateleira boa tem frente, fundo e silêncio."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre organização de itens.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "A loja comum está aberta. Aqui ficam os itens que qualquer viajante pode pedir sem rodeio.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "Para achar o reservado, siga a ordem: etiqueta, peso, canto seco e pergunta curta. Nada de teatrinho.",
+      "ao_entrar": {
+        "setor": {
+          "Ramon_IniciouTrilha": true,
+          "Ramon_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Começar pela etiqueta menor.",
+          "destino": "etiqueta"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "etiqueta": {
+      "fala": "A etiqueta menor diz mais que a grande. A grande vende; a menor orienta.",
+      "ao_entrar": {
+        "setor": {
+          "Ramon_Etiqueta": true,
+          "Ramon_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ler a margem da etiqueta.",
+          "destino": "peso"
+        },
+        {
+          "texto": "Arrancar a etiqueta para ler melhor.",
+          "destino": "erro_etiqueta"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_etiqueta": {
+      "fala": "Etiqueta arrancada vira sujeira, não pista. Leia onde ela está.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "etiqueta"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "peso": {
+      "fala": "A margem fala de peso. Item leve demais na frente costuma esconder caixa pesada atrás.",
+      "ao_entrar": {
+        "setor": {
+          "Ramon_Peso": true,
+          "Ramon_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Comparar o peso da frente com o fundo.",
+          "destino": "canto_seco"
+        },
+        {
+          "texto": "Escolher só o item mais leve.",
+          "destino": "erro_peso"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "etiqueta"
+        }
+      ]
+    },
+    "erro_peso": {
+      "fala": "Leve demais é confortável, mas não abre fundo reservado.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "peso"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "canto_seco": {
+      "fala": "O fundo pesado encosta num canto seco. Onde não há poeira, alguém mexe com frequência.",
+      "ao_entrar": {
+        "setor": {
+          "Ramon_CantoSeco": true,
+          "Ramon_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Tocar o canto seco sem empurrar.",
+          "destino": "pergunta_curta"
+        },
+        {
+          "texto": "Empurrar tudo para achar botão.",
+          "destino": "erro_canto_seco"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "peso"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_canto_seco": {
+      "fala": "Empurrar tudo só derruba estoque. Canto seco se observa, não se ataca.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "canto_seco"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_curta": {
+      "fala": "Agora falta a pergunta curta. Segredo em loja de item não gosta de frase enfeitada.",
+      "ao_entrar": {
+        "setor": {
+          "Ramon_PerguntaCurta": true,
+          "Ramon_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar: “tem reserva seca?”",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Fazer um discurso sobre raridade.",
+          "destino": "erro_pergunta_curta"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "canto_seco"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_pergunta_curta": {
+      "fala": "Discurso longo cansa a prateleira. Pergunta curta, Ramon escuta.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pergunta_curta"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Ramon_ConcluiuTrilha": true,
+          "Ramon_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir o compartimento reservado pela ordem certa.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pergunta_curta"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Se você pede o reservado antes de olhar a etiqueta, eu só vejo pressa no seu bolso.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Ramon_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora você já leu a prateleira do jeito certo. Posso conferir o reservado."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Ramon_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Ramon_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Ramon_Etiqueta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Ramon_Peso",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Ramon_CantoSeco",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Ramon_PerguntaCurta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Ramon_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Faltou passo. Etiqueta, peso, canto seco e pergunta curta; sem isso a prateleira não abre.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Boa. O compartimento reservado está aberto, mas sem bagunçar a ordem dos itens.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Presente eu não tenho. O extra daqui é acesso ao estoque que não fica empoeirado à vista.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "fala": "Presente eu não tenho. O extra daqui é acesso ao estoque que não fica empoeirado à vista.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Ramon.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

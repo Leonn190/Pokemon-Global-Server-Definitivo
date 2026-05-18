@@ -1,0 +1,473 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Nair Sombria. Meus Pokémon reservados não gostam de claridade demais nem de conversa vazia.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou à sombra. Talvez agora entenda que silêncio também é forma de cuidado."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre a sombra do viveiro.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "A loja comum está aberta. Fique na luz baixa e escolha com calma.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "A seleção secreta passa pela sombra do viveiro: luz baixa, passo lateral, canto quieto, tigela cheia e pergunta suave.",
+      "ao_entrar": {
+        "setor": {
+          "Nair_Sombria_IniciouTrilha": true,
+          "Nair_Sombria_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abaixar a luz do viveiro.",
+          "destino": "luz_baixa"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "luz_baixa": {
+      "fala": "Luz baixa não esconde os Pokémon; só para de disputar atenção com eles.",
+      "ao_entrar": {
+        "setor": {
+          "Nair_Sombria_LuzBaixa": true,
+          "Nair_Sombria_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Deixar a luz baixa.",
+          "destino": "passo_lateral"
+        },
+        {
+          "texto": "Acender tudo para enxergar melhor.",
+          "destino": "erro_luz_baixa"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_luz_baixa": {
+      "fala": "Claridade demais faz metade do viveiro recuar.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "luz_baixa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "passo_lateral": {
+      "fala": "Com luz baixa, caminhe de lado. Aproximação direta parece caça.",
+      "ao_entrar": {
+        "setor": {
+          "Nair_Sombria_PassoLateral": true,
+          "Nair_Sombria_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Dar um passo lateral.",
+          "destino": "canto_quieto"
+        },
+        {
+          "texto": "Ir direto ao centro.",
+          "destino": "erro_passo_lateral"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "luz_baixa"
+        }
+      ]
+    },
+    "erro_passo_lateral": {
+      "fala": "Centro direto é imposição. Lateral é convite.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "passo_lateral"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "canto_quieto": {
+      "fala": "O passo lateral chega ao canto quieto. É ali que os mais desconfiados observam.",
+      "ao_entrar": {
+        "setor": {
+          "Nair_Sombria_CantoQuieto": true,
+          "Nair_Sombria_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ficar parado no canto quieto.",
+          "destino": "tigela_cheia"
+        },
+        {
+          "texto": "Agachar e tentar puxar atenção.",
+          "destino": "erro_canto_quieto"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "passo_lateral"
+        }
+      ]
+    },
+    "erro_canto_quieto": {
+      "fala": "Puxar atenção não é receber confiança.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "canto_quieto"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "tigela_cheia": {
+      "fala": "No canto há uma tigela cheia. Ninguém tocou porque ninguém foi apressado.",
+      "ao_entrar": {
+        "setor": {
+          "Nair_Sombria_TigelaCheia": true,
+          "Nair_Sombria_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar se a tigela é sinal.",
+          "destino": "pergunta_suave"
+        },
+        {
+          "texto": "Mexer na tigela.",
+          "destino": "erro_tigela_cheia"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "canto_quieto"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_tigela_cheia": {
+      "fala": "Mexer na tigela sem permissão fecha qualquer seleção reservada.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "tigela_cheia"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_suave": {
+      "fala": "A tigela é sinal: pergunte suave, sem escolher por aparência.",
+      "ao_entrar": {
+        "setor": {
+          "Nair_Sombria_PerguntaSuave": true,
+          "Nair_Sombria_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a seleção da sombra com calma.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Pedir o Pokémon mais sombrio.",
+          "destino": "erro_pergunta_suave"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "tigela_cheia"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_pergunta_suave": {
+      "fala": "Sombrio não é fantasia. Calma primeiro.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pergunta_suave"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Nair_Sombria_ConcluiuTrilha": true,
+          "Nair_Sombria_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a seleção da sombra.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pergunta_suave"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "A sombra não responde a pedido jogado. Comece pela luz baixa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Nair_Sombria_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você passou pelo canto quieto. Agora a sombra aceita ouvir."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Nair_Sombria_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Nair_Sombria_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Nair_Sombria_LuzBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Nair_Sombria_PassoLateral",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Nair_Sombria_CantoQuieto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Nair_Sombria_TigelaCheia",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Nair_Sombria_PerguntaSuave",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Nair_Sombria_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Faltou sombra no caminho. Luz baixa, passo lateral, canto quieto e tigela cheia.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "A seleção da sombra está aberta. Não faça festa; eles preferem aproximação discreta.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Não tenho presente. Quem vem à sombra recebe acesso, não brinde.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "fala": "Não tenho presente. Quem vem à sombra recebe acesso, não brinde.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Nair Sombria.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

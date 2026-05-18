@@ -1,0 +1,589 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Vlad seleciona Pokémon por temperamento, não por pose. A loja comum abre; a ala reservada julga o seu pulso.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou, viajante. O pulso denuncia menos medo quando a pessoa já aprendeu a respirar perto do viveiro."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre temperamento Pokémon.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja comum aberta. Não cutuque as grades; elas são limite, não decoração.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "A ala reservada tem seis sinais: pulso calmo, grade fria, nome sussurrado, passo contado, sombra parada e escolha sem posse.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_IniciouTrilha": true,
+          "Vlad_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Acalmar o pulso.",
+          "destino": "pulso_calmo"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pulso_calmo": {
+      "fala": "Pokémon nota mão trêmula antes de ouvir palavra bonita.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_PulsoCalmo": true,
+          "Vlad_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Respirar até a mão firmar.",
+          "destino": "grade_fria"
+        },
+        {
+          "texto": "Esconder a mão no bolso.",
+          "destino": "erro_pulso_calmo"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_pulso_calmo": {
+      "fala": "Esconder mão parece truque. Acalmar é melhor.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pulso_calmo"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "grade_fria": {
+      "fala": "A grade fria separa sem humilhar. Limite bom protege os dois lados.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_GradeFria": true,
+          "Vlad_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Tocar a grade com dois dedos.",
+          "destino": "nome_sussurrado"
+        },
+        {
+          "texto": "Sacudir a grade.",
+          "destino": "erro_grade_fria"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "pulso_calmo"
+        }
+      ]
+    },
+    "erro_grade_fria": {
+      "fala": "Sacudir grade transforma cuidado em ameaça.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "grade_fria"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "nome_sussurrado": {
+      "fala": "Dois dedos bastam. Agora sussurre um nome genérico, sem tentar dominar.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_NomeSussurrado": true,
+          "Vlad_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Sussurrar “amigo”.",
+          "destino": "passo_contado"
+        },
+        {
+          "texto": "Gritar um apelido forte.",
+          "destino": "erro_nome_sussurrado"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "grade_fria"
+        }
+      ]
+    },
+    "erro_nome_sussurrado": {
+      "fala": "Apelido forte demais tenta mandar antes de conhecer.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "nome_sussurrado"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "passo_contado": {
+      "fala": "O sussurro pede três passos contados. Nem um a mais.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_PassoContado": true,
+          "Vlad_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Dar três passos contados.",
+          "destino": "sombra_parada"
+        },
+        {
+          "texto": "Correr até a ponta da ala.",
+          "destino": "erro_passo_contado"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "nome_sussurrado"
+        }
+      ]
+    },
+    "erro_passo_contado": {
+      "fala": "Correr numa ala reservada é pedir para todo mundo recuar.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "passo_contado"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "sombra_parada": {
+      "fala": "No terceiro passo sua sombra para antes de você. É o ponto de observação.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_SombraParada": true,
+          "Vlad_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Parar junto com a sombra.",
+          "destino": "escolha_sem_posse"
+        },
+        {
+          "texto": "Avançar sobre a sombra.",
+          "destino": "erro_sombra_parada"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "passo_contado"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_sombra_parada": {
+      "fala": "Avançar sobre a sombra quebra o acordo do viveiro.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "sombra_parada"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "escolha_sem_posse": {
+      "fala": "Agora escolha sem posse: diga que quer conhecer, não levar.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_EscolhaSemPosse": true,
+          "Vlad_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir para conhecer a ala reservada.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Dizer que quer o mais forte.",
+          "destino": "erro_escolha_sem_posse"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "sombra_parada"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Perguntar se esse caminho também guarda presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "erro_escolha_sem_posse": {
+      "fala": "Força sem vínculo é só barulho caro.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "escolha_sem_posse"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_ConcluiuTrilha": true,
+          "Vlad_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a ala reservada.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Pedir o presente de tratador.",
+          "destino": "preparar_presente"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "escolha_sem_posse"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Você pediu ala reservada com pulso de vitrine. Primeiro acalme a mão.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Vlad_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Pulso, grade e sombra já falaram por você. Posso abrir a ala."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Vlad_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Vlad_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Vlad_PulsoCalmo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_GradeFria",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_NomeSussurrado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_PassoContado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_SombraParada",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_EscolhaSemPosse",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Faltou sinal de temperamento. Sem os seis, a ala reservada fica fechada.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "A ala reservada está aberta. Escolha olhando comportamento, não raridade.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "preparar_presente": {
+      "fala": "Você pediu como tratador, não como dono. Vlad respeita essa diferença.",
+      "ao_entrar": {
+        "setor": {
+          "Vlad_PedidoPresenteCorreto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Receber o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Ver a loja secreta primeiro.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "final_trilha"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Vlad_PulsoCalmo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_GradeFria",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_NomeSussurrado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_PassoContado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_SombraParada",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_EscolhaSemPosse",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Vlad_PedidoPresenteCorreto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente de tratador só vem depois de entender temperamento.",
+      "opcoes": [
+        {
+          "texto": "Entender o caminho primeiro.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Leve o presente. Use para cuidar antes de mandar.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Vlad.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

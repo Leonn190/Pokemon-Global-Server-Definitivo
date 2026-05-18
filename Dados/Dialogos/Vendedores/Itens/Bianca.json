@@ -1,0 +1,473 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Bianca. Vendo itens para quem sabe escolher, não para quem aperta todos os botões do balcão.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Se veio com mais calma, talvez a caixa azul finalmente faça sentido."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre a caixa azul.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "A loja comum está aberta. Itens bons, preço claro e nenhuma charada para o básico.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "Minha parte secreta fica no caminho da caixa azul: tampa, lacre, dobra, cheiro de erva e pergunta educada.",
+      "ao_entrar": {
+        "setor": {
+          "Bianca_IniciouTrilha": true,
+          "Bianca_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Observar a tampa azul.",
+          "destino": "tampa_azul"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "tampa_azul": {
+      "fala": "A tampa azul é velha, mas não descuidada. Quem olha só a cor perde o encaixe.",
+      "ao_entrar": {
+        "setor": {
+          "Bianca_TampaAzul": true,
+          "Bianca_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Procurar o encaixe lateral.",
+          "destino": "lacre_inteiro"
+        },
+        {
+          "texto": "Bater na tampa para abrir.",
+          "destino": "erro_tampa_azul"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_tampa_azul": {
+      "fala": "Bater na caixa só faz parecer que você não sabe lidar com item frágil.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "tampa_azul"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "lacre_inteiro": {
+      "fala": "O encaixe aponta para um lacre inteiro. Lacre inteiro não significa fechado; significa respeitado.",
+      "ao_entrar": {
+        "setor": {
+          "Bianca_LacreInteiro": true,
+          "Bianca_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Seguir o lacre sem romper.",
+          "destino": "dobra_papel"
+        },
+        {
+          "texto": "Romper o lacre para adiantar.",
+          "destino": "erro_lacre_inteiro"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "tampa_azul"
+        }
+      ]
+    },
+    "erro_lacre_inteiro": {
+      "fala": "Romper o lacre fecha minha confiança. Você precisa seguir, não violar.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "lacre_inteiro"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "dobra_papel": {
+      "fala": "O lacre termina numa dobra de papel quase escondida. Bianca sempre dobra duas vezes o que importa.",
+      "ao_entrar": {
+        "setor": {
+          "Bianca_DobraPapel": true,
+          "Bianca_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir só a primeira dobra.",
+          "destino": "cheiro_erva"
+        },
+        {
+          "texto": "Desdobrar tudo de uma vez.",
+          "destino": "erro_dobra_papel"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "lacre_inteiro"
+        }
+      ]
+    },
+    "erro_dobra_papel": {
+      "fala": "Quem desdobra tudo perde a marca da primeira dobra.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "dobra_papel"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "cheiro_erva": {
+      "fala": "A primeira dobra guarda cheiro de erva medicinal. Não é item caro, é item útil.",
+      "ao_entrar": {
+        "setor": {
+          "Bianca_CheiroErva": true,
+          "Bianca_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pela reserva medicinal.",
+          "destino": "pedido_educado"
+        },
+        {
+          "texto": "Pedir o item mais raro da caixa.",
+          "destino": "erro_cheiro_erva"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "dobra_papel"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_cheiro_erva": {
+      "fala": "Raridade não é o ponto. Utilidade é.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "cheiro_erva"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pedido_educado": {
+      "fala": "Agora você pode pedir sem parecer caçador de atalho. Educação abre caixa que chave não abre.",
+      "ao_entrar": {
+        "setor": {
+          "Bianca_PedidoEducado": true,
+          "Bianca_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a reserva azul com educação.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Exigir desconto por ter descoberto.",
+          "destino": "erro_pedido_educado"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "cheiro_erva"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_pedido_educado": {
+      "fala": "Exigir desconto mata a educação da pergunta.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pedido_educado"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Bianca_ConcluiuTrilha": true,
+          "Bianca_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a caixa azul reservada.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pedido_educado"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "A caixa azul não abre para quem só fala “secreto”. Ela abre para quem sabe qual lacre não foi rompido.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Bianca_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já passou pelo lacre e pela dobra. Agora a pergunta parece menos vazia."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Bianca_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Bianca_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Bianca_TampaAzul",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Bianca_LacreInteiro",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Bianca_DobraPapel",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Bianca_CheiroErva",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Bianca_PedidoEducado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Bianca_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Ainda falta caixa azul no seu caminho. Tampa, lacre, dobra e cheiro de erva precisam aparecer antes.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Certo. Vou abrir a caixa azul reservada. Não conte para comprador barulhento.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Hoje não tem presente. Mas aprender a achar caixa reservada já poupa muito dinheiro depois.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "fala": "Hoje não tem presente. Mas aprender a achar caixa reservada já poupa muito dinheiro depois.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Bianca.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

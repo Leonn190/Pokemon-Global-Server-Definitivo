@@ -1,0 +1,736 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Estela. Minha banca parece delicada, mas item delicado sobrevive mais que item bruto quando a mão presta atenção.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Se veio atrás da reserva, lembre: brilho frio, fita, dobra, vidro, sombra, nota, distância, respiração e pedido."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre itens delicados.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja comum aberta. A parte delicada de verdade fica fora do alcance apressado.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "Minha reserva delicada tem nove cuidados. Se quebrar um, eu fecho tudo antes do dano virar culpa.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_IniciouTrilha": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Observar o brilho frio.",
+          "destino": "brilho_frio"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "brilho_frio": {
+      "fala": "Brilho frio não chama; ele espera. O quente demais geralmente é vitrine chamativa.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_BrilhoFrio": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Escolher o brilho frio.",
+          "destino": "fita_fina"
+        },
+        {
+          "texto": "Escolher o brilho mais quente.",
+          "destino": "erro_brilho_frio"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_brilho_frio": {
+      "fala": "O brilho quente é convite comum. O frio é cuidado.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "brilho_frio"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fita_fina": {
+      "fala": "O brilho frio prende uma fita fina. Fita fina não aguenta puxão.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_FitaFina": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Seguir a fita com os olhos.",
+          "destino": "dobra_seda"
+        },
+        {
+          "texto": "Puxar a fita.",
+          "destino": "erro_fita_fina"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "brilho_frio"
+        }
+      ]
+    },
+    "erro_fita_fina": {
+      "fala": "Puxou, perdeu. Fita fina ensina distância.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "fita_fina"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "dobra_seda": {
+      "fala": "A fita leva a uma dobra de seda. Seda marca até respiração errada.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_DobraSeda": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esperar a seda parar de mexer.",
+          "destino": "vidro_baixo"
+        },
+        {
+          "texto": "Alisar a seda com força.",
+          "destino": "erro_dobra_seda"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "fita_fina"
+        }
+      ]
+    },
+    "erro_dobra_seda": {
+      "fala": "Força em seda vira amassado que não pede desculpa.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "dobra_seda"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "vidro_baixo": {
+      "fala": "Quando a seda para, aparece vidro baixo. O vidro mostra item e distância ao mesmo tempo.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_VidroBaixo": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ler o reflexo do vidro.",
+          "destino": "sombra_fina"
+        },
+        {
+          "texto": "Encostar no vidro.",
+          "destino": "erro_vidro_baixo"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "dobra_seda"
+        }
+      ]
+    },
+    "erro_vidro_baixo": {
+      "fala": "Encostar no vidro deixou marca. Marcas falam mal de pressa.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "vidro_baixo"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "sombra_fina": {
+      "fala": "No reflexo, uma sombra fina corta a prateleira. Ela indica onde não tocar.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_SombraFina": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Respeitar a área da sombra.",
+          "destino": "nota_pequena"
+        },
+        {
+          "texto": "Tocar exatamente na sombra.",
+          "destino": "erro_sombra_fina"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "vidro_baixo"
+        }
+      ]
+    },
+    "erro_sombra_fina": {
+      "fala": "A sombra era aviso, não alvo.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "sombra_fina"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "nota_pequena": {
+      "fala": "Fora da sombra, há nota pequena: “peça antes de mover”.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_NotaPequena": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ler a nota em silêncio.",
+          "destino": "distancia_certa"
+        },
+        {
+          "texto": "Ler alto para chamar atenção.",
+          "destino": "erro_nota_pequena"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "sombra_fina"
+        }
+      ]
+    },
+    "erro_nota_pequena": {
+      "fala": "Nota pequena não quer plateia.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "nota_pequena"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "distancia_certa": {
+      "fala": "A nota pede distância certa: perto para ver, longe para não invadir.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_DistanciaCerta": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Dar meio passo para trás.",
+          "destino": "respiracao"
+        },
+        {
+          "texto": "Chegar mais perto.",
+          "destino": "erro_distancia_certa"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "nota_pequena"
+        }
+      ]
+    },
+    "erro_distancia_certa": {
+      "fala": "Mais perto virou invasão. Meio passo para trás.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "distancia_certa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "respiracao": {
+      "fala": "Meio passo libera respiração. Se até você acalma, a prateleira também.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_Respiracao": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Respirar antes de pedir.",
+          "destino": "pedido_delicado"
+        },
+        {
+          "texto": "Pedir prendendo a respiração.",
+          "destino": "erro_respiracao"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "distancia_certa"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_respiracao": {
+      "fala": "Respiração presa vira mão dura.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "respiracao"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pedido_delicado": {
+      "fala": "Agora peça como quem sabe que item delicado não é fraco: é preciso.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_PedidoDelicado": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a reserva delicada.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Pedir “qualquer coisa frágil”.",
+          "destino": "erro_pedido_delicado"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "respiracao"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Perguntar se esse caminho também guarda presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "erro_pedido_delicado": {
+      "fala": "Frágil é palavra de quem não entendeu precisão.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pedido_delicado"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_ConcluiuTrilha": true,
+          "Estela_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a reserva delicada.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Pedir o presente delicado com cuidado.",
+          "destino": "preparar_presente"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pedido_delicado"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Você pediu delicadeza com mão pesada. Comece pelo brilho frio.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Estela_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora sua mão parece menos pesada. Posso testar a reserva delicada."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Estela_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Estela_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Estela_BrilhoFrio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_FitaFina",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_DobraSeda",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_VidroBaixo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_SombraFina",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_NotaPequena",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_DistanciaCerta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_Respiracao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_PedidoDelicado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Faltou cuidado. Brilho, fita, dobra, vidro, sombra, nota, distância, respiração e pedido precisam existir.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Reserva delicada aberta. Devagar. Aqui até olhar forte demais parece empurrão.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "preparar_presente": {
+      "fala": "Você pediu baixo, sem encostar onde não devia. Isso é raro o suficiente para eu dar um presente.",
+      "ao_entrar": {
+        "setor": {
+          "Estela_PedidoPresenteCorreto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Receber o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Ver a loja secreta primeiro.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "final_trilha"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Estela_BrilhoFrio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_FitaFina",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_DobraSeda",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_VidroBaixo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_SombraFina",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_NotaPequena",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_DistanciaCerta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_Respiracao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_PedidoDelicado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Estela_PedidoPresenteCorreto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente delicado não sai para mão que ainda não aprendeu distância.",
+      "opcoes": [
+        {
+          "texto": "Entender o caminho primeiro.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Leve este presente. Guarda bem; se quebrar por pressa, ele vai te denunciar.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Estela.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

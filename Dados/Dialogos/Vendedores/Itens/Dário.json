@@ -1,0 +1,736 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Dário. Minha loja parece antiga porque item sério precisa sobreviver ao dono, ao preço e à pressa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou ao balcão antigo. Se lembra da sequência da ferrugem boa?"
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre item antigo.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja comum aberta. O antigo que está na frente é seguro para qualquer mão.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "A reserva antiga exige nove sinais: ferrugem boa, cabo liso, selo gasto, caixa dupla, pano escuro, moeda presa, data torta, frase baixa e aceite.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_IniciouTrilha": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Observar a ferrugem boa.",
+          "destino": "ferrugem_boa"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "ferrugem_boa": {
+      "fala": "Ferrugem boa não é abandono. É prova de tempo sem ruína.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_FerrugemBoa": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar o que a ferrugem preservou.",
+          "destino": "cabo_liso"
+        },
+        {
+          "texto": "Pedir para limpar tudo.",
+          "destino": "erro_ferrugem_boa"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_ferrugem_boa": {
+      "fala": "Limpar tudo apagaria a história que abre a reserva.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "ferrugem_boa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "cabo_liso": {
+      "fala": "A ferrugem preservou o cabo liso. Muita mão passou aqui sem quebrar o uso.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_CaboLiso": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Seguir o desgaste do cabo.",
+          "destino": "selo_gasto"
+        },
+        {
+          "texto": "Procurar o lado mais novo.",
+          "destino": "erro_cabo_liso"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "ferrugem_boa"
+        }
+      ]
+    },
+    "erro_cabo_liso": {
+      "fala": "Novo demais aqui é substituição, não pista.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "cabo_liso"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "selo_gasto": {
+      "fala": "O desgaste leva a um selo gasto. Selo gasto ainda vale se ninguém fingiu que era novo.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_SeloGasto": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ler o selo pelo resto da marca.",
+          "destino": "caixa_dupla"
+        },
+        {
+          "texto": "Desprezar o selo gasto.",
+          "destino": "erro_selo_gasto"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "cabo_liso"
+        }
+      ]
+    },
+    "erro_selo_gasto": {
+      "fala": "Desprezar marca velha fecha conversa com Dário.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "selo_gasto"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "caixa_dupla": {
+      "fala": "O resto da marca aponta para uma caixa dupla: a primeira guarda poeira, a segunda guarda decisão.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_CaixaDupla": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir só a primeira caixa.",
+          "destino": "pano_escuro"
+        },
+        {
+          "texto": "Abrir as duas de uma vez.",
+          "destino": "erro_caixa_dupla"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "selo_gasto"
+        }
+      ]
+    },
+    "erro_caixa_dupla": {
+      "fala": "Abrir tudo junto mistura poeira com decisão.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "caixa_dupla"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pano_escuro": {
+      "fala": "Na primeira caixa há pano escuro. Ele não esconde; ele protege do olhar errado.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_PanoEscuro": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Levantar só uma ponta do pano.",
+          "destino": "moeda_presa"
+        },
+        {
+          "texto": "Arrancar o pano inteiro.",
+          "destino": "erro_pano_escuro"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "caixa_dupla"
+        }
+      ]
+    },
+    "erro_pano_escuro": {
+      "fala": "Arrancar pano é gesto de saque, não de compra.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pano_escuro"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "moeda_presa": {
+      "fala": "Sob a ponta, uma moeda presa. Ela não paga nada; ela segura uma lembrança.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_MoedaPresa": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pela lembrança presa.",
+          "destino": "data_torta"
+        },
+        {
+          "texto": "Tentar soltar a moeda.",
+          "destino": "erro_moeda_presa"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "pano_escuro"
+        }
+      ]
+    },
+    "erro_moeda_presa": {
+      "fala": "Soltar a moeda antes da lembrança quebra o sinal.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "moeda_presa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "data_torta": {
+      "fala": "A lembrança é uma data torta gravada por mão cansada. Ainda assim, é data.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_DataTorta": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Aceitar a data torta.",
+          "destino": "frase_baixa"
+        },
+        {
+          "texto": "Corrigir a data.",
+          "destino": "erro_data_torta"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "moeda_presa"
+        }
+      ]
+    },
+    "erro_data_torta": {
+      "fala": "Corrigir cicatriz dos outros é falta de respeito.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "data_torta"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "frase_baixa": {
+      "fala": "Depois da data vem frase baixa: “o que serviu bem merece nova rota”.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_FraseBaixa": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Repetir a frase baixa.",
+          "destino": "aceite_antigo"
+        },
+        {
+          "texto": "Falar alto para provar que decorou.",
+          "destino": "erro_frase_baixa"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "data_torta"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_frase_baixa": {
+      "fala": "Frase baixa perde valor quando vira anúncio.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "frase_baixa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "aceite_antigo": {
+      "fala": "Agora aceite: item antigo pode falhar diferente, mas também pode salvar diferente.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_AceiteAntigo": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Aceitar a condição da reserva antiga.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Exigir garantia perfeita.",
+          "destino": "erro_aceite_antigo"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "frase_baixa"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Perguntar se esse caminho também guarda presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "erro_aceite_antigo": {
+      "fala": "Garantia perfeita não existe nem em item novo, muito menos em história viva.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "aceite_antigo"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_ConcluiuTrilha": true,
+          "Dario_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a reserva antiga.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Pedir o presente antigo com respeito.",
+          "destino": "preparar_presente"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "aceite_antigo"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Reserva antiga não responde a pressa nova. Comece pela ferrugem boa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Dario_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você chegou até o aceite. Agora o balcão antigo reconhece sua mão."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Dario_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Dario_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Dario_FerrugemBoa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_CaboLiso",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_SeloGasto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_CaixaDupla",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_PanoEscuro",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_MoedaPresa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_DataTorta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_FraseBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_AceiteAntigo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Faltou sinal antigo. Sem a sequência completa, eu só abro a frente segura.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Reserva antiga aberta. Não chame de velho o que ainda sabe trabalhar.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "preparar_presente": {
+      "fala": "Você pediu como quem entende história, não como quem quer troféu. Isso libera o presente.",
+      "ao_entrar": {
+        "setor": {
+          "Dario_PedidoPresenteCorreto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Receber o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Ver a loja secreta primeiro.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "final_trilha"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Dario_FerrugemBoa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_CaboLiso",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_SeloGasto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_CaixaDupla",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_PanoEscuro",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_MoedaPresa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_DataTorta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_FraseBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_AceiteAntigo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Dario_PedidoPresenteCorreto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente antigo não sai para mão que pula sinais. Faça a sequência inteira.",
+      "opcoes": [
+        {
+          "texto": "Entender o caminho primeiro.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Leve este presente. Já passou por outras mãos; agora vai testar a sua.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Dário.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

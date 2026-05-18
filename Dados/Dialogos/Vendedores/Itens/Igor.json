@@ -1,0 +1,638 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Igor. Eu vendo itens para explorador que volta vivo. Minha loja comum ajuda; minha reserva testa se você presta atenção.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Bom sinal: explorador que volta vivo merece conversar. Mas ainda precisa provar leitura de rota."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre rota de exploração.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja comum aberta. Tudo aqui serve antes da trilha ficar feia.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "Reserva de explorador segue rota: mapa amassado, dobra norte, risco vermelho, cantil vazio, pedra leve, passo curto e pergunta final.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_IniciouTrilha": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pegar o mapa amassado.",
+          "destino": "mapa_amassado"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "mapa_amassado": {
+      "fala": "Mapa amassado tem história. Mapa liso demais nunca viu lama.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_MapaAmassado": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Procurar a dobra norte.",
+          "destino": "dobra_norte"
+        },
+        {
+          "texto": "Alisar o mapa inteiro.",
+          "destino": "erro_mapa_amassado"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_mapa_amassado": {
+      "fala": "Ao alisar tudo, você apaga a dobra que importava.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "mapa_amassado"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "dobra_norte": {
+      "fala": "A dobra norte aponta para uma rota que evita água funda e comprador convencido.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_DobraNorte": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Seguir o risco vermelho.",
+          "destino": "risco_vermelho"
+        },
+        {
+          "texto": "Seguir a linha mais curta.",
+          "destino": "erro_dobra_norte"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "mapa_amassado"
+        }
+      ]
+    },
+    "erro_dobra_norte": {
+      "fala": "Linha curta costuma atravessar problema. Risco vermelho existe por motivo.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "dobra_norte"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "risco_vermelho": {
+      "fala": "O risco vermelho não marca perigo; marca onde alguém já voltou para contar.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_RiscoVermelho": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pelo cantil vazio.",
+          "destino": "cantil_vazio"
+        },
+        {
+          "texto": "Ignorar o risco por confiança.",
+          "destino": "erro_risco_vermelho"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "dobra_norte"
+        }
+      ]
+    },
+    "erro_risco_vermelho": {
+      "fala": "Confiança sem leitura vira estatística ruim.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "risco_vermelho"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "cantil_vazio": {
+      "fala": "Cantil vazio pesa pouco e ensina muito: suprimento não é só o que você carrega, é quando você para.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_CantilVazio": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Virar o cantil sem reclamar.",
+          "destino": "pedra_leve"
+        },
+        {
+          "texto": "Pedir cantil cheio de graça.",
+          "destino": "erro_cantil_vazio"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "risco_vermelho"
+        }
+      ]
+    },
+    "erro_cantil_vazio": {
+      "fala": "Pedir cheio de graça antes de entender vazio é perder a lição.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "cantil_vazio"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pedra_leve": {
+      "fala": "Dentro do cantil há uma pedra leve. Ela não serve para beber; serve para testar som.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_PedraLeve": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ouvir o som da pedra.",
+          "destino": "passo_curto"
+        },
+        {
+          "texto": "Jogar a pedra fora.",
+          "destino": "erro_pedra_leve"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "cantil_vazio"
+        }
+      ]
+    },
+    "erro_pedra_leve": {
+      "fala": "Explorador não joga fora pista só porque ela não parece item.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pedra_leve"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "passo_curto": {
+      "fala": "O som pede passo curto. Em terreno ruim, passo grande derruba herói e novato igual.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_PassoCurto": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Dar um passo curto até o balcão lateral.",
+          "destino": "pergunta_final"
+        },
+        {
+          "texto": "Dar um passo largo para acabar logo.",
+          "destino": "erro_passo_curto"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "pedra_leve"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_passo_curto": {
+      "fala": "Passo largo pulou o balcão lateral. Volte e reduza.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "passo_curto"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_final": {
+      "fala": "O balcão lateral só responde uma pergunta: “qual suprimento falta antes da volta?”",
+      "ao_entrar": {
+        "setor": {
+          "Igor_PerguntaFinal": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fazer a pergunta da volta.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Perguntar qual item dá mais poder.",
+          "destino": "erro_pergunta_final"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "passo_curto"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Perguntar se esse caminho também guarda presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "erro_pergunta_final": {
+      "fala": "Poder não garante retorno. Suprimento garante chance.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pergunta_final"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_ConcluiuTrilha": true,
+          "Igor_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a reserva de explorador.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Pedir o presente como suprimento de rota.",
+          "destino": "preparar_presente"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pergunta_final"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Você quer reserva sem rota. Em exploração isso termina em queda ou inventário vazio.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Igor_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora você tem rota suficiente. Vamos ver se a reserva reconhece seus passos."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Igor_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Igor_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Igor_MapaAmassado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_DobraNorte",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_RiscoVermelho",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_CantilVazio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_PedraLeve",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_PassoCurto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_PerguntaFinal",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Rota incompleta. Sem mapa, dobra, risco, cantil, pedra, passo e pergunta, eu não abro reserva.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Reserva de explorador aberta. Use antes de se achar invencível.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "preparar_presente": {
+      "fala": "Você pediu suprimento, não mimo. Isso é linguagem de explorador sério.",
+      "ao_entrar": {
+        "setor": {
+          "Igor_PedidoPresenteCorreto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Receber o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Ver a loja secreta primeiro.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "final_trilha"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Igor_MapaAmassado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_DobraNorte",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_RiscoVermelho",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_CantilVazio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_PedraLeve",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_PassoCurto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_PerguntaFinal",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Igor_PedidoPresenteCorreto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente de suprimento só vai para quem completou a rota sem pular risco.",
+      "opcoes": [
+        {
+          "texto": "Entender o caminho primeiro.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Leve este presente. Se um dia ele salvar sua rota, lembra do mapa amassado.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Igor.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

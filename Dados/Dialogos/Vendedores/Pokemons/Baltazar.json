@@ -1,0 +1,438 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Baltazar cuida de Pokémon negociados com calma. A loja abre fácil, mas a seleção reservada observa seu jeito antes.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Os Pokémon reservados gostam mais de gente que retorna sem bater no vidro."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre cuidado com Pokémon.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "A loja comum está aberta. Veja sem assustar ninguém.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "Para a seleção reservada, três cuidados bastam: voz baixa, mão aberta e olhar paciente.",
+      "ao_entrar": {
+        "setor": {
+          "Baltazar_IniciouTrilha": true,
+          "Baltazar_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Falar em voz baixa.",
+          "destino": "voz_baixa"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "voz_baixa": {
+      "fala": "Voz baixa não é segredo; é respeito para Pokémon que estranha movimento brusco.",
+      "ao_entrar": {
+        "setor": {
+          "Baltazar_VozBaixa": true,
+          "Baltazar_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Manter a voz baixa.",
+          "destino": "mao_aberta"
+        },
+        {
+          "texto": "Chamar alto para ver reação.",
+          "destino": "erro_voz_baixa"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_voz_baixa": {
+      "fala": "Chamar alto só prova que você queria reação, não confiança.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "voz_baixa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "mao_aberta": {
+      "fala": "Mão aberta mostra que você não veio agarrar nada. Alguns Pokémon olham primeiro para a mão.",
+      "ao_entrar": {
+        "setor": {
+          "Baltazar_MaoAberta": true,
+          "Baltazar_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Mostrar a mão aberta.",
+          "destino": "olhar_paciente"
+        },
+        {
+          "texto": "Fechar o punho por ansiedade.",
+          "destino": "erro_mao_aberta"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "voz_baixa"
+        }
+      ]
+    },
+    "erro_mao_aberta": {
+      "fala": "Punho fechado parece ameaça até quando não é.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "mao_aberta"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "olhar_paciente": {
+      "fala": "Olhar paciente deixa o Pokémon escolher olhar de volta. Esse é o começo certo.",
+      "ao_entrar": {
+        "setor": {
+          "Baltazar_OlharPaciente": true,
+          "Baltazar_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esperar o olhar voltar.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Encarar sem piscar.",
+          "destino": "erro_olhar_paciente"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "mao_aberta"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Perguntar se esse caminho também guarda presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "erro_olhar_paciente": {
+      "fala": "Encarar força disputa. Esperar cria encontro.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "olhar_paciente"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Baltazar_ConcluiuTrilha": true,
+          "Baltazar_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a seleção reservada.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Pedir o presente de cuidado.",
+          "destino": "preparar_presente"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "olhar_paciente"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Pokémon reservado não aparece para pedido seco. Primeiro mostre voz baixa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Baltazar_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora você parece menos caçador e mais cuidador. Posso abrir a seleção."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Baltazar_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Baltazar_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Baltazar_VozBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Baltazar_MaoAberta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Baltazar_OlharPaciente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Baltazar_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Faltou cuidado básico. Voz baixa, mão aberta e olhar paciente.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "A seleção reservada está aberta. Devagar, eles percebem pressa.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "preparar_presente": {
+      "fala": "Você pediu como quem vai cuidar, não como quem vai colecionar. Isso merece um presente.",
+      "ao_entrar": {
+        "setor": {
+          "Baltazar_PedidoPresenteCorreto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Receber o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Ver a loja secreta primeiro.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "final_trilha"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Baltazar_VozBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Baltazar_MaoAberta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Baltazar_OlharPaciente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Baltazar_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Baltazar_PedidoPresenteCorreto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente só depois de mostrar cuidado com a seleção reservada.",
+      "opcoes": [
+        {
+          "texto": "Entender o caminho primeiro.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Leve este presente. Baltazar confia em quem sabe baixar a voz.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Baltazar.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

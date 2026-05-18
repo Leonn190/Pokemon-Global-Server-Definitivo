@@ -1,0 +1,605 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Priscila. Não confunda minha calma com loja fácil. O básico é fácil; o secreto é inventário mental.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou. Talvez agora você consiga separar item útil, item bonito e item que só atrapalha espaço."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre inventário mental.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja comum aberta. Escolha sem desmontar minha lógica.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "Meu segredo passa por oito cortes: bolso vazio, peso certo, item repetido, item inútil, descarte, retorno, silêncio e pedido limpo.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_IniciouTrilha": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Começar pelo bolso vazio.",
+          "destino": "bolso_vazio"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "bolso_vazio": {
+      "fala": "Bolso vazio não é pobreza; é possibilidade. Quem não abre espaço não recebe item certo.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_BolsoVazio": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Aceitar o espaço vazio.",
+          "destino": "peso_certo"
+        },
+        {
+          "texto": "Encher o bolso com qualquer coisa.",
+          "destino": "erro_bolso_vazio"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_bolso_vazio": {
+      "fala": "Encher por medo do vazio é o primeiro erro de inventário.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "bolso_vazio"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "peso_certo": {
+      "fala": "Agora escolha pelo peso certo. Peso demais prende; peso de menos engana.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_PesoCerto": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Comparar utilidade e peso.",
+          "destino": "item_repetido"
+        },
+        {
+          "texto": "Escolher o mais pesado por parecer forte.",
+          "destino": "erro_peso_certo"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "bolso_vazio"
+        }
+      ]
+    },
+    "erro_peso_certo": {
+      "fala": "Peso não é força. Às vezes é só atraso.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "peso_certo"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "item_repetido": {
+      "fala": "Item repetido pode ser segurança ou desperdício. A diferença é saber para onde você vai.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_ItemRepetido": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Separar só o repetido necessário.",
+          "destino": "item_inutil"
+        },
+        {
+          "texto": "Levar todos os repetidos.",
+          "destino": "erro_item_repetido"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "peso_certo"
+        }
+      ]
+    },
+    "erro_item_repetido": {
+      "fala": "Todos os repetidos viram parede no inventário.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "item_repetido"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "item_inutil": {
+      "fala": "O item inútil é o mais perigoso: ele sempre tem uma desculpa bonita.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_ItemInutil": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Guardar a desculpa e soltar o item.",
+          "destino": "descarte"
+        },
+        {
+          "texto": "Manter por apego.",
+          "destino": "erro_item_inutil"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "item_repetido"
+        }
+      ]
+    },
+    "erro_item_inutil": {
+      "fala": "Apego ocupa slot que poderia salvar rota.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "item_inutil"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "descarte": {
+      "fala": "Descarte não é perda. É edição.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_Descarte": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Descartar sem drama.",
+          "destino": "retorno"
+        },
+        {
+          "texto": "Pedir recompensa por descartar.",
+          "destino": "erro_descarte"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "item_inutil"
+        }
+      ]
+    },
+    "erro_descarte": {
+      "fala": "Se precisa de recompensa para soltar peso morto, ainda não entendeu.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "descarte"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "retorno": {
+      "fala": "Depois do descarte vem retorno: olhe de novo para o que ficou.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_Retorno": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Revisar o que ficou.",
+          "destino": "silencio"
+        },
+        {
+          "texto": "Sair sem revisar.",
+          "destino": "erro_retorno"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "descarte"
+        }
+      ]
+    },
+    "erro_retorno": {
+      "fala": "Sem revisão, o erro volta com outro nome.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "retorno"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "silencio": {
+      "fala": "Agora silêncio. Inventário fala quando você para de justificar cada item.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_Silencio": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ficar em silêncio.",
+          "destino": "pedido_limpo"
+        },
+        {
+          "texto": "Explicar cada escolha em voz alta.",
+          "destino": "erro_silencio"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "retorno"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_silencio": {
+      "fala": "Explicação demais às vezes é culpa fantasiada de lógica.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "silencio"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pedido_limpo": {
+      "fala": "Pedido limpo tem poucas palavras e nenhum pedido de milagre.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_PedidoLimpo": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir o estoque limpo.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Pedir tudo que estiver escondido.",
+          "destino": "erro_pedido_limpo"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "silencio"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_pedido_limpo": {
+      "fala": "Pedir tudo é confessar que não aprendeu a escolher.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pedido_limpo"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Priscila_ConcluiuTrilha": true,
+          "Priscila_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir o estoque de inventário limpo.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pedido_limpo"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Você pediu segredo com inventário bagunçado. Não abro reserva para quem não sabe abrir espaço.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Priscila_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora o pedido parece limpo. Posso ver se seu inventário mental aguenta a reserva."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Priscila_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Priscila_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Priscila_BolsoVazio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Priscila_PesoCerto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Priscila_ItemRepetido",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Priscila_ItemInutil",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Priscila_Descarte",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Priscila_Retorno",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Priscila_Silencio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Priscila_PedidoLimpo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Priscila_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Faltou organização. Sem os oito cortes, o estoque secreto vira bagunça comum.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Estoque secreto aberto. Pegue só o que cabe na sua decisão.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Não dou presente. Presente entope inventário de quem ainda está aprendendo a escolher.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "fala": "Não dou presente. Presente entope inventário de quem ainda está aprendendo a escolher.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Priscila.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

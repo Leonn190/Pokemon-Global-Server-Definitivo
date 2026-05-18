@@ -1,0 +1,589 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Samira. Minha banca cheira a remédio, metal limpo e decisão difícil. Loja comum é fácil; reserva boa exige cuidado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Se lembra da ordem? Frasco fosco, pano limpo, tampa morna, conta baixa, palavra certa."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre a reserva de cuidado.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Aqui está a loja comum. O básico cura pressa, mas não substitui atenção.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "A reserva de cuidado não aparece para quem pega item como se fosse pedra. Comece pelo frasco fosco.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_IniciouTrilha": true,
+          "Samira_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Observar o frasco fosco.",
+          "destino": "frasco_fosco"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "frasco_fosco": {
+      "fala": "Frasco fosco protege o que não deve receber luz demais. Item bom também precisa de ambiente.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_FrascoFosco": true,
+          "Samira_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar por que ele fica fora da luz.",
+          "destino": "pano_limpo"
+        },
+        {
+          "texto": "Levar o frasco para a luz.",
+          "destino": "erro_frasco_fosco"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_frasco_fosco": {
+      "fala": "Luz demais estraga o que era para ser protegido.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "frasco_fosco"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pano_limpo": {
+      "fala": "O frasco fica sobre pano limpo. Pano limpo não é decoração; é aviso de manuseio.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_PanoLimpo": true,
+          "Samira_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Dobrar o pano sem sujar.",
+          "destino": "tampa_morna"
+        },
+        {
+          "texto": "Usar o pano para limpar a bancada inteira.",
+          "destino": "erro_pano_limpo"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "frasco_fosco"
+        }
+      ]
+    },
+    "erro_pano_limpo": {
+      "fala": "Esse pano não é trapo. Ele guarda a ordem da reserva.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pano_limpo"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "tampa_morna": {
+      "fala": "Ao dobrar, você percebe a tampa morna. Ela foi tocada há pouco, mas não por cliente comum.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_TampaMorna": true,
+          "Samira_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar quem separou a tampa.",
+          "destino": "conta_baixa"
+        },
+        {
+          "texto": "Abrir a tampa na hora.",
+          "destino": "erro_tampa_morna"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "pano_limpo"
+        }
+      ]
+    },
+    "erro_tampa_morna": {
+      "fala": "Abrir sem perguntar quebra cuidado básico.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "tampa_morna"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conta_baixa": {
+      "fala": "Fui eu que separei. A conta está baixa porque reserva boa não precisa assustar comprador justo.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_ContaBaixa": true,
+          "Samira_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Aceitar que preço baixo também pode ser sério.",
+          "destino": "palavra_certa"
+        },
+        {
+          "texto": "Desconfiar e pedir mais barato ainda.",
+          "destino": "erro_conta_baixa"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "tampa_morna"
+        }
+      ]
+    },
+    "erro_conta_baixa": {
+      "fala": "Peça desconto demais e eu entendo que você não viu o cuidado.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "conta_baixa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "palavra_certa": {
+      "fala": "A palavra certa não é “barato” nem “raro”. É “necessário”.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_PalavraCerta": true,
+          "Samira_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Dizer que procura o necessário.",
+          "destino": "pausa_cuidado"
+        },
+        {
+          "texto": "Dizer que procura o raro.",
+          "destino": "erro_palavra_certa"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "conta_baixa"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_palavra_certa": {
+      "fala": "Raro chama vitrine. Necessário chama reserva.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "palavra_certa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pausa_cuidado": {
+      "fala": "Depois da palavra, vem a pausa. Quem precisa de item de verdade respira antes de escolher.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_PausaCuidado": true,
+          "Samira_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esperar a pausa terminar.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Escolher antes da pausa.",
+          "destino": "erro_pausa_cuidado"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "palavra_certa"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Perguntar se esse caminho também guarda presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "erro_pausa_cuidado": {
+      "fala": "A pressa voltou. Respire antes de pedir.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pausa_cuidado"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_ConcluiuTrilha": true,
+          "Samira_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a reserva de cuidado.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Pedir o presente como kit de cuidado.",
+          "destino": "preparar_presente"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pausa_cuidado"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Você está pedindo cuidado sem demonstrar cuidado. Comece pelo frasco fosco.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Samira_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora sua pergunta tem pano limpo e tampa morna. Posso abrir a reserva."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Samira_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Samira_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Samira_FrascoFosco",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_PanoLimpo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_TampaMorna",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_ContaBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_PalavraCerta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_PausaCuidado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Reserva de cuidado falhou. Frasco, pano, tampa, conta, palavra e pausa precisam estar no caminho.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "A reserva está aberta. Pegue com cuidado; item mal usado volta como problema.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "preparar_presente": {
+      "fala": "Você pediu como quem vai usar direito, não como quem coleciona brilho. Isso muda tudo.",
+      "ao_entrar": {
+        "setor": {
+          "Samira_PedidoPresenteCorreto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Receber o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Ver a loja secreta primeiro.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "final_trilha"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Samira_FrascoFosco",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_PanoLimpo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_TampaMorna",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_ContaBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_PalavraCerta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_PausaCuidado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Samira_PedidoPresenteCorreto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente de cuidado não vai para mão apressada. Siga a sequência e peça com responsabilidade.",
+      "opcoes": [
+        {
+          "texto": "Entender o caminho primeiro.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Leve este presente. Não é prêmio; é confiança embalada.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Samira.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

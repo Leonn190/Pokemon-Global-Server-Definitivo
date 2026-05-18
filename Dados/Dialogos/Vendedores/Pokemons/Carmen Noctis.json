@@ -1,0 +1,605 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Carmen Noctis. Minha seleção comum tolera curiosidade. A noturna reservada exige postura.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou depois do escuro. Quem volta sem lanterna alta talvez tenha aprendido algo."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre a seleção noturna.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja comum aberta. Mantenha o reflexo baixo.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "A seleção noturna tem oito passos: lanterna baixa, sino mudo, corredor frio, asa recolhida, respiração lenta, olho indireto, nome ausente e pedido noturno.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_IniciouTrilha": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Baixar a lanterna.",
+          "destino": "lanterna_baixa"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "lanterna_baixa": {
+      "fala": "Lanterna alta transforma curiosidade em agressão. Baixa, ela vira permissão.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_LanternaBaixa": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Manter a lanterna baixa.",
+          "destino": "sino_mudo"
+        },
+        {
+          "texto": "Iluminar a ala inteira.",
+          "destino": "erro_lanterna_baixa"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_lanterna_baixa": {
+      "fala": "A ala inteira recuou. Luz demais é invasão.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "lanterna_baixa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "sino_mudo": {
+      "fala": "Ao baixar a luz, você vê um sino mudo. Ele existe para não ser tocado.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_SinoMudo": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Passar pelo sino sem tocar.",
+          "destino": "corredor_frio"
+        },
+        {
+          "texto": "Tocar o sino para chamar atenção.",
+          "destino": "erro_sino_mudo"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "lanterna_baixa"
+        }
+      ]
+    },
+    "erro_sino_mudo": {
+      "fala": "O sino mudo tinha um trabalho: ficar mudo.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "sino_mudo"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "corredor_frio": {
+      "fala": "Depois do sino vem corredor frio. Frio ajuda a separar impulso de escolha.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_CorredorFrio": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Atravessar devagar.",
+          "destino": "asa_recolhida"
+        },
+        {
+          "texto": "Apressar o passo para sair do frio.",
+          "destino": "erro_corredor_frio"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "sino_mudo"
+        }
+      ]
+    },
+    "erro_corredor_frio": {
+      "fala": "A pressa fez o corredor parecer ameaça.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "corredor_frio"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "asa_recolhida": {
+      "fala": "No fim do corredor, uma asa recolhida observa. Recolher não é medo; é cálculo.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_AsaRecolhida": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Respeitar a distância da asa.",
+          "destino": "respiracao_lenta"
+        },
+        {
+          "texto": "Tentar ver a asa aberta.",
+          "destino": "erro_asa_recolhida"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "corredor_frio"
+        }
+      ]
+    },
+    "erro_asa_recolhida": {
+      "fala": "Forçar asa aberta acaba com qualquer chance de confiança.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "asa_recolhida"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "respiracao_lenta": {
+      "fala": "Distância correta pede respiração lenta. No escuro, pressa faz mais barulho.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_RespiracaoLenta": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Respirar devagar.",
+          "destino": "olho_indireto"
+        },
+        {
+          "texto": "Prender a respiração para não fazer som.",
+          "destino": "erro_respiracao_lenta"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "asa_recolhida"
+        }
+      ]
+    },
+    "erro_respiracao_lenta": {
+      "fala": "Respiração presa vira tensão, e tensão também faz barulho.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "respiracao_lenta"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "olho_indireto": {
+      "fala": "Olhe de lado. Olho direto demais parece desafio.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_OlhoIndireto": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Olhar de forma indireta.",
+          "destino": "nome_ausente"
+        },
+        {
+          "texto": "Encarar a sombra.",
+          "destino": "erro_olho_indireto"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "respiracao_lenta"
+        }
+      ]
+    },
+    "erro_olho_indireto": {
+      "fala": "Encarar a sombra foi convite para disputa, não encontro.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "olho_indireto"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "nome_ausente": {
+      "fala": "Não dê nome ainda. Nome cedo demais é posse disfarçada.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_NomeAusente": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Aceitar o nome ausente.",
+          "destino": "pedido_noturno"
+        },
+        {
+          "texto": "Inventar um nome imponente.",
+          "destino": "erro_nome_ausente"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "olho_indireto"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_nome_ausente": {
+      "fala": "Nome imponente fala mais de você que do Pokémon.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "nome_ausente"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pedido_noturno": {
+      "fala": "Agora peça como a noite pede: baixo, preciso e sem pressa.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_PedidoNoturno": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a seleção noturna reservada.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Pedir o mais assustador.",
+          "destino": "erro_pedido_noturno"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "nome_ausente"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_pedido_noturno": {
+      "fala": "Assustador é teatro. Reservado é confiança.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pedido_noturno"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Carmen_Noctis_ConcluiuTrilha": true,
+          "Carmen_Noctis_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a seleção noturna reservada.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pedido_noturno"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Noturno não significa escondido para qualquer um. Baixe a lanterna antes de pedir.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Carmen_Noctis_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora sua postura combina com a ala noturna. Posso conferir o acesso."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Carmen_Noctis_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Carmen_Noctis_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Carmen_Noctis_LanternaBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Carmen_Noctis_SinoMudo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Carmen_Noctis_CorredorFrio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Carmen_Noctis_AsaRecolhida",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Carmen_Noctis_RespiracaoLenta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Carmen_Noctis_OlhoIndireto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Carmen_Noctis_NomeAusente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Carmen_Noctis_PedidoNoturno",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Carmen_Noctis_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Faltou postura noturna. Oito passos, sem atalho claro demais.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "A seleção noturna reservada está aberta. Sem susto, sem aplauso e sem lanterna na cara.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Não dou presente. A noite já cobra menos de quem aprende a andar nela.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "fala": "Não dou presente. A noite já cobra menos de quem aprende a andar nela.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender a loja secreta.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Carmen Noctis.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

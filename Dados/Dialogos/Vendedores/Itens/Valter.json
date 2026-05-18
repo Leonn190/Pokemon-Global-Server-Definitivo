@@ -1,0 +1,540 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Valter aqui. Minha loja comum é reta; o depósito de verdade é torto porque item bom aprende a se esconder.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou ao depósito? Então tente lembrar: caixa baixa, corda curta, nó simples e silêncio antes do pedido."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre o depósito torto.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja comum liberada. O que está na frente é honesto, só não é tudo.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "trilha_intro": {
+      "fala": "O depósito torto começa embaixo, não no alto. Caixa baixa, corda curta, nó simples, marca de chão e pedido sem ganância.",
+      "ao_entrar": {
+        "setor": {
+          "Valter_IniciouTrilha": true,
+          "Valter_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Começar pela caixa mais baixa.",
+          "destino": "caixa_baixa"
+        },
+        {
+          "texto": "Pular direto para o segredo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "caixa_baixa": {
+      "fala": "A caixa baixa é a única sem poeira. Todo mundo olha para cima; comprador atento começa onde a mão alcança.",
+      "ao_entrar": {
+        "setor": {
+          "Valter_CaixaBaixa": true,
+          "Valter_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ler o risco na lateral da caixa.",
+          "destino": "corda_curta"
+        },
+        {
+          "texto": "Abrir a caixa de cima.",
+          "destino": "erro_caixa_baixa"
+        },
+        {
+          "texto": "Abrir a loja comum primeiro.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "erro_caixa_baixa": {
+      "fala": "A caixa de cima é vitrine disfarçada. O depósito começa embaixo.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "caixa_baixa"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "corda_curta": {
+      "fala": "O risco aponta para uma corda curta. Corda curta não prende; ela lembra que caminho bom não precisa ser comprido demais.",
+      "ao_entrar": {
+        "setor": {
+          "Valter_CordaCurta": true,
+          "Valter_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Seguir a ponta da corda.",
+          "destino": "no_simples"
+        },
+        {
+          "texto": "Puxar a corda com força.",
+          "destino": "erro_corda_curta"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "caixa_baixa"
+        }
+      ]
+    },
+    "erro_corda_curta": {
+      "fala": "Força arrebenta corda e confiança. Siga a ponta.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "corda_curta"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "no_simples": {
+      "fala": "A ponta termina num nó simples. Nó simples é pista de gente prática.",
+      "ao_entrar": {
+        "setor": {
+          "Valter_NoSimples": true,
+          "Valter_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Desfazer o nó devagar.",
+          "destino": "marca_chao"
+        },
+        {
+          "texto": "Cortar o nó.",
+          "destino": "erro_no_simples"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "corda_curta"
+        }
+      ]
+    },
+    "erro_no_simples": {
+      "fala": "Cortar nó é admitir que não quer entender o caminho.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "no_simples"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "marca_chao": {
+      "fala": "Atrás do nó há uma marca no chão: dois passos para o lado, nenhum para trás.",
+      "ao_entrar": {
+        "setor": {
+          "Valter_MarcaChao": true,
+          "Valter_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Dar dois passos para o lado.",
+          "destino": "pedido_sem_ganancia"
+        },
+        {
+          "texto": "Dar um passo para trás.",
+          "destino": "erro_marca_chao"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "no_simples"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        }
+      ]
+    },
+    "erro_marca_chao": {
+      "fala": "Para trás fica a loja comum. O segredo anda de lado.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "marca_chao"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pedido_sem_ganancia": {
+      "fala": "Agora falta o pedido. Se a primeira palavra for “raro”, eu fecho o depósito.",
+      "ao_entrar": {
+        "setor": {
+          "Valter_PedidoSemGanancia": true,
+          "Valter_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir o estoque guardado com calma.",
+          "destino": "final_trilha"
+        },
+        {
+          "texto": "Pedir o item mais raro logo.",
+          "destino": "erro_pedido_sem_ganancia"
+        },
+        {
+          "texto": "Voltar ao passo anterior.",
+          "destino": "marca_chao"
+        },
+        {
+          "texto": "Tentar a loja secreta agora.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Perguntar se esse caminho também guarda presente.",
+          "destino": "checar_presente"
+        }
+      ]
+    },
+    "erro_pedido_sem_ganancia": {
+      "fala": "Ganância é barulhenta. Aqui o pedido precisa caber no depósito.",
+      "opcoes": [
+        {
+          "texto": "Corrigir o caminho.",
+          "destino": "pedido_sem_ganancia"
+        },
+        {
+          "texto": "Voltar ao início da conversa.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "final_trilha": {
+      "fala": "Você chegou ao fim do caminho. Agora a pergunta já tem peso suficiente para abrir o que estava escondido.",
+      "ao_entrar": {
+        "setor": {
+          "Valter_ConcluiuTrilha": true,
+          "Valter_Passos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir o depósito torto.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Pedir o presente sem parecer cobrança.",
+          "destino": "preparar_presente"
+        },
+        {
+          "texto": "Abrir a loja comum antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar ao último passo.",
+          "destino": "pedido_sem_ganancia"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Depósito torto não abre com pergunta reta. Você ainda não passou pela caixa baixa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Valter_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora sua pergunta tem nó, marca e chão. Já parece pedido de quem viu o depósito."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Entender o caminho primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Valter_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "trilha_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.Valter_ConcluiuTrilha",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Valter_CaixaBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_CordaCurta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_NoSimples",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_MarcaChao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_PedidoSemGanancia",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Você pulou pedaço do depósito. Volte pela caixa baixa e não ignore o nó simples.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar o caminho.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Fechado. Vou mostrar o depósito torto. Pise onde a marca manda.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "preparar_presente": {
+      "fala": "Presente só sai quando a pessoa entende que depósito não é saque. Você pediu do jeito certo.",
+      "ao_entrar": {
+        "setor": {
+          "Valter_PedidoPresenteCorreto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Receber o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Ver a loja secreta primeiro.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "final_trilha"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.Valter_CaixaBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_CordaCurta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_NoSimples",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_MarcaChao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_PedidoSemGanancia",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_ConcluiuTrilha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.Valter_PedidoPresenteCorreto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Primeiro caminhe pelo depósito torto até eu saber que você não está só caçando brinde.",
+      "opcoes": [
+        {
+          "texto": "Entender o caminho primeiro.",
+          "destino": "trilha_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Toma. Um item de presente para quem respeitou a ordem do depósito.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo de Valter.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

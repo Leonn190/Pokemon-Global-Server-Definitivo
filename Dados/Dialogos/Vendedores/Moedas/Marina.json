@@ -3,7 +3,7 @@
   "nos": {
     "saudacao": {
       "fala_condicional": {
-        "padrao": "Olá, querido. Sou Josefa. A banca está aberta: moedas na frente, conversa no balcão e segredo só para quem tem calma.",
+        "padrao": "Bem-vindo. Sou Marina. Minha loja parece tranquila, mas quem entende correnteza acha passagem melhor.",
         "casos": [
           {
             "condicoes": [
@@ -13,7 +13,7 @@
                 "valor": 0
               }
             ],
-            "valor": "Olha quem voltou. Gosto de cliente que lembra o caminho. Quer comprar, conversar ou procurar aquilo que não fica na vitrine?"
+            "valor": "Você voltou para a margem certa. Quer a loja clara, a conversa da correnteza ou o caminho escondido?"
           }
         ]
       },
@@ -23,25 +23,25 @@
           "destino": "loja_padrao"
         },
         {
-          "texto": "Conversar um pouco.",
-          "destino": "conversa"
+          "texto": "Falar sobre a correnteza.",
+          "destino": "conversa_correnteza"
         },
         {
-          "texto": "Você guarda algo fora da vitrine?",
-          "destino": "pergunta_segredo"
+          "texto": "Procurar loja secreta.",
+          "destino": "pergunta_secreta"
         },
         {
-          "texto": "Tem algum presente para mim?",
+          "texto": "Perguntar sobre presente.",
           "destino": "checar_presente"
         },
         {
-          "texto": "Tchau.",
+          "texto": "Sair.",
           "acao": "fim"
         }
       ]
     },
     "loja_padrao": {
-      "fala": "Claro. O que está exposto é simples de achar, simples de pagar e simples de levar.",
+      "fala": "Pode olhar. Esses itens ficam na superfície, sem truque.",
       "saida": "loja",
       "opcoes": [
         {
@@ -50,25 +50,11 @@
         }
       ]
     },
-    "conversa": {
-      "fala_condicional": {
-        "padrao": "Toda moeda tem dois lados. Eu vendo o lado brilhante, mas presto atenção em quem pergunta pelo lado riscado.",
-        "casos": [
-          {
-            "condicoes": [
-              {
-                "alvo": "setor.JosefaPerguntouSegredo",
-                "op": "==",
-                "valor": true
-              }
-            ],
-            "valor": "Você ainda está pensando no estoque escondido, né? Então escute: cliente apressado só vê preço; cliente atento vê porta."
-          }
-        ]
-      },
+    "conversa_correnteza": {
+      "fala": "Vendedor bom não empurra cliente: deixa a água mostrar onde pesa menos. Você costuma seguir placa ou reparar no fluxo?",
       "ao_entrar": {
         "setor": {
-          "JosefaConversa": {
+          "MarinaConversa": {
             "op": "add",
             "valor": 1
           }
@@ -76,16 +62,11 @@
       },
       "opcoes": [
         {
-          "texto": "Que porta?",
-          "destino": "pista_segredo",
-          "ao_escolher": {
-            "setor": {
-              "JosefaPerguntouSegredo": true
-            }
-          }
+          "texto": "Eu reparo no fluxo.",
+          "destino": "fluxo"
         },
         {
-          "texto": "Só queria comprar mesmo.",
+          "texto": "Prefiro placa e preço.",
           "destino": "loja_padrao"
         },
         {
@@ -94,57 +75,58 @@
         }
       ]
     },
-    "pista_segredo": {
-      "fala": "A porta é a confiança. Se você pergunta sem fazer barulho e não trata presente como obrigação, eu abro uma gaveta a mais.",
+    "fluxo": {
+      "fala": "Então repare: o que fica no canto da banca não é esquecido. É só reservado para quem não chega fazendo onda.",
       "ao_entrar": {
         "setor": {
-          "JosefaSabeDaGaveta": true,
-          "JosefaConfianca": {
-            "op": "add",
-            "valor": 1
-          }
+          "MarinaEntendeuFluxo": true
         }
       },
       "opcoes": [
         {
-          "texto": "Então posso ver essa gaveta?",
+          "texto": "Quero ver o canto reservado.",
           "destino": "checar_loja_secreta"
         },
         {
-          "texto": "E sobre o presente?",
-          "destino": "checar_presente"
+          "texto": "Isso libera algum presente?",
+          "destino": "presente_pista"
         },
         {
-          "texto": "Entendi. Voltar.",
+          "texto": "Voltar.",
           "destino": "saudacao"
         }
       ]
     },
-    "pergunta_segredo": {
+    "pergunta_secreta": {
       "fala_condicional": {
-        "padrao": "Falar assim, direto, assusta a mercadoria. Primeiro conversa comigo, depois a gaveta talvez converse com você.",
+        "padrao": "Loja secreta é como maré baixa: aparece só para quem esperou o momento certo.",
         "casos": [
           {
             "condicoes": [
               {
-                "alvo": "setor.JosefaSabeDaGaveta",
+                "alvo": "setor.MarinaEntendeuFluxo",
                 "op": "==",
                 "valor": true
               }
             ],
-            "valor": "Você aprendeu a palavra certa: gaveta. Posso mostrar a parte discreta da banca."
+            "valor": "Você já percebeu o canto reservado. Agora posso puxar a cortina sem fazer espuma."
           }
         ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "MarinaPerguntouSecreta": true
+        }
       },
       "opcoes": [
         {
           "texto_condicional": {
-            "padrao": "Conversar antes.",
+            "padrao": "Entender a correnteza primeiro.",
             "casos": [
               {
                 "condicoes": [
                   {
-                    "alvo": "setor.JosefaSabeDaGaveta",
+                    "alvo": "setor.MarinaEntendeuFluxo",
                     "op": "==",
                     "valor": true
                   }
@@ -154,12 +136,12 @@
             ]
           },
           "destino_condicional": {
-            "padrao": "conversa",
+            "padrao": "conversa_correnteza",
             "casos": [
               {
                 "condicoes": [
                   {
-                    "alvo": "setor.JosefaSabeDaGaveta",
+                    "alvo": "setor.MarinaEntendeuFluxo",
                     "op": "==",
                     "valor": true
                   }
@@ -182,12 +164,12 @@
           {
             "condicoes": [
               {
-                "alvo": "setor.JosefaSabeDaGaveta",
+                "alvo": "setor.MarinaEntendeuFluxo",
                 "op": "==",
                 "valor": true
               },
               {
-                "alvo": "setor.JosefaConfianca",
+                "alvo": "setor.MarinaConversa",
                 "op": ">=",
                 "valor": 1
               }
@@ -199,21 +181,43 @@
       "opcoes": []
     },
     "loja_secreta_bloqueada": {
-      "fala": "Ainda não. Se até a vitrine precisa de pano, imagina a gaveta. Converse com calma primeiro.",
+      "fala": "Calma. Você ainda está batendo na superfície. Fale comigo sobre a correnteza primeiro.",
       "opcoes": [
         {
-          "texto": "Tudo bem.",
+          "texto": "Conversar.",
+          "destino": "conversa_correnteza"
+        },
+        {
+          "texto": "Voltar.",
           "destino": "saudacao"
         }
       ]
     },
     "loja_secreta": {
-      "fala": "Sem alarde. Essa parte eu só mostro para quem sabe pedir baixo.",
+      "fala": "Pronto. A maré baixou. Olhe o que eu guardo longe do barulho.",
       "saida": "loja_secreta",
       "opcoes": [
         {
           "texto": "Fechar.",
           "acao": "fim"
+        }
+      ]
+    },
+    "presente_pista": {
+      "fala": "Talvez. Eu gosto de presentear quem escuta antes de pedir. Diga que entendeu o fluxo sem pressa.",
+      "ao_entrar": {
+        "setor": {
+          "MarinaPistaPresente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Eu entendi o fluxo.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
@@ -224,14 +228,14 @@
           {
             "condicoes": [
               {
-                "alvo": "setor.JosefaSabeDaGaveta",
+                "alvo": "setor.MarinaEntendeuFluxo",
                 "op": "==",
                 "valor": true
               },
               {
-                "alvo": "setor.JosefaConversa",
-                "op": ">=",
-                "valor": 1
+                "alvo": "setor.MarinaPistaPresente",
+                "op": "==",
+                "valor": true
               }
             ],
             "valor": "presente_liberado"
@@ -241,11 +245,11 @@
       "opcoes": []
     },
     "presente_negado": {
-      "fala": "Presente não é troco. Primeiro me mostre que veio falar comigo, não só cutucar meu bolso.",
+      "fala": "Ainda não. Presente meu não boia na primeira pergunta. Siga a correnteza da conversa.",
       "opcoes": [
         {
-          "texto": "Conversar então.",
-          "destino": "conversa"
+          "texto": "Conversar sobre isso.",
+          "destino": "conversa_correnteza"
         },
         {
           "texto": "Voltar.",
@@ -254,7 +258,7 @@
       ]
     },
     "presente_liberado": {
-      "fala": "Você ouviu direitinho e não fez escândalo. Pegue isto e use com juízo.",
+      "fala": "Aí sim. Você não tentou atravessar contra a água. Leve isto.",
       "saida": "presente_1",
       "opcoes": [
         {
@@ -264,7 +268,7 @@
       ]
     },
     "fallback": {
-      "fala": "Não consegui abrir o diálogo da Josefa.",
+      "fala": "Não consegui abrir o diálogo da Marina.",
       "opcoes": [
         {
           "texto": "Fechar",

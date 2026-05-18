@@ -1,0 +1,218 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Hans. Vendo moedas e mantenho as contas limpas. Loja aberta para quem sabe escolher rápido.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "De volta. Bom sinal: cliente que retorna costuma saber o valor do silêncio."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Você tem uma loja secreta?",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Algum presente?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Aqui está a loja normal. Preço claro, compra clara.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Eu separo três coisas: preço, pressa e confiança. As duas primeiras qualquer um entende. A terceira quase ninguém merece.",
+      "ao_entrar": {
+        "setor": {
+          "HansFalouConfianca": true,
+          "HansConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como eu mereço confiança?",
+          "destino": "pista_confianca"
+        },
+        {
+          "texto": "Quero comprar.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pista_confianca": {
+      "fala": "Não force a fechadura. Pergunte uma vez, volte ao balcão e mostre que não está aqui só por fofoca.",
+      "ao_entrar": {
+        "setor": {
+          "HansSabeRegra": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voltar ao balcão.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Mesmo assim quero ver a loja secreta.",
+          "destino": "checar_loja_secreta"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Existe estoque que não aparece em placa. Mas perguntar sem contexto não abre nada.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.HansSabeRegra",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você ouviu a regra e voltou ao assunto sem gritar. Isso já vale alguma coisa."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "HansPerguntouSecreta": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Conversar antes.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.HansSabeRegra",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Abrir loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "conversa",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.HansSabeRegra",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Deixa pra lá.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.HansSabeRegra",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.HansPerguntouSecreta",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Não ainda. Primeiro entenda meu método: confiança antes de curiosidade.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Certo. Estoque reservado, sem propaganda e sem devolução dramática.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Presente, não. Meu extra é preço escondido para quem entende o caminho da loja secreta.",
+      "opcoes": [
+        {
+          "texto": "Entendi.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Hans.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

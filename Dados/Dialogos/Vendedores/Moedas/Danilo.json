@@ -1,0 +1,243 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Danilo na área. Minha loja é direta, mas meu estoque bom não gosta de gente afoita.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou, hein? Então talvez você esteja menos afoito hoje. Loja comum, papo ou o caminho escondido?"
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Ouvi dizer que tem estoque secreto.",
+          "destino": "rumor_secreto"
+        },
+        {
+          "texto": "Tem presente?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Pode olhar. Essa parte eu deixo na luz porque não tem motivo para esconder.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Eu aprendi vendendo em rota movimentada: quem pergunta demais sem comprar nada às vezes é só curioso; quem compra sem ouvir perde oportunidade.",
+      "ao_entrar": {
+        "setor": {
+          "DaniloConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual oportunidade?",
+          "destino": "oportunidade"
+        },
+        {
+          "texto": "Vou comprar primeiro.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "oportunidade": {
+      "fala": "A oportunidade de entender o vendedor antes da mercadoria. Marina chama de correnteza; eu chamo de não tropeçar no próprio desejo.",
+      "ao_entrar": {
+        "setor": {
+          "DaniloEntendeuRitmo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Não vou tropeçar. Quero saber do estoque secreto.",
+          "destino": "rumor_secreto"
+        },
+        {
+          "texto": "Abrir loja normal.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "rumor_secreto": {
+      "fala_condicional": {
+        "padrao": "Rumor corre mais que cliente com pressa. Se veio só pelo boato, vai encontrar só balcão.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.DaniloEntendeuRitmo",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora sim. Você ouviu antes de cutucar o segredo. Mas falta uma coisa: escolher a palavra certa."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "DaniloPerguntouRumor": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Conversar antes.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.DaniloEntendeuRitmo",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Pedir acesso reservado."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "conversa",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.DaniloEntendeuRitmo",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "palavra_certa"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "palavra_certa": {
+      "fala": "A palavra é reservado. Se falar secreto alto demais, deixa de ser secreto. Tenta de novo, sem teatro.",
+      "ao_entrar": {
+        "setor": {
+          "DaniloSabeReservado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quero acesso reservado.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.DaniloEntendeuRitmo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.DaniloSabeReservado",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Ainda não. Você pulou etapa ou falou alto demais. Entenda o ritmo e peça pelo reservado.",
+      "opcoes": [
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Aí. Reservado, sem placa e sem plateia. Olha com calma.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Presente eu não tenho hoje. Meu agrado é abrir o reservado para quem não chega chutando a porta.",
+      "opcoes": [
+        {
+          "texto": "Entendi.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Danilo.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Kleber. Eu vendo moedas, mas minha banca é quase uma oficina: tudo tem encaixe, peso e hora certa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Bom. Quem volta talvez tenha entendido que meu balcão tem mais de uma trava."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Perguntar sobre a oficina.",
+          "destino": "oficina"
+        },
+        {
+          "texto": "Procurar loja secreta.",
+          "destino": "pergunta_trava"
+        },
+        {
+          "texto": "Pedir presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Aqui está o estoque comum. Sem mola escondida, sem peça sobrando.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "oficina": {
+      "fala": "Peça boa não entra na máquina de qualquer jeito. Primeiro eu vejo se o cliente sabe perguntar, depois vejo se sabe esperar.",
+      "ao_entrar": {
+        "setor": {
+          "KleberConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Eu sei esperar.",
+          "destino": "teste_espera"
+        },
+        {
+          "texto": "Só quero comprar.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "teste_espera": {
+      "fala": "Então não peça a gaveta antes de entender a bancada. A trava tem três dentes: ouvir, notar e pedir baixo.",
+      "ao_entrar": {
+        "setor": {
+          "KleberOuviuTrava": true,
+          "KleberDentesTrava": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é o segundo dente?",
+          "destino": "segundo_dente"
+        },
+        {
+          "texto": "Pedir baixo pela loja secreta.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "segundo_dente": {
+      "fala": "Notar. Por exemplo: Hans conta moedas no silêncio, Josefa sorri antes de abrir gaveta. Cada vendedor tem sua dobradiça.",
+      "ao_entrar": {
+        "setor": {
+          "KleberNotouDente": true,
+          "KleberDentesTrava": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora peço baixo pela loja secreta.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "E o presente?",
+          "destino": "pista_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_trava": {
+      "fala_condicional": {
+        "padrao": "A trava nem rangeu. Se quiser abrir algo escondido, comece pela oficina.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.KleberNotouDente",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já viu dois dentes da trava. Falta só pedir sem bater no balcão."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Falar da oficina primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.KleberNotouDente",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Pedir baixo pela loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "oficina",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.KleberNotouDente",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.KleberOuviuTrava",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.KleberNotouDente",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Travou. Falta entender a bancada: ouvir e notar antes de pedir.",
+      "opcoes": [
+        {
+          "texto": "Ir para a oficina.",
+          "destino": "oficina"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Agora encaixou. Não toque nas peças sem olhar preço, mas pode escolher.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pista_presente": {
+      "fala": "Presente é peça separada. Eu dou para quem abre a trava sem forçar e ainda pergunta se sobrou parafuso.",
+      "ao_entrar": {
+        "setor": {
+          "KleberPistaPresente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então quero ver se mereço.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.KleberNotouDente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.KleberPistaPresente",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Você pediu a peça antes de entender a trava toda.",
+      "opcoes": [
+        {
+          "texto": "Entender a oficina.",
+          "destino": "oficina"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Beleza. Você não forçou a tampa e ainda respeitou a bancada. Leve isto.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Valeu.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Kleber.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

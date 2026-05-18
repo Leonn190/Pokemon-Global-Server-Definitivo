@@ -1,0 +1,509 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Mirela. Minhas moedas parecem joias, mas joia de verdade é saber qual brilho não foi feito para ser visto de primeira.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Cuidado: quanto mais vezes olha para o mesmo brilho, mais fácil é se perder nele."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre brilho e moedas.",
+          "destino": "brilho_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "A vitrine comum está aberta. O brilho fácil mora nela.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "brilho_intro": {
+      "fala": "Primeira regra: não siga o maior brilho. Ele é isca para olhos apressados.",
+      "ao_entrar": {
+        "setor": {
+          "MirelaRegraBrilho": true,
+          "MirelaTrilha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Escolher o brilho menor.",
+          "destino": "brilho_menor"
+        },
+        {
+          "texto": "Escolher o maior brilho mesmo assim.",
+          "destino": "erro_brilho_maior"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "brilho_menor": {
+      "fala": "O brilho menor não pede atenção; ele espera merecimento. Agora olhe o reflexo, não a moeda.",
+      "ao_entrar": {
+        "setor": {
+          "MirelaBrilhoMenor": true,
+          "MirelaTrilha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Olhar o reflexo atrás da moeda.",
+          "destino": "reflexo"
+        },
+        {
+          "texto": "Pegar a moeda sem olhar.",
+          "destino": "erro_pressa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "brilho_intro"
+        }
+      ]
+    },
+    "reflexo": {
+      "fala": "No reflexo aparece uma gaveta que não está na frente. Isso assusta gente que só acredita no que vê direto.",
+      "ao_entrar": {
+        "setor": {
+          "MirelaReflexo": true,
+          "MirelaTrilha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pela gaveta refletida.",
+          "destino": "gaveta_refletida"
+        },
+        {
+          "texto": "Dizer que é truque barato.",
+          "destino": "erro_truque"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "brilho_menor"
+        }
+      ]
+    },
+    "gaveta_refletida": {
+      "fala": "Boa. A gaveta existe, mas ela não abre com chave. Abre com ordem: brilho, reflexo, sombra, pausa.",
+      "ao_entrar": {
+        "setor": {
+          "MirelaGaveta": true,
+          "MirelaTrilha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Seguir para a sombra.",
+          "destino": "sombra"
+        },
+        {
+          "texto": "Tentar abrir agora.",
+          "destino": "erro_chave"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "reflexo"
+        }
+      ]
+    },
+    "sombra": {
+      "fala": "A sombra mostra o que o brilho escondeu. Repare que ela cai para o lado contrário da vitrine comum.",
+      "ao_entrar": {
+        "setor": {
+          "MirelaSombra": true,
+          "MirelaTrilha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ficar em silêncio por um momento.",
+          "destino": "pausa"
+        },
+        {
+          "texto": "Perguntar correndo pelo segredo.",
+          "destino": "erro_pressa_segredo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "gaveta_refletida"
+        }
+      ]
+    },
+    "pausa": {
+      "fala": "Agora sim. A pausa diz que você não veio arrancar nada. Só falta nomear o caminho sem chamar de truque.",
+      "ao_entrar": {
+        "setor": {
+          "MirelaPausa": true,
+          "MirelaTrilha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Chamar isso de caminho do brilho quieto.",
+          "destino": "nome_caminho"
+        },
+        {
+          "texto": "Chamar isso de truque de loja.",
+          "destino": "erro_truque"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombra"
+        }
+      ]
+    },
+    "nome_caminho": {
+      "fala": "Brilho quieto. Gostei. Você não repetiu minhas palavras, mas entendeu a direção delas.",
+      "ao_entrar": {
+        "setor": {
+          "MirelaNomeCaminho": true,
+          "MirelaTrilha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a loja secreta pelo brilho quieto.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Perguntar se isso libera presente.",
+          "destino": "pista_presente"
+        },
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Loja secreta existe, mas não acende para pedido direto. Mire primeiro no brilho menor.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.MirelaNomeCaminho",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já conhece o brilho quieto. Posso conferir se a gaveta reconhece você."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Seguir o brilho menor.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.MirelaNomeCaminho",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "brilho_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.MirelaNomeCaminho",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.MirelaRegraBrilho",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MirelaBrilhoMenor",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MirelaReflexo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MirelaGaveta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MirelaSombra",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MirelaPausa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MirelaNomeCaminho",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Ainda falta reflexo, sombra ou pausa. O brilho quieto não abre pela metade.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar pelo brilho menor.",
+          "destino": "brilho_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "A gaveta reconheceu seu caminho. Veja a parte que eu guardo longe dos olhos famintos.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pista_presente": {
+      "fala": "Presente é outro brilho. Se você pedir como quem cobra, apaga. Se pedir como quem agradece o caminho, talvez acenda.",
+      "ao_entrar": {
+        "setor": {
+          "MirelaPistaPresente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agradecer o caminho e perguntar pelo presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Cobrar o presente.",
+          "destino": "presente_negado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "nome_caminho"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.MirelaNomeCaminho",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MirelaPistaPresente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MirelaPausa",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Não. O presente ainda está apagado. Primeiro siga o brilho quieto até o fim e peça sem pressa.",
+      "opcoes": [
+        {
+          "texto": "Seguir o caminho certo.",
+          "destino": "brilho_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Agora brilhou do jeito certo. Leve isto, e lembre: nem toda luz quer plateia.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "erro_brilho_maior": {
+      "fala": "O maior brilho sempre ganha olhos e perde segredos. Tente o menor.",
+      "opcoes": [
+        {
+          "texto": "Escolher o brilho menor.",
+          "destino": "brilho_menor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "erro_pressa": {
+      "fala": "Pressa risca joia e fecha gaveta. Olhe o reflexo antes.",
+      "opcoes": [
+        {
+          "texto": "Olhar o reflexo.",
+          "destino": "reflexo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "brilho_menor"
+        }
+      ]
+    },
+    "erro_truque": {
+      "fala": "Quem chama tudo de truque só compra vitrine. Experimente respeitar o reflexo.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao reflexo.",
+          "destino": "reflexo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "erro_chave": {
+      "fala": "Não há chave. Há ordem. Sombra antes da abertura.",
+      "opcoes": [
+        {
+          "texto": "Seguir para a sombra.",
+          "destino": "sombra"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "gaveta_refletida"
+        }
+      ]
+    },
+    "erro_pressa_segredo": {
+      "fala": "A pressa fez sombra demais. Pare um momento e deixe o caminho respirar.",
+      "opcoes": [
+        {
+          "texto": "Ficar em silêncio.",
+          "destino": "pausa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombra"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Mirela.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

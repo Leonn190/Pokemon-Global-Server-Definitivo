@@ -1,0 +1,614 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Edward Newgate, ao seu dispor. Minha loja comum é o convés. A loja secreta é porão fechado, e porão fechado não abre para passageiro barulhento.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou ao meu convés. Talvez hoje consiga distinguir carga, lastro, mapa, juramento e tesouro."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre o convés.",
+          "destino": "conves"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "O convés está aberto. Produtos comuns, vento comum, preço comum.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conves": {
+      "fala": "Primeiro passo: no convés você não procura tesouro. Você aprende onde pisa.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardConves": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Aprender onde pisar.",
+          "destino": "tabuas"
+        },
+        {
+          "texto": "Pedir o tesouro logo.",
+          "destino": "erro_tesouro_logo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "tabuas": {
+      "fala": "As tábuas rangem diferente. A terceira não denuncia peso; denuncia intenção.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardTabuas": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pisar leve na terceira tábua.",
+          "destino": "lastro"
+        },
+        {
+          "texto": "Pular para evitar barulho.",
+          "destino": "erro_pulo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conves"
+        }
+      ]
+    },
+    "lastro": {
+      "fala": "Agora o lastro. Navio sem lastro vira com qualquer moeda brilhante. Cliente sem lastro também.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardLastro": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar qual carga pesa de verdade.",
+          "destino": "carga"
+        },
+        {
+          "texto": "Dizer que peso atrapalha velocidade.",
+          "destino": "erro_velocidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tabuas"
+        }
+      ]
+    },
+    "carga": {
+      "fala": "Carga de verdade não é a mais cara. É a que não pode molhar. Por isso vai no porão interno.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardCarga": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pelo porão interno.",
+          "destino": "porao"
+        },
+        {
+          "texto": "Procurar a carga na vitrine.",
+          "destino": "erro_vitrine"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lastro"
+        }
+      ]
+    },
+    "porao": {
+      "fala": "O porão interno tem duas portas: uma para estoque reservado, outra para lembranças que não vendo.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardPorao": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pelo mapa da porta reservada.",
+          "destino": "mapa"
+        },
+        {
+          "texto": "Perguntar pela lembrança que não vende.",
+          "destino": "lembranca_cedo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "carga"
+        }
+      ]
+    },
+    "mapa": {
+      "fala": "Mapa sem legenda é desenho. A legenda é: carga, maré, silêncio e juramento. Esqueça um e o porão vira parede.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardMapa": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pela maré.",
+          "destino": "mare"
+        },
+        {
+          "texto": "Ignorar a legenda.",
+          "destino": "erro_legenda"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "porao"
+        }
+      ]
+    },
+    "mare": {
+      "fala": "Maré boa não é a alta. É a que encobre o rangido da porta. Espere o balcão respirar.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardMare": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esperar em silêncio.",
+          "destino": "silencio"
+        },
+        {
+          "texto": "Bater no balcão para apressar.",
+          "destino": "erro_barulho"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "mapa"
+        }
+      ]
+    },
+    "silencio": {
+      "fala": "Silêncio aceito. Agora vem juramento: você não pergunta o que tem no porão antes da porta abrir.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardSilencio": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Jurar abrir os olhos antes da boca.",
+          "destino": "juramento"
+        },
+        {
+          "texto": "Perguntar o que tem lá dentro.",
+          "destino": "erro_curiosidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "mare"
+        }
+      ]
+    },
+    "juramento": {
+      "fala": "Esse juramento serve. Não é formalidade; é filtro. Agora você pode pedir o estoque reservado pelo nome certo.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardJuramento": true,
+          "EdwardRota": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir o porão reservado.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Perguntar pela lembrança que não vende.",
+          "destino": "lembranca"
+        },
+        {
+          "texto": "Voltar ao convés.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Porão secreto não abre com grito de cais. Aprenda convés, lastro, carga, mapa, maré e juramento.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EdwardJuramento",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você fez o juramento. Agora o porão reservado pode reconhecer sua voz."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Começar pelo convés.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.EdwardJuramento",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir o porão reservado."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "conves",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.EdwardJuramento",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EdwardConves",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardTabuas",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardLastro",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardCarga",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardPorao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardMapa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardMare",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardSilencio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardJuramento",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "O porão ainda não abriu. Falta rota: talvez tabuas, carga, maré ou juramento. Não existe atalho no casco.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar pelo convés.",
+          "destino": "conves"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Porta aberta. O porão reservado é seu por alguns instantes. Escolha sem fazer tempestade.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "lembranca_cedo": {
+      "fala": "Lembrança antes de juramento vira curiosidade vazia. Faça a rota primeiro.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao mapa.",
+          "destino": "mapa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "porao"
+        }
+      ]
+    },
+    "lembranca": {
+      "fala": "A lembrança que não vendo só vira presente para quem entende que nem todo tesouro tem preço.",
+      "ao_entrar": {
+        "setor": {
+          "EdwardLembranca": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir como lembrança, não como compra.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Perguntar quanto custa.",
+          "destino": "presente_negado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "juramento"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EdwardJuramento",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardLembranca",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EdwardSilencio",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Não. Você ainda tratou lembrança como mercadoria. Volte ao juramento e peça de outro jeito.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao juramento.",
+          "destino": "juramento"
+        },
+        {
+          "texto": "Recomeçar pelo convés.",
+          "destino": "conves"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Agora sim. Leve. Tesouro bom não é o que afunda bolso; é o que lembra a rota que você fez.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Edward.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "erro_tesouro_logo": {
+      "fala": "Tesouro pedido cedo demais vira pedra. Comece no convés.",
+      "opcoes": [
+        {
+          "texto": "Começar no convés.",
+          "destino": "conves"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "erro_pulo": {
+      "fala": "Quem pula tábua não aprende casco. Pise leve, não fuja do rangido.",
+      "opcoes": [
+        {
+          "texto": "Pisar leve.",
+          "destino": "lastro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tabuas"
+        }
+      ]
+    },
+    "erro_velocidade": {
+      "fala": "Velocidade sem lastro vira naufrágio. Pergunte pela carga.",
+      "opcoes": [
+        {
+          "texto": "Perguntar pela carga.",
+          "destino": "carga"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lastro"
+        }
+      ]
+    },
+    "erro_vitrine": {
+      "fala": "Carga de porão nunca fica na vitrine. Siga para o porão interno.",
+      "opcoes": [
+        {
+          "texto": "Perguntar pelo porão.",
+          "destino": "porao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "carga"
+        }
+      ]
+    },
+    "erro_legenda": {
+      "fala": "Mapa sem legenda engana até capitão velho. Leia maré e silêncio.",
+      "opcoes": [
+        {
+          "texto": "Perguntar pela maré.",
+          "destino": "mare"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "mapa"
+        }
+      ]
+    },
+    "erro_barulho": {
+      "fala": "Barulho chama onda ruim. Espere a maré encobrir a porta.",
+      "opcoes": [
+        {
+          "texto": "Esperar em silêncio.",
+          "destino": "silencio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "mare"
+        }
+      ]
+    },
+    "erro_curiosidade": {
+      "fala": "Boca antes do olho quebra juramento antes mesmo dele existir.",
+      "opcoes": [
+        {
+          "texto": "Jurar abrir os olhos antes da boca.",
+          "destino": "juramento"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "silencio"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Edward Newgate.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,253 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Oi! Sou Osvaldo. Minha lojinha de itens é simples, mas eu guardo uma prateleira baixa para quem conversa com educação.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou! A loja continua aberta, e a prateleira baixa também lembra de cliente educado."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre a prateleira.",
+          "destino": "prateleira"
+        },
+        {
+          "texto": "Tem loja secreta?",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Claro! Esses são os itens que ficam bem na frente.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "prateleira": {
+      "fala": "A prateleira baixa é para item pequeno e cliente tranquilo. Quem chega chutando caixa nem vê nada.",
+      "ao_entrar": {
+        "setor": {
+          "OsvaldoPrateleira": true,
+          "OsvaldoConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Olhar a prateleira baixa com calma.",
+          "destino": "baixo"
+        },
+        {
+          "texto": "Abrir loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "baixo": {
+      "fala": "Viu? Não é mistério grande. Só precisava olhar sem pressa. Tem um fundo falso simples ali atrás.",
+      "ao_entrar": {
+        "setor": {
+          "OsvaldoFundoFalso": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir para ver o fundo falso.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Perguntar do presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "prateleira"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Tem, mas é bem simples. Conversa comigo e olha a prateleira baixa primeiro.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.OsvaldoFundoFalso",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você achou o fundo falso. Posso abrir a parte reservada rapidinho."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Olhar a prateleira baixa.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.OsvaldoFundoFalso",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Abrir o fundo falso."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "prateleira",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.OsvaldoFundoFalso",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.OsvaldoPrateleira",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.OsvaldoFundoFalso",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Calma, primeiro olha a prateleira baixa. É quase ali do lado.",
+      "opcoes": [
+        {
+          "texto": "Olhar a prateleira.",
+          "destino": "prateleira"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Prontinho. Esse é o fundinho reservado da loja.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.OsvaldoFundoFalso",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Tenho sim, mas primeiro quero ver se você consegue achar a prateleira baixa. É fácil, prometo.",
+      "opcoes": [
+        {
+          "texto": "Conversar sobre a prateleira.",
+          "destino": "prateleira"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Boa! Você achou sem bagunçar nada. Pode levar esse presentinho.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Valeu.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Osvaldo.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

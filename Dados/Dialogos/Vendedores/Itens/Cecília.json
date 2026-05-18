@@ -1,0 +1,278 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Cecília. Vendo itens, arrumo etiquetas e não gosto quando mexem em caixa sem perguntar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Se veio pela loja, ela está aberta. Se veio pelo reservado, siga as etiquetas certas."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre etiquetas.",
+          "destino": "etiquetas"
+        },
+        {
+          "texto": "Tem loja secreta?",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Pode olhar. Tudo que está na frente tem etiqueta clara.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "etiquetas": {
+      "fala": "A etiqueta principal mostra preço. A etiqueta pequena mostra cuidado. Quase ninguém lê a pequena.",
+      "ao_entrar": {
+        "setor": {
+          "CeciliaEtiqueta": true,
+          "CeciliaConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ler a etiqueta pequena.",
+          "destino": "etiqueta_pequena"
+        },
+        {
+          "texto": "Ignorar e comprar logo.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "etiqueta_pequena": {
+      "fala": "Ela diz: 'reservado para quem pergunta antes de tocar'. Simples, mas já elimina metade dos curiosos.",
+      "ao_entrar": {
+        "setor": {
+          "CeciliaLeuPequena": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar antes de tocar na caixa reservada.",
+          "destino": "caixa_reservada"
+        },
+        {
+          "texto": "Tocar na caixa mesmo assim.",
+          "destino": "erro_tocar"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "etiquetas"
+        }
+      ]
+    },
+    "caixa_reservada": {
+      "fala": "Obrigada por perguntar. Agora falta só conferir se você sabe fechar a caixa depois de olhar.",
+      "ao_entrar": {
+        "setor": {
+          "CeciliaPerguntouCaixa": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Prometer fechar a caixa depois.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Dizer que vai deixar aberta.",
+          "destino": "erro_aberta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "etiqueta_pequena"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Tem reservado, mas não para quem pula etiqueta. Leia a pequena primeiro.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.CeciliaPerguntouCaixa",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você leu a etiqueta pequena e pediu antes de tocar. Já posso conferir a caixa."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ler a etiqueta pequena.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.CeciliaPerguntouCaixa",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a caixa reservada."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "etiquetas",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.CeciliaPerguntouCaixa",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.CeciliaEtiqueta",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.CeciliaLeuPequena",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.CeciliaPerguntouCaixa",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Ainda não. Etiqueta pequena primeiro, caixa reservada depois.",
+      "opcoes": [
+        {
+          "texto": "Ler etiquetas.",
+          "destino": "etiquetas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Certo. Vou abrir a caixa reservada. Depois eu fecho e ninguém tropeça nela.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Hoje não. Mas a caixa reservada já é um bom bônus para quem sabe ler etiqueta.",
+      "opcoes": [
+        {
+          "texto": "Entender a caixa reservada.",
+          "destino": "etiquetas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "erro_tocar": {
+      "fala": "Viu? Por isso a etiqueta existe. Pergunte antes de tocar.",
+      "opcoes": [
+        {
+          "texto": "Perguntar direito.",
+          "destino": "caixa_reservada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "etiqueta_pequena"
+        }
+      ]
+    },
+    "erro_aberta": {
+      "fala": "Caixa aberta derruba item e confiança. Prometa fechar depois.",
+      "opcoes": [
+        {
+          "texto": "Prometer fechar a caixa.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "caixa_reservada"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Cecília.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

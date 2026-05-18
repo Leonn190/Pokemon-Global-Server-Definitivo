@@ -1,0 +1,449 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Nicolas. Minha loja comum está aberta, mas o mapa do balcão não é desenhado para quem só procura seta grande.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou ao meu balcão. Bom. Quem volta talvez já tenha percebido que minha loja secreta não fica atrás de uma pergunta reta."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre esse mapa.",
+          "destino": "mapa_intro"
+        },
+        {
+          "texto": "Quero a loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Você dá presentes?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "A parte comum está aqui. Essa eu deixo iluminada de propósito.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "mapa_intro": {
+      "fala": "Todo balcão tem um mapa: vitrine, gaveta, canto gasto, silêncio do vendedor e pergunta que não tenta arrombar nada.",
+      "ao_entrar": {
+        "setor": {
+          "NicolasMapa": true,
+          "NicolasPassos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Começar pela vitrine.",
+          "destino": "vitrine"
+        },
+        {
+          "texto": "Ir direto para a gaveta.",
+          "destino": "erro_gaveta"
+        },
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "vitrine": {
+      "fala": "A vitrine ensina o básico: o que eu mostro não esconde o que eu penso. Repare no item mais barato, não no mais brilhante.",
+      "ao_entrar": {
+        "setor": {
+          "NicolasVitrine": true,
+          "NicolasPassos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Olhar o canto gasto da bancada.",
+          "destino": "canto_gasto"
+        },
+        {
+          "texto": "Pedir desconto no mais caro.",
+          "destino": "erro_brilho"
+        },
+        {
+          "texto": "Abrir a loja comum.",
+          "destino": "loja_padrao"
+        }
+      ]
+    },
+    "canto_gasto": {
+      "fala": "Esse canto é onde cliente paciente apoia a mão. Clarice chamaria isso de rodapé; eu chamo de ponto de leitura.",
+      "ao_entrar": {
+        "setor": {
+          "NicolasCanto": true,
+          "NicolasPassos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pelo risco no canto.",
+          "destino": "risco"
+        },
+        {
+          "texto": "Bater no balcão para chamar atenção.",
+          "destino": "erro_barulho"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "mapa_intro"
+        }
+      ]
+    },
+    "risco": {
+      "fala": "O risco não é dano. É marca. Quando o comprador vê marca antes de preço, eu sei que ele sabe seguir mapa.",
+      "ao_entrar": {
+        "setor": {
+          "NicolasRisco": true,
+          "NicolasPassos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar que nome essa marca tem.",
+          "destino": "nome_marca"
+        },
+        {
+          "texto": "Chamar isso de defeito.",
+          "destino": "erro_defeito"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "nome_marca": {
+      "fala": "Eu chamo de dobra. Não por dobrar preço, mas por dobrar caminho. A porta está no modo como você pede a segunda leitura.",
+      "ao_entrar": {
+        "setor": {
+          "NicolasDobra": true,
+          "NicolasPassos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a segunda leitura em voz baixa.",
+          "destino": "voz_baixa"
+        },
+        {
+          "texto": "Pedir a segunda leitura como cobrança.",
+          "destino": "erro_cobranca"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "risco"
+        }
+      ]
+    },
+    "voz_baixa": {
+      "fala": "Boa. Voz baixa não é medo; é respeito pelo que fica fora da vitrine.",
+      "ao_entrar": {
+        "setor": {
+          "NicolasVozBaixa": true,
+          "NicolasPassos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Perguntar pelo lado sem etiqueta.",
+          "destino": "lado_sem_etiqueta"
+        },
+        {
+          "texto": "Perguntar pelo preço secreto logo.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "lado_sem_etiqueta": {
+      "fala": "Agora você está no mapa certo. O lado sem etiqueta não aparece para cliente que só mede tudo por preço.",
+      "ao_entrar": {
+        "setor": {
+          "NicolasEtiqueta": true,
+          "NicolasPassos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedir a loja secreta pelo caminho da dobra.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar à vitrine.",
+          "destino": "vitrine"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Pedir assim é como procurar saída sem olhar o mapa. Você vai andar em círculo no meu balcão.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.NicolasEtiqueta",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora a pergunta tem mapa por trás. Posso conferir se você juntou os passos certos."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Aprender o mapa primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.NicolasEtiqueta",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Conferir a loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "mapa_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.NicolasEtiqueta",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.NicolasMapa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.NicolasVitrine",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.NicolasCanto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.NicolasRisco",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.NicolasDobra",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.NicolasVozBaixa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.NicolasEtiqueta",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Falta pedaço do mapa. Volte pela vitrine, pelo canto gasto e pela dobra. Sem isso, a porta não reconhece você.",
+      "opcoes": [
+        {
+          "texto": "Recomeçar pelo mapa.",
+          "destino": "mapa_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Você seguiu sem empurrar. Então aqui está a parte do balcão que só aparece para quem lê o caminho inteiro.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Presente, não. No meu nível, o extra é acesso. Se quiser recompensa fácil, procure uma banca mais baixa no caminho.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender o acesso.",
+          "destino": "mapa_intro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "erro_gaveta": {
+      "fala": "Gaveta sem mapa é parede. Comece pela vitrine.",
+      "opcoes": [
+        {
+          "texto": "Ir para a vitrine.",
+          "destino": "vitrine"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "erro_brilho": {
+      "fala": "Brilho demais cega. O caminho não está no mais caro.",
+      "opcoes": [
+        {
+          "texto": "Olhar o canto gasto.",
+          "destino": "canto_gasto"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "vitrine"
+        }
+      ]
+    },
+    "erro_barulho": {
+      "fala": "Barulho fecha balcão. Cliente paciente apoia a mão, não bate nela.",
+      "opcoes": [
+        {
+          "texto": "Pedir desculpa e observar o risco.",
+          "destino": "risco"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "canto_gasto"
+        }
+      ]
+    },
+    "erro_defeito": {
+      "fala": "Defeito é quando algo perde função. Essa marca ganhou função.",
+      "opcoes": [
+        {
+          "texto": "Perguntar o nome da marca.",
+          "destino": "nome_marca"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "risco"
+        }
+      ]
+    },
+    "erro_cobranca": {
+      "fala": "Cobrança não abre segredo. Pedido baixo abre mais portas que exigência alta.",
+      "opcoes": [
+        {
+          "texto": "Pedir em voz baixa.",
+          "destino": "voz_baixa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "nome_marca"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Nicolas.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

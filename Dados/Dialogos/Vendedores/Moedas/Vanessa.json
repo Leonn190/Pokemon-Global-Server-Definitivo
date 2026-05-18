@@ -1,0 +1,247 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Vanessa. Minha loja fica aberta, mas minha atenção não. Se quiser comprar, é simples. Se quiser segredo, fale direito.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Bom. Talvez agora a conversa ande melhor que da primeira vez."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar com calma.",
+          "destino": "conversa_calma"
+        },
+        {
+          "texto": "Perguntar sobre loja secreta.",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Você dá presentes?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Aqui está. Parte visível, sem charada. Eu não dificulto o básico.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa_calma": {
+      "fala": "Eu reparo em pressa. Quem chega atropelando opção costuma perder o que veio buscar. Você consegue conversar sem cutucar a fechadura?",
+      "ao_entrar": {
+        "setor": {
+          "VanessaConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Consigo. Vou ouvir primeiro.",
+          "destino": "ouvir_primeiro"
+        },
+        {
+          "texto": "Prefiro comprar logo.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "ouvir_primeiro": {
+      "fala": "Então ouça: a loja escondida não é prêmio. É filtro. Quem pede como se fosse direito perde a chance.",
+      "ao_entrar": {
+        "setor": {
+          "VanessaEntendeuFiltro": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quero pedir do jeito certo.",
+          "destino": "pedido_certo"
+        },
+        {
+          "texto": "Abrir loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pedido_certo": {
+      "fala": "Peça sem se achar dono do balcão. Algo como: 'se for possível, posso ver o reservado?'. Simples, mas raro.",
+      "ao_entrar": {
+        "setor": {
+          "VanessaSabeFrase": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Se for possível, posso ver o reservado?",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Pergunta direta demais. Eu disse: segredo não gosta de cotovelo no balcão.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.VanessaSabeFrase",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Agora você sabe pedir sem fazer posse do segredo. Isso muda minha resposta."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "VanessaPerguntouSecreta": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Conversar e aprender o jeito certo.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.VanessaSabeFrase",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Pedir o reservado direito."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "conversa_calma",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.VanessaSabeFrase",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tudo bem, voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.VanessaEntendeuFiltro",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.VanessaSabeFrase",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Não. Ainda parece curiosidade apressada. Converse, ouça, e só depois peça o reservado.",
+      "opcoes": [
+        {
+          "texto": "Conversar.",
+          "destino": "conversa_calma"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Melhor. Você pediu como visitante, não como dono. Vou abrir o reservado.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Hoje não. Eu não dou presente só para suavizar negociação. O extra aqui é acesso, não mimo.",
+      "opcoes": [
+        {
+          "texto": "Então quero entender o acesso.",
+          "destino": "conversa_calma"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Vanessa.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

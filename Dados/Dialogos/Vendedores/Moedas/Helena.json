@@ -1,0 +1,354 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Seja bem-vindo. Sou Helena. Minha loja comum está à disposição, mas os melhores compartimentos só abrem para quem entende a história da moeda.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você retornou. Isso já coloca seu nome numa página menos comum do meu arquivo. Quer loja, história ou compartimento reservado?"
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Ouvir a história da moeda.",
+          "destino": "historia_inicio"
+        },
+        {
+          "texto": "Perguntar pelo compartimento reservado.",
+          "destino": "pergunta_reservado"
+        },
+        {
+          "texto": "Perguntar sobre presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Claro. A prateleira pública não exige leitura de arquivo. Ela está aberta para todos.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "historia_inicio": {
+      "fala": "Toda moeda começa como metal, vira troca e termina como memória. Quem só vê preço enxerga um terço do caminho.",
+      "ao_entrar": {
+        "setor": {
+          "HelenaConversa": {
+            "op": "add",
+            "valor": 1
+          },
+          "HelenaOuviuInicio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é o segundo terço?",
+          "destino": "historia_troca"
+        },
+        {
+          "texto": "Quero comprar antes.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "historia_troca": {
+      "fala": "Troca. É quando a moeda deixa de ser objeto e vira promessa. Promessa malfeita pesa no bolso por muito tempo.",
+      "ao_entrar": {
+        "setor": {
+          "HelenaOuviuTroca": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "E o último terço?",
+          "destino": "historia_memoria"
+        },
+        {
+          "texto": "Isso abre a loja secreta?",
+          "destino": "pergunta_reservado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "historia_memoria": {
+      "fala": "Memória. A moeda guarda por onde passou. Por isso meu estoque reservado não fica com os itens caros; fica com os itens que têm caminho.",
+      "ao_entrar": {
+        "setor": {
+          "HelenaOuviuMemoria": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quero seguir esse caminho.",
+          "destino": "chave_arquivo"
+        },
+        {
+          "texto": "E o presente?",
+          "destino": "pista_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "chave_arquivo": {
+      "fala": "Então guarde a palavra: percurso. Não é senha mágica, é sinal de que você ouviu até o fim.",
+      "ao_entrar": {
+        "setor": {
+          "HelenaSabePercurso": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Percurso.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Percurso também libera presente?",
+          "destino": "pista_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_reservado": {
+      "fala_condicional": {
+        "padrao": "Reservado existe, mas eu não abro arquivo pela capa. Primeiro ouça a história inteira: metal, troca e memória.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.HelenaSabePercurso",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você chegou à palavra percurso. Posso abrir o compartimento sem estragar a ordem do arquivo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "HelenaPerguntouReservado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ouvir a história inteira.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.HelenaSabePercurso",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Dizer percurso e abrir."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "historia_inicio",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.HelenaSabePercurso",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.HelenaOuviuInicio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.HelenaOuviuTroca",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.HelenaOuviuMemoria",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.HelenaSabePercurso",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Arquivo incompleto. Você precisa passar por metal, troca, memória e percurso antes do compartimento reservado.",
+      "opcoes": [
+        {
+          "texto": "Ouvir a história.",
+          "destino": "historia_inicio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Compartimento reservado aberto. Repare: não é luxo, é percurso guardado em forma de item.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pista_presente": {
+      "fala": "Presente, para mim, é uma nota de rodapé. Só aparece quando a leitura principal foi feita sem pular parágrafo.",
+      "ao_entrar": {
+        "setor": {
+          "HelenaPistaPresente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Li metal, troca, memória e percurso.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Ainda preciso ouvir a história.",
+          "destino": "historia_inicio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.HelenaOuviuInicio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.HelenaOuviuTroca",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.HelenaOuviuMemoria",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.HelenaSabePercurso",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.HelenaPistaPresente",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "A nota de rodapé ainda não apareceu. Termine a leitura e peça sem pressa.",
+      "opcoes": [
+        {
+          "texto": "Ouvir a história.",
+          "destino": "historia_inicio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Leitura completa. Aqui está sua nota de rodapé em forma de presente. Use bem.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Helena.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Helena.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

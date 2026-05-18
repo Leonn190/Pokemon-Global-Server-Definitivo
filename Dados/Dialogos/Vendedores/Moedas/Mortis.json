@@ -1,0 +1,247 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Mortis. Não se assuste com o nome. Eu vendo moedas, não maus presságios. A loja comum está viva o bastante.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Interessante. Nem todo cliente encara uma segunda conversa comigo."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar com Mortis.",
+          "destino": "conversa_sombra"
+        },
+        {
+          "texto": "Existe uma loja secreta?",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente?",
+          "destino": "sem_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Veja a loja comum. Ela não morde. Pelo menos não até onde eu registrei.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa_sombra": {
+      "fala": "As melhores moedas já passaram por bolso, lama e perda. Valor limpo demais às vezes é suspeito. Você lida bem com coisa marcada?",
+      "ao_entrar": {
+        "setor": {
+          "MortisConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Lido. Marca também conta história.",
+          "destino": "marca_historia"
+        },
+        {
+          "texto": "Prefiro mercadoria limpa.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "marca_historia": {
+      "fala": "Boa resposta. O reservado não é amaldiçoado; só carrega histórias que cliente medroso chama de problema.",
+      "ao_entrar": {
+        "setor": {
+          "MortisAceitouMarca": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quero ver essas histórias reservadas.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Isso parece perigoso.",
+          "destino": "aviso"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "aviso": {
+      "fala": "Perigoso é comprar sem ler. Se você entendeu isso, já está menos vulnerável que metade dos corajosos.",
+      "ao_entrar": {
+        "setor": {
+          "MortisOuviuAviso": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir o reservado mesmo assim.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Existe. Mas se você perguntar tremendo, eu finjo que não. Converse sobre marcas antes.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.MortisAceitouMarca",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você não fugiu da marca. Posso mostrar o reservado sem precisar apagar as velas."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "MortisPerguntouSecreta": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Conversar sobre marcas primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.MortisAceitouMarca",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Abrir loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "conversa_sombra",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.MortisAceitouMarca",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Melhor voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.MortisAceitouMarca",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.MortisConversa",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Não. Você ainda está olhando a sombra e não o objeto. Fale comigo sobre marcas primeiro.",
+      "opcoes": [
+        {
+          "texto": "Conversar.",
+          "destino": "conversa_sombra"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Então venha. O reservado não é para assustar; é para quem aguenta saber de onde veio o brilho.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_presente": {
+      "fala": "Presente não. Eu guardo lembranças demais e distribuo poucas. Mas o reservado pode valer mais que gentileza.",
+      "opcoes": [
+        {
+          "texto": "Quero entender o reservado.",
+          "destino": "conversa_sombra"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Mortis.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

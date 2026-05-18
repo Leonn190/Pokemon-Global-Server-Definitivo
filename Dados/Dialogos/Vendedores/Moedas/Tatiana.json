@@ -1,0 +1,285 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Olá. Tatiana. Minha banca segue registro, ordem e margem. A loja comum está à vista; o resto depende de leitura fina.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Ótimo. Cliente recorrente ganha linha no meu caderno, mas ainda precisa merecer rodapé."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre seus registros.",
+          "destino": "conversa_registro"
+        },
+        {
+          "texto": "Tem loja secreta no rodapé?",
+          "destino": "pergunta_rodape"
+        },
+        {
+          "texto": "Existe presente anotado para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja comum aberta. Tudo que está nessa página pode ser comprado sem carimbo extra.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa_registro": {
+      "fala": "Eu anoto quem compra, quem reclama e quem sabe perguntar. Marina chama isso de correnteza; eu chamo de contabilidade bem-feita.",
+      "ao_entrar": {
+        "setor": {
+          "TatianaConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que eu preciso perguntar?",
+          "destino": "linha_fina"
+        },
+        {
+          "texto": "Quero só comprar.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "linha_fina": {
+      "fala": "Pergunte pela margem, não pelo segredo. Quem pede segredo quer atalho; quem pede margem entende que toda conta tem sobra.",
+      "ao_entrar": {
+        "setor": {
+          "TatianaSabeMargem": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então quero ver a margem.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "E o presente fica em qual linha?",
+          "destino": "pista_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_rodape": {
+      "fala_condicional": {
+        "padrao": "Rodapé existe, mas você pulou a leitura da página. Primeiro entenda a margem.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TatianaSabeMargem",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você falou margem. Agora sim estamos na mesma página."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "TatianaPerguntouRodape": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ler a página primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.TatianaSabeMargem",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Abrir a margem reservada."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "conversa_registro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.TatianaSabeMargem",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TatianaSabeMargem",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.TatianaConversa",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Negado no registro. Falta entender a margem antes de pedir rodapé.",
+      "opcoes": [
+        {
+          "texto": "Conversar sobre registros.",
+          "destino": "conversa_registro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Muito bem. Abrindo a margem reservada. Não dobre a página.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pista_presente": {
+      "fala": "Presente fica em linha separada. Para abrir, preciso ver que você entendeu margem e voltou sem rasurar a conversa.",
+      "ao_entrar": {
+        "setor": {
+          "TatianaPistaPresente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entendi a margem.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TatianaSabeMargem",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.TatianaPistaPresente",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.TatianaConversa",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não consta como liberado. Leia a margem, pergunte pela linha certa e volte ao registro.",
+      "opcoes": [
+        {
+          "texto": "Conversar sobre registros.",
+          "destino": "conversa_registro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Registro aprovado. Aqui está o item separado na linha de presente.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Tatiana.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

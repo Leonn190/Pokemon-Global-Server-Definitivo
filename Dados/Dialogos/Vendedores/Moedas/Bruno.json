@@ -1,0 +1,280 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "E aí. Sou Bruno. Minha banca é simples na frente, mas eu gosto de cliente que percebe quando a moeda pesa mais do que parece.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou, hein? Então já sabe que minha loja comum é fácil. O resto depende de saber sentir o peso certo da conversa."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Conversar sobre moedas.",
+          "destino": "conversa_peso"
+        },
+        {
+          "texto": "Você tem estoque secreto?",
+          "destino": "pergunta_secreta"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Tranquilo. O que está na bancada é o caminho fácil: olhou, pagou, levou.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Fechar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa_peso": {
+      "fala": "Tem moeda que brilha e não vale nada. Tem moeda arranhada que compra meia aventura. Eu separo cliente do mesmo jeito.",
+      "ao_entrar": {
+        "setor": {
+          "BrunoConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como eu mostro valor?",
+          "destino": "teste_peso"
+        },
+        {
+          "texto": "Só quero a loja comum.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "teste_peso": {
+      "fala": "Não é bajular. É escolher a pergunta certa. Se você pergunta pelo peso antes do brilho, eu sei que está prestando atenção.",
+      "ao_entrar": {
+        "setor": {
+          "BrunoEntendeuPeso": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então quero ver o peso escondido.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Isso tem a ver com presente?",
+          "destino": "pista_presente"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "pergunta_secreta": {
+      "fala_condicional": {
+        "padrao": "Estoque secreto existe, mas falar dele sem saber o peso da moeda é só barulho no balcão.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.BrunoEntendeuPeso",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você pegou a ideia do peso. Beleza. Posso virar a bandeja e mostrar o lado que fica por baixo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "BrunoPerguntouSecreta": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Conversar sobre o peso primeiro.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.BrunoEntendeuPeso",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Abrir loja secreta."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "conversa_peso",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.BrunoEntendeuPeso",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.BrunoEntendeuPeso",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.BrunoConversa",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "loja_secreta_bloqueada": {
+      "fala": "Ainda não. Primeiro conversa comigo até entender o que eu chamo de peso.",
+      "opcoes": [
+        {
+          "texto": "Conversar.",
+          "destino": "conversa_peso"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "loja_secreta": {
+      "fala": "Aí sim. Sem espalhar, tá? Essa parte é para quem sabe olhar além do brilho.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pista_presente": {
+      "fala": "Presente eu não dou para mão leve. Dou para quem entendeu que valor não é só preço.",
+      "ao_entrar": {
+        "setor": {
+          "BrunoPistaPresente": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Eu entendi o peso.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.BrunoEntendeuPeso",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.BrunoPistaPresente",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Não ainda. Você pediu certo, mas ainda não chegou no ponto. Escuta a conversa sobre peso primeiro.",
+      "opcoes": [
+        {
+          "texto": "Conversar sobre moedas.",
+          "destino": "conversa_peso"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Boa. Você não veio só pelo brilho. Leva isso aqui e não gasta tudo no primeiro impulso.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Valeu.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Bruno.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

@@ -1,6 +1,6 @@
 {
   "catalogo_versao": "v2_modelos_salas",
-  "descricao": "Catalogo de modelos prontos de salas de dungeon. A dungeon ainda pode ser gerada proceduralmente, mas o conteudo interno das salas deve vir destes modelos. Inclui modelos adicionais de armadilhas, salas totalmente quebradicas e sala de alta densidade sem servos.",
+  "descricao": "Catalogo de modelos prontos de salas de dungeon. A dungeon ainda pode ser gerada proceduralmente, mas o conteudo interno das salas deve vir destes modelos. Inclui modelos adicionais de armadilhas, salas totalmente quebradicas e sala de alta densidade sem servos. Inclui 10 salas novas de armadilhas avançadas sem buracos, sem chaves e sem servos obrigatorios.",
   "tamanho_sala_tiles": {
     "largura": 32,
     "altura": 18,
@@ -5046,6 +5046,1384 @@
         }
       },
       "observacao": "Sala de alta densidade de armadilhas, sem nenhum servo/pokemon para focar o desafio em movimentacao."
+    },
+    {
+      "id": 31,
+      "modelo_id": "semaforo_torretas",
+      "nome": "Sala Semáforo de Torretas",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.1,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_oeste_alta",
+          "tipo": "torreta",
+          "posicao_local": [
+            6.5,
+            5.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.16,
+            "velocidade_tiro": 3.2,
+            "frequencia_tiros": 0.45
+          },
+          "config_max": {
+            "tamanho_tiro": 0.27,
+            "velocidade_tiro": 5.4,
+            "frequencia_tiros": 1.1
+          }
+        },
+        {
+          "id_local": "torreta_central_baixa",
+          "tipo": "torreta",
+          "posicao_local": [
+            16.0,
+            13.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.16,
+            "velocidade_tiro": 3.0,
+            "frequencia_tiros": 0.4
+          },
+          "config_max": {
+            "tamanho_tiro": 0.26,
+            "velocidade_tiro": 5.2,
+            "frequencia_tiros": 1.0
+          }
+        },
+        {
+          "id_local": "torreta_leste_alta",
+          "tipo": "torreta",
+          "posicao_local": [
+            25.5,
+            5.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.16,
+            "velocidade_tiro": 3.2,
+            "frequencia_tiros": 0.45
+          },
+          "config_max": {
+            "tamanho_tiro": 0.27,
+            "velocidade_tiro": 5.4,
+            "frequencia_tiros": 1.1
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.9,
+          "max": 4.0
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.7
+        }
+      },
+      "observacao": "Tres torretas criam janelas de passagem em ritmos diferentes. Sem servos, buracos ou chaves."
+    },
+    {
+      "id": 32,
+      "modelo_id": "corredor_vivo_espetos",
+      "nome": "Sala Corredor Vivo",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.11,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "lamina_linha_1",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.0,
+            4.5
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              4.5,
+              26.5,
+              4.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.3,
+            "velocidade": 3.6
+          }
+        },
+        {
+          "id_local": "lamina_linha_2",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            26.0,
+            7.0
+          ],
+          "movimento": {
+            "direcao": [
+              -1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              7.0,
+              26.5,
+              7.0
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.3,
+            "velocidade": 3.6
+          }
+        },
+        {
+          "id_local": "lamina_linha_3",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.0,
+            9.5
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              9.5,
+              26.5,
+              9.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.35,
+            "velocidade": 3.9
+          }
+        },
+        {
+          "id_local": "lamina_linha_4",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            26.0,
+            12.0
+          ],
+          "movimento": {
+            "direcao": [
+              -1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              12.0,
+              26.5,
+              12.0
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.3,
+            "velocidade": 3.6
+          }
+        },
+        {
+          "id_local": "lamina_linha_5",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.0,
+            14.5
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              14.5,
+              26.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.3,
+            "velocidade": 3.6
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.0,
+          "max": 4.3
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      },
+      "observacao": "Travessia de timing com cinco espetos moveis horizontais alternados."
+    },
+    {
+      "id": 33,
+      "modelo_id": "grade_cruzada_moveis",
+      "nome": "Sala Grade Cruzada",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.09,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "trilho_vertical_oeste",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            10.5,
+            4.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              1
+            ],
+            "limites_local": [
+              10.5,
+              3.5,
+              10.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.05,
+            "velocidade": 1.6
+          },
+          "config_max": {
+            "tamanho": 1.45,
+            "velocidade": 3.2
+          }
+        },
+        {
+          "id_local": "trilho_vertical_leste",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            21.5,
+            14.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              -1
+            ],
+            "limites_local": [
+              21.5,
+              3.5,
+              21.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.05,
+            "velocidade": 1.6
+          },
+          "config_max": {
+            "tamanho": 1.45,
+            "velocidade": 3.2
+          }
+        },
+        {
+          "id_local": "trilho_horizontal_norte",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.0,
+            6.5
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              6.5,
+              26.5,
+              6.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.4
+          }
+        },
+        {
+          "id_local": "trilho_horizontal_sul",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            26.0,
+            11.5
+          ],
+          "movimento": {
+            "direcao": [
+              -1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              11.5,
+              26.5,
+              11.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.4
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.1,
+          "max": 4.5
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.7
+        }
+      },
+      "observacao": "Dois trilhos verticais e dois horizontais cruzam a sala, criando uma grade movel."
+    },
+    {
+      "id": 34,
+      "modelo_id": "relogio_duplo_fogo",
+      "nome": "Sala Relógio Duplo de Fogo",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.08,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 4,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "barra_fogo_oeste",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            10.5,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 4,
+            "numero_cabos": 1,
+            "tamanho_bolas": 0.28,
+            "velocidade_giro": 0.8,
+            "comprimento": 2.8
+          },
+          "config_max": {
+            "numero_bolas": 7,
+            "numero_cabos": 2,
+            "tamanho_bolas": 0.4,
+            "velocidade_giro": 1.55,
+            "comprimento": 4.2
+          }
+        },
+        {
+          "id_local": "barra_fogo_leste",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            21.5,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 4,
+            "numero_cabos": 1,
+            "tamanho_bolas": 0.28,
+            "velocidade_giro": 0.95,
+            "comprimento": 2.8
+          },
+          "config_max": {
+            "numero_bolas": 7,
+            "numero_cabos": 2,
+            "tamanho_bolas": 0.4,
+            "velocidade_giro": 1.75,
+            "comprimento": 4.2
+          }
+        },
+        {
+          "id_local": "espeto_divisor_norte",
+          "tipo": "espeto",
+          "posicao_local": [
+            16.0,
+            5.0
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.35
+          }
+        },
+        {
+          "id_local": "espeto_divisor_sul",
+          "tipo": "espeto",
+          "posicao_local": [
+            16.0,
+            13.0
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.35
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.0,
+          "max": 4.4
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.7
+        }
+      },
+      "observacao": "Duas barras de fogo forcam o jogador a ler dois ciclos ao mesmo tempo."
+    },
+    {
+      "id": 35,
+      "modelo_id": "labirinto_espetos_torreta",
+      "nome": "Sala Labirinto de Espetos",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.1,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_centro_labirinto",
+          "tipo": "torreta",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.15,
+            "velocidade_tiro": 3.0,
+            "frequencia_tiros": 0.35
+          },
+          "config_max": {
+            "tamanho_tiro": 0.24,
+            "velocidade_tiro": 4.8,
+            "frequencia_tiros": 0.85
+          }
+        },
+        {
+          "id_local": "parede_esq_1",
+          "tipo": "espeto",
+          "posicao_local": [
+            10.0,
+            5.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "parede_esq_2",
+          "tipo": "espeto",
+          "posicao_local": [
+            10.0,
+            8.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "parede_esq_3",
+          "tipo": "espeto",
+          "posicao_local": [
+            10.0,
+            11.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "parede_dir_1",
+          "tipo": "espeto",
+          "posicao_local": [
+            22.0,
+            7.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "parede_dir_2",
+          "tipo": "espeto",
+          "posicao_local": [
+            22.0,
+            10.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "parede_dir_3",
+          "tipo": "espeto",
+          "posicao_local": [
+            22.0,
+            13.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.4,
+          "max": 3.2
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      },
+      "observacao": "Espetos fixos criam rotas apertadas enquanto uma torreta central pune linha reta."
+    },
+    {
+      "id": 36,
+      "modelo_id": "ricochetes_zonas_seguras",
+      "nome": "Sala Ricochetes e Zonas Seguras",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.08,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "ricochete_noroeste",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            8.0,
+            5.0
+          ],
+          "movimento": {
+            "direcao": [
+              0.82,
+              0.57
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 2.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 5.0
+          }
+        },
+        {
+          "id_local": "ricochete_sudeste",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            24.0,
+            13.0
+          ],
+          "movimento": {
+            "direcao": [
+              -0.82,
+              -0.57
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 2.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 5.0
+          }
+        },
+        {
+          "id_local": "espeto_canto_norte",
+          "tipo": "espeto",
+          "posicao_local": [
+            16.0,
+            4.5
+          ],
+          "config_min": {
+            "tamanho": 0.9
+          },
+          "config_max": {
+            "tamanho": 1.3
+          }
+        },
+        {
+          "id_local": "espeto_canto_sul",
+          "tipo": "espeto",
+          "posicao_local": [
+            16.0,
+            13.5
+          ],
+          "config_min": {
+            "tamanho": 0.9
+          },
+          "config_max": {
+            "tamanho": 1.3
+          }
+        },
+        {
+          "id_local": "espeto_lateral_oeste",
+          "tipo": "espeto",
+          "posicao_local": [
+            6.0,
+            9.0
+          ],
+          "config_min": {
+            "tamanho": 0.9
+          },
+          "config_max": {
+            "tamanho": 1.3
+          }
+        },
+        {
+          "id_local": "espeto_lateral_leste",
+          "tipo": "espeto",
+          "posicao_local": [
+            26.0,
+            9.0
+          ],
+          "config_min": {
+            "tamanho": 0.9
+          },
+          "config_max": {
+            "tamanho": 1.3
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.2,
+          "max": 4.8
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      },
+      "observacao": "Dois ricochetes cruzam a sala, mas os cantos continuam legiveis como respiro."
+    },
+    {
+      "id": 37,
+      "modelo_id": "tempestade_torretas_fracas",
+      "nome": "Sala Tempestade de Torretas",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.07,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 4,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_noroeste_rapida",
+          "tipo": "torreta",
+          "posicao_local": [
+            7.0,
+            5.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.12,
+            "velocidade_tiro": 2.8,
+            "frequencia_tiros": 0.4
+          },
+          "config_max": {
+            "tamanho_tiro": 0.2,
+            "velocidade_tiro": 4.5,
+            "frequencia_tiros": 0.95
+          }
+        },
+        {
+          "id_local": "torreta_nordeste_rapida",
+          "tipo": "torreta",
+          "posicao_local": [
+            25.0,
+            5.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.12,
+            "velocidade_tiro": 2.8,
+            "frequencia_tiros": 0.4
+          },
+          "config_max": {
+            "tamanho_tiro": 0.2,
+            "velocidade_tiro": 4.5,
+            "frequencia_tiros": 0.95
+          }
+        },
+        {
+          "id_local": "torreta_sudoeste_rapida",
+          "tipo": "torreta",
+          "posicao_local": [
+            7.0,
+            13.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.12,
+            "velocidade_tiro": 2.8,
+            "frequencia_tiros": 0.4
+          },
+          "config_max": {
+            "tamanho_tiro": 0.2,
+            "velocidade_tiro": 4.5,
+            "frequencia_tiros": 0.95
+          }
+        },
+        {
+          "id_local": "torreta_sudeste_rapida",
+          "tipo": "torreta",
+          "posicao_local": [
+            25.0,
+            13.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.12,
+            "velocidade_tiro": 2.8,
+            "frequencia_tiros": 0.4
+          },
+          "config_max": {
+            "tamanho_tiro": 0.2,
+            "velocidade_tiro": 4.5,
+            "frequencia_tiros": 0.95
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.0,
+          "max": 4.6
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.7
+        }
+      },
+      "observacao": "Quatro torretas fracas criam pressao constante sem usar projeteis enormes."
+    },
+    {
+      "id": 38,
+      "modelo_id": "cortina_de_laminas",
+      "nome": "Sala Cortina de Lâminas",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.07,
+      "dificuldade_base": 6,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 4,
+        "max": 8,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "cortina_1",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            7.0,
+            4.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              1
+            ],
+            "limites_local": [
+              7.0,
+              3.5,
+              7.0,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.85,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.2,
+            "velocidade": 3.3
+          }
+        },
+        {
+          "id_local": "cortina_2",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            10.5,
+            14.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              -1
+            ],
+            "limites_local": [
+              10.5,
+              3.5,
+              10.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.85,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.2,
+            "velocidade": 3.3
+          }
+        },
+        {
+          "id_local": "cortina_3",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            14.0,
+            4.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              1
+            ],
+            "limites_local": [
+              14.0,
+              3.5,
+              14.0,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.85,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.6
+          }
+        },
+        {
+          "id_local": "cortina_4",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            18.0,
+            14.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              -1
+            ],
+            "limites_local": [
+              18.0,
+              3.5,
+              18.0,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.85,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.6
+          }
+        },
+        {
+          "id_local": "cortina_5",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            21.5,
+            4.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              1
+            ],
+            "limites_local": [
+              21.5,
+              3.5,
+              21.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.85,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.2,
+            "velocidade": 3.3
+          }
+        },
+        {
+          "id_local": "cortina_6",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            25.0,
+            14.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              -1
+            ],
+            "limites_local": [
+              25.0,
+              3.5,
+              25.0,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.85,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.2,
+            "velocidade": 3.3
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.6,
+          "max": 5.2
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.8
+        }
+      },
+      "observacao": "Seis trilhos verticais alternados formam uma cortina dificil, mas previsivel."
+    },
+    {
+      "id": 39,
+      "modelo_id": "moinho_quatro_barras",
+      "nome": "Sala Moinho de Fogo",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.06,
+      "dificuldade_base": 6,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 4,
+        "max": 8,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "moinho_central",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 4,
+            "numero_cabos": 3,
+            "tamanho_bolas": 0.26,
+            "velocidade_giro": 0.75,
+            "comprimento": 3.2
+          },
+          "config_max": {
+            "numero_bolas": 7,
+            "numero_cabos": 4,
+            "tamanho_bolas": 0.38,
+            "velocidade_giro": 1.35,
+            "comprimento": 4.5
+          }
+        },
+        {
+          "id_local": "espeto_no",
+          "tipo": "espeto",
+          "posicao_local": [
+            10.5,
+            5.0
+          ],
+          "config_min": {
+            "tamanho": 0.9
+          },
+          "config_max": {
+            "tamanho": 1.25
+          }
+        },
+        {
+          "id_local": "espeto_ne",
+          "tipo": "espeto",
+          "posicao_local": [
+            21.5,
+            5.0
+          ],
+          "config_min": {
+            "tamanho": 0.9
+          },
+          "config_max": {
+            "tamanho": 1.25
+          }
+        },
+        {
+          "id_local": "espeto_so",
+          "tipo": "espeto",
+          "posicao_local": [
+            10.5,
+            13.0
+          ],
+          "config_min": {
+            "tamanho": 0.9
+          },
+          "config_max": {
+            "tamanho": 1.25
+          }
+        },
+        {
+          "id_local": "espeto_se",
+          "tipo": "espeto",
+          "posicao_local": [
+            21.5,
+            13.0
+          ],
+          "config_min": {
+            "tamanho": 0.9
+          },
+          "config_max": {
+            "tamanho": 1.25
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.5,
+          "max": 5.4
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.8
+        }
+      },
+      "observacao": "Uma barra de fogo central com varios cabos cria um moinho de timing."
+    },
+    {
+      "id": 40,
+      "modelo_id": "espinha_de_peixe",
+      "nome": "Sala Espinha de Peixe",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.09,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_cabeca",
+          "tipo": "torreta",
+          "posicao_local": [
+            16.0,
+            4.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.15,
+            "velocidade_tiro": 3.1,
+            "frequencia_tiros": 0.35
+          },
+          "config_max": {
+            "tamanho_tiro": 0.25,
+            "velocidade_tiro": 5.1,
+            "frequencia_tiros": 0.9
+          }
+        },
+        {
+          "id_local": "espeto_espinha_1",
+          "tipo": "espeto",
+          "posicao_local": [
+            12.0,
+            6.5
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "espeto_espinha_2",
+          "tipo": "espeto",
+          "posicao_local": [
+            20.0,
+            6.5
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "espeto_espinha_3",
+          "tipo": "espeto",
+          "posicao_local": [
+            13.5,
+            9.0
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "espeto_espinha_4",
+          "tipo": "espeto",
+          "posicao_local": [
+            18.5,
+            9.0
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "espeto_espinha_5",
+          "tipo": "espeto",
+          "posicao_local": [
+            12.0,
+            11.5
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "espeto_espinha_6",
+          "tipo": "espeto",
+          "posicao_local": [
+            20.0,
+            11.5
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "lamina_cauda",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.0,
+            13.5
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              13.5,
+              26.5,
+              13.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.9,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.5
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.8,
+          "max": 4.1
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.6
+        }
+      },
+      "observacao": "Espetos fixos desenham um zigue-zague e uma lamina movel fecha a saida facil."
     }
   ]
 }

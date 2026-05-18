@@ -153,8 +153,10 @@ class ArmadilhasDungeon:
             pos = visual.posicao if visual is not None else trap.get("posicao", [0.0, 0.0])
             if tipo == "espeto":
                 self._desenhar_espeto(tela, camera, pos, movel=False, escala=float(self._config(trap).get("escala", 1.0) or 1.0))
-            elif tipo in {"espeto_movel", "espeto_ricochete"}:
+            elif tipo == "espeto_movel":
                 self._desenhar_espeto(tela, camera, pos, movel=True, escala=float(self._config(trap).get("escala", 1.0) or 1.0))
+            elif tipo == "espeto_ricochete":
+                self._desenhar_espeto(tela, camera, pos, movel=True, escala=float(self._config(trap).get("escala", 1.0) or 1.0), sprite_nome="Espetos Ricochete.png")
             elif tipo == "quebradinho":
                 self._desenhar_quebradinho(tela, camera, trap.get("posicao", [0, 0]), fase=str(estado.get("fase") or "inteiro"))
             elif tipo == "barra_fogo":
@@ -162,8 +164,8 @@ class ArmadilhasDungeon:
             elif tipo == "torreta":
                 self._desenhar_torreta(tela, camera, pos, self._projeteis_suavizados.get(tid, []))
 
-    def _desenhar_espeto(self, tela, camera, pos, movel=False, escala=1.0):
-        sprite = self._sprite("Espetos Movel.png" if movel else "Espetos.png")
+    def _desenhar_espeto(self, tela, camera, pos, movel=False, escala=1.0, sprite_nome=None):
+        sprite = self._sprite(sprite_nome or ("Espetos Movel.png" if movel else "Espetos.png"))
         cx, cy = self._mundo_para_tela(camera, pos)
         tile = float(getattr(camera, "TilePx", 50) or 50)
         lado = max(12, int(tile * float(escala)))

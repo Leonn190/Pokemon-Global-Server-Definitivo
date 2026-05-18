@@ -341,7 +341,7 @@ class MiniPainelAtaque(_MiniBase):
         tipo_ico = construir_icone_tipo_com_fundo_branco(tipo, 28) if construir_icone_tipo_com_fundo_branco else None
         if tipo_ico is not None:
             tela.blit(tipo_ico, (pill.right + 10, rect.y + 34))
-        self.txt_desc.configurar_rect(pygame.Rect(x0 + 110, rect.y + 34, rect.right - x0 - 190, 48))
+        self.txt_desc.configurar_rect(pygame.Rect(x0 + 136, rect.y + 34, max(48, rect.right - x0 - 216), 48))
         self.txt_desc.set_texto(descricao)
         self.txt_desc.draw(tela)
 

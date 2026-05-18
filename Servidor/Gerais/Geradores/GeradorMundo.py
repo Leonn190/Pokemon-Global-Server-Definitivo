@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Callable, Dict, Tuple
 
 from Servidor.Gerais import ContextoServidor
+from Servidor.Gerais.Geradores.AplicadorConfigMundo import aplicar_config_mundo
 
 BLOCO_TAMANHO_PX = 32
 
@@ -58,6 +59,82 @@ def _carregar_regras_terreno() -> dict:
     if not isinstance(payload, dict):
         raise ValueError("Terreno.toml inválido: conteúdo raiz não é objeto")
     return payload
+
+
+def _carregar_toml_dict(arquivo: Path, descricao: str) -> dict:
+    if not arquivo.exists():
+        raise FileNotFoundError(f"Arquivo de regras de {descricao} nÃ£o encontrado: {arquivo}")
+    with arquivo.open("rb") as f:
+        payload = tomllib.load(f)
+    if not isinstance(payload, dict):
+        raise ValueError(f"{arquivo.name} invÃ¡lido: conteÃºdo raiz nÃ£o Ã© objeto")
+    return payload
+
+
+def _toml_valor(valor) -> str:
+    if isinstance(valor, bool):
+        return "true" if valor else "false"
+    if isinstance(valor, int) and not isinstance(valor, bool):
+        return str(valor)
+    if isinstance(valor, float):
+        return repr(float(valor))
+    if isinstance(valor, (list, tuple)):
+        return "[" + ", ".join(_toml_valor(item) for item in valor) + "]"
+    return json.dumps(str(valor), ensure_ascii=False)
+
+
+def _dump_toml(dados: dict) -> str:
+    linhas: list[str] = []
+
+    def escrever_tabela(tabela: dict, prefixo: tuple[str, ...] = ()) -> None:
+        if prefixo:
+            if linhas:
+                linhas.append("")
+            linhas.append("[" + ".".join(prefixo) + "]")
+        for chave, valor in tabela.items():
+            if not isinstance(valor, dict):
+                linhas.append(f"{chave} = {_toml_valor(valor)}")
+        for chave, valor in tabela.items():
+            if isinstance(valor, dict):
+                escrever_tabela(valor, (*prefixo, str(chave)))
+
+    escrever_tabela(dados)
+    return "\n".join(linhas) + "\n"
+
+
+def _salvar_toml_temporario(pasta: Path, nome: str, dados: dict) -> Path:
+    arquivo = pasta / nome
+    arquivo.write_text(_dump_toml(dados), encoding="utf-8")
+    return arquivo
+
+
+def _preparar_regras_geracao_temporarias(config_mundo: dict | None):
+    if not isinstance(config_mundo, dict) or not config_mundo:
+        return (
+            ARQUIVO_REGRAS_TERRENO_FONTE,
+            ARQUIVO_REGRAS_BIOMAS_FONTE,
+            ARQUIVO_REGRAS_LOCALIDADES_FONTE,
+            None,
+        )
+
+    regras_terreno = _carregar_toml_dict(ARQUIVO_REGRAS_TERRENO_FONTE, "terreno")
+    regras_biomas = _carregar_toml_dict(ARQUIVO_REGRAS_BIOMAS_FONTE, "biomas")
+    regras_localidades = _carregar_toml_dict(ARQUIVO_REGRAS_LOCALIDADES_FONTE, "localidades")
+    regras_terreno, regras_biomas, regras_localidades = aplicar_config_mundo(
+        regras_terreno,
+        regras_biomas,
+        regras_localidades,
+        config_mundo,
+    )
+
+    temporario = tempfile.TemporaryDirectory(prefix="regras_mundo_")
+    pasta = Path(temporario.name)
+    return (
+        _salvar_toml_temporario(pasta, "Terreno.toml", regras_terreno),
+        _salvar_toml_temporario(pasta, "Biomas.toml", regras_biomas),
+        _salvar_toml_temporario(pasta, "Localidades.toml", regras_localidades),
+        temporario,
+    )
 
 
 def _obter_chunk_blocos() -> int:
@@ -237,7 +314,7 @@ def _emitir_progresso(callback_progresso, percentual: int, mensagem: str) -> Non
     callback_progresso(max(0, min(100, int(percentual))), str(mensagem))
 
 
-def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str], None] | None = None) -> None:
+def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str], None] | None = None, config_mundo: dict | None = None) -> None:
     _compilar_java_se_necessario()
 
     pasta_estado_mundo = obter_pasta_estado_mundo(criar=True, exigir_ativo=True)
@@ -253,6 +330,8 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
     if not ARQUIVO_REGRAS_LOCALIDADES_FONTE.exists():
         raise FileNotFoundError(f"Arquivo de regras de localidades não encontrado: {ARQUIVO_REGRAS_LOCALIDADES_FONTE}")
 
+    regras_terreno_path, regras_biomas_path, regras_localidades_path, regras_temporarias = _preparar_regras_geracao_temporarias(config_mundo)
+
     cmd = [
         "java",
         "-cp",
@@ -260,9 +339,9 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
         "WorldGenerator",
         str(seed),
         str(pasta_estado_mundo),
-        str(ARQUIVO_REGRAS_TERRENO_FONTE),
-        str(ARQUIVO_REGRAS_BIOMAS_FONTE),
-        str(ARQUIVO_REGRAS_LOCALIDADES_FONTE),
+        str(regras_terreno_path),
+        str(regras_biomas_path),
+        str(regras_localidades_path),
     ]
 
     _emitir_progresso(callback_progresso, 1, "Preparando geração do mundo")
@@ -381,6 +460,8 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
         )
     if not arquivo_foto_mundo_java.exists():
         raise FileNotFoundError(f"Foto do mundo não foi gerada em {arquivo_foto_mundo_java}")
+    if regras_temporarias is not None:
+        regras_temporarias.cleanup()
 
 
 def limpar_arquivos_mundo() -> None:
@@ -450,9 +531,9 @@ def _carregar_world_meta() -> Dict[str, int | float]:
     }
 
 
-def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_progresso: Callable[[int, str], None] | None = None) -> Dict[str, object]:
+def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_progresso: Callable[[int, str], None] | None = None, config_mundo: dict | None = None) -> Dict[str, object]:
     seed = _gerar_seed()
-    _executar_world_generator(seed, callback_progresso=callback_progresso)
+    _executar_world_generator(seed, callback_progresso=callback_progresso, config_mundo=config_mundo)
 
     meta_java = _carregar_world_meta()
     _emitir_progresso(callback_progresso, 96, "Finalizando mundo")

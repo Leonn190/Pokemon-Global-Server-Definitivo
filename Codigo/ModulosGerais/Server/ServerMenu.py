@@ -90,6 +90,14 @@ def definir_mundo_server(server_id, mundo_existente):
     return _enviar_operacao(server_id, "definir_mundo", {"mundo_existente": bool(mundo_existente)})
 
 
+def obter_config_mundo_server(server_id):
+    return _enviar_operacao(server_id, "obter_config_mundo")
+
+
+def definir_config_mundo_server(server_id, config):
+    return _enviar_operacao(server_id, "definir_config_mundo", {"config": config or {}})
+
+
 def criar_personagem(server_id, usuario, skin, pokemon_inicial):
     server, erro = _preparar_servidor_local(server_id)
     if erro:

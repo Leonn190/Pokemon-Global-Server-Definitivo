@@ -20,6 +20,7 @@ from Servidor.Mundo.BancoDados import BANCO_DADOS
 from Servidor.Mundo.PacotesTick import PACOTES_TICK
 from Servidor.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from Servidor.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
+from Servidor.Gerais.Geradores.AplicadorConfigMundo import BIOMAS_CONFIGURAVEIS, TAMANHOS_MUNDO
 from Servidor.Gerais.LoaderRegras import (
     carregar_regras_cliente_mundo,
     carregar_regras_dungeons,
@@ -78,6 +79,7 @@ _TIPOS_ESTADIO_RESPEITO = (
     "psiquico", "inseto", "pedra", "fantasma", "dragao", "sombrio", "metal", "fada", "cosmico", "sonoro", "geral",
 )
 _CATEGORIAS_CONHECIMENTO = ("Efeitos", "Ataques", "Pokemons", "Itens", "Musicas")
+_RECURSOS_CONFIG_MUNDO = ("arvores", "pedras_minerios", "plantas_decorativas", "recursos_raros")
 
 
 def _valor_regra(regras: dict, chave: str, padrao):
@@ -194,6 +196,62 @@ def _normalizar_dict_lista_ids(valor) -> dict[str, list[str]]:
         if lista:
             saida[dungeon_id] = lista
     return saida
+
+
+def _percentual_config(valor, padrao: int = 50) -> int:
+    try:
+        numero = int(round(float(valor)))
+    except (TypeError, ValueError):
+        numero = int(padrao)
+    return max(0, min(100, numero))
+
+
+def _config_mundo_padrao() -> dict:
+    return {
+        "versao": 1,
+        "tamanho_mundo": dict(TAMANHOS_MUNDO["regular"]),
+        "agua": 50,
+        "rios": {
+            "quantidade": 50,
+            "comprimento": 50,
+            "largura": 50,
+        },
+        "lagos": 50,
+        "biomas": {bioma: 50 for bioma in BIOMAS_CONFIGURAVEIS},
+        "recursos": {recurso: 50 for recurso in _RECURSOS_CONFIG_MUNDO},
+        "vilas": 50,
+    }
+
+
+def normalizar_config_mundo(config) -> dict:
+    base = _config_mundo_padrao()
+    bruto = config if isinstance(config, dict) else {}
+
+    tamanho = bruto.get("tamanho_mundo")
+    tamanho_id = "regular"
+    if isinstance(tamanho, dict):
+        tamanho_id = str(tamanho.get("id") or tamanho.get("opcao") or "regular").strip().lower()
+    elif isinstance(tamanho, str):
+        tamanho_id = tamanho.strip().lower()
+    base["tamanho_mundo"] = dict(TAMANHOS_MUNDO.get(tamanho_id, TAMANHOS_MUNDO["regular"]))
+
+    base["agua"] = _percentual_config(bruto.get("agua"), 50)
+    base["lagos"] = _percentual_config(bruto.get("lagos"), 50)
+    base["vilas"] = _percentual_config(bruto.get("vilas"), 50)
+
+    rios = bruto.get("rios") if isinstance(bruto.get("rios"), dict) else {}
+    base["rios"] = {
+        "quantidade": _percentual_config(rios.get("quantidade"), 50),
+        "comprimento": _percentual_config(rios.get("comprimento"), 50),
+        "largura": _percentual_config(rios.get("largura"), 50),
+    }
+
+    biomas = bruto.get("biomas") if isinstance(bruto.get("biomas"), dict) else {}
+    base["biomas"] = {bioma: _percentual_config(biomas.get(bioma), 50) for bioma in BIOMAS_CONFIGURAVEIS}
+
+    recursos = bruto.get("recursos") if isinstance(bruto.get("recursos"), dict) else {}
+    base["recursos"] = {recurso: _percentual_config(recursos.get(recurso), 50) for recurso in _RECURSOS_CONFIG_MUNDO}
+    return base
 
 
 def _contar_recursos_miticos_inventario(inventario: dict | None) -> int:
@@ -942,8 +1000,9 @@ def _criar_novo_mundo_sync():
             _set_geracao(progresso=percentual, mensagem=mensagem)
 
     players = dict(_ESTADO.get("personagens", {}))
+    config_mundo = obter_config_mundo()
     _set_geracao(em_andamento=True, progresso=1, mensagem="Preparando geração do mundo", erro="", operacao="criacao")
-    _ESTADO_MUNDO = gerar_novo_estado_mundo(players=players, callback_progresso=_callback_progresso)
+    _ESTADO_MUNDO = gerar_novo_estado_mundo(players=players, callback_progresso=_callback_progresso, config_mundo=config_mundo)
     _ESTADO_MUNDO["tempo_mundo"] = _tempo_mundo_padrao()
     _set_geracao(progresso=98, mensagem="Salvando estado do mundo")
     salvar_estado_mundo(_ESTADO_MUNDO)
@@ -1289,6 +1348,27 @@ def obter_regras_servidor() -> dict:
         return {}
     with _LOCK:
         return dict(_ESTADO.get("regras_servidor", {}) or {})
+
+
+def obter_config_mundo() -> dict:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return _config_mundo_padrao()
+    with _LOCK:
+        regras = dict(_ESTADO.get("regras_servidor", {}) or {})
+        return normalizar_config_mundo(regras.get("mundo_configuracao"))
+
+
+def definir_config_mundo(config) -> dict:
+    _garantir_estado_ativo()
+    normalizada = normalizar_config_mundo(config)
+    with _LOCK:
+        regras = dict(_ESTADO.get("regras_servidor", {}) or {})
+        regras["mundo_configuracao"] = normalizada
+        _ESTADO["regras_servidor"] = regras
+        _salvar_json_servidor_ativo_locked()
+    return dict(normalizada)
 
 
 def definir_regra_servidor(nome: str, valor) -> bool:

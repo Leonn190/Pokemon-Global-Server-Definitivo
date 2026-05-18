@@ -5,7 +5,8 @@ import pygame
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.ModulosGerais.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
-from Codigo.ModulosGerais.Server.ServerMenu import definir_mundo_server, definir_server_ligado, obter_status_operacao, operar_server
+from Codigo.ModulosGerais.Server.ServerMenu import definir_config_mundo_server, definir_mundo_server, definir_server_ligado, obter_config_mundo_server, obter_status_operacao, operar_server
+from Codigo.Telas.Subtelas.SubtelaMundo import SubtelaMundo
 from Codigo.Telas.Telas.TelasGenericas import SubtelaCarregamento, SubtelaConfirmacao, SubtelaTexto
 
 _TELA_CARREGADA = False
@@ -16,6 +17,7 @@ _MENSAGEM = None
 _BOTAO_VOLTAR = None
 _BOTAO_LIGAR = None
 _BOTAO_MUNDO = None
+_BOTAO_CONFIG_MUNDO = None
 
 _REQUISICAO_THREAD = None
 _REQUISICAO_RESULTADO = None
@@ -105,6 +107,10 @@ def _worker(tipo, server_id, payload):
         resposta = definir_server_ligado(server_id, payload)
     elif tipo == "mundo":
         resposta = definir_mundo_server(server_id, payload)
+    elif tipo == "config_mundo":
+        resposta = obter_config_mundo_server(server_id)
+    elif tipo == "salvar_config_mundo":
+        resposta = definir_config_mundo_server(server_id, payload)
     elif tipo == "status":
         resposta = obter_status_operacao(server_id)
     else:
@@ -183,6 +189,18 @@ def _validar_chave_apagar(jogo, chave):
     return True
 def _toggle_ligado(jogo, estado, botao):
     _iniciar_requisicao("ligado", _get_server_id(jogo.Cena), estado, "Atualizando status do servidor...")
+
+
+def _abrir_config_mundo(jogo, botao):
+    if not _iniciar_requisicao("config_mundo", _get_server_id(jogo.Cena), None, "Carregando configuraÃ§Ã£o de mundo..."):
+        _emitir_feedback("JÃ¡ existe uma operaÃ§Ã£o em andamento")
+
+
+def _salvar_config_mundo(jogo, payload):
+    if not _iniciar_requisicao("salvar_config_mundo", _get_server_id(jogo.Cena), payload, "Salvando configuraÃ§Ã£o de mundo..."):
+        _emitir_feedback("JÃ¡ existe uma operaÃ§Ã£o em andamento")
+        return False
+    return True
 
 
 def _atualizar_rotulos_botoes():
@@ -304,6 +322,18 @@ def _processar_resposta(jogo):
             _BOTAO_MUNDO.set_estado(bool(resposta.get("mundo_existente", False)))
             _processar_status_geracao(jogo, resposta)
 
+    elif tipo == "config_mundo":
+        if sucesso:
+            jogo.GerenciadorSubtelas.abrir(SubtelaMundo(
+                jogo.TELA.get_size(),
+                resposta.get("config_mundo", {}),
+                salvar_callback=lambda payload_config: _salvar_config_mundo(jogo, payload_config),
+            ))
+
+    elif tipo == "salvar_config_mundo":
+        if sucesso:
+            _emitir_feedback(resposta.get("mensagem", "Configuração de mundo salva"), sucesso=True)
+
     if tipo in ("ligado", "validar_chave") or not sucesso:
         _emitir_feedback(resposta.get("mensagem", "Falha de comunicação"), sucesso=sucesso)
     _atualizar_rotulos_botoes()
@@ -312,7 +342,7 @@ def _processar_resposta(jogo):
 
 def _montar_layout(jogo, tela_destino=None):
     global _TELA_CARREGADA, _TAMANHO_CACHE
-    global _BOTAO_VOLTAR, _BOTAO_LIGAR, _BOTAO_MUNDO, _MENSAGEM
+    global _BOTAO_VOLTAR, _BOTAO_LIGAR, _BOTAO_MUNDO, _BOTAO_CONFIG_MUNDO, _MENSAGEM
     global _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
 
     tela = tela_destino if tela_destino is not None else jogo.TELA
@@ -333,7 +363,7 @@ def _montar_layout(jogo, tela_destino=None):
     x = (largura - largura_botao) // 2
 
     _BOTAO_LIGAR = BotaoAlavanca(
-        pygame.Rect(x, int(altura * 0.28), largura_botao, altura_botao),
+        pygame.Rect(x, int(altura * 0.20), largura_botao, altura_botao),
         "Server",
         estado_inicial=False,
         execute=_toggle_ligado,
@@ -341,15 +371,22 @@ def _montar_layout(jogo, tela_destino=None):
     )
 
     _BOTAO_MUNDO = BotaoAlavanca(
-        pygame.Rect(x, int(altura * 0.48), largura_botao, altura_botao),
+        pygame.Rect(x, int(altura * 0.38), largura_botao, altura_botao),
         "Mundo",
         estado_inicial=False,
         execute=_pedir_confirmacao_apagar_mundo,
         style=_estilo_alavanca_acao(),
     )
 
+    _BOTAO_CONFIG_MUNDO = Botao(
+        pygame.Rect(x, int(altura * 0.56), largura_botao, altura_botao),
+        "Configurar Mundo",
+        execute=_abrir_config_mundo,
+        style=_ESTILO_BOTAO,
+    )
+
     _BOTAO_VOLTAR = Botao(
-        pygame.Rect(x, int(altura * 0.72), largura_botao, 96),
+        pygame.Rect(x, int(altura * 0.74), largura_botao, 96),
         "Voltar",
         execute=lambda jogo_ref, botao: _voltar(jogo_ref.Cena),
         style=_ESTILO_BOTAO,
@@ -391,9 +428,11 @@ def TelaOperador(cena, jogo, eventos, dt, tela_destino=None):
     bloqueado = requisicao_bloqueante or isinstance(modal, SubtelaCarregamento)
     _BOTAO_LIGAR.set_habilitado((not bloqueado) and bool(_BOTAO_MUNDO.estado))
     _BOTAO_MUNDO.set_habilitado(not bloqueado)
+    _BOTAO_CONFIG_MUNDO.set_habilitado(not bloqueado)
 
     _BOTAO_LIGAR.render(tela, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
     _BOTAO_MUNDO.render(tela, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
+    _BOTAO_CONFIG_MUNDO.render(tela, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
     _BOTAO_VOLTAR.render(tela, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
 
 

@@ -3,8 +3,10 @@ import time
 
 from Servidor.Gerais.EstadoServidor import (
     chave_seguranca,
+    definir_config_mundo,
     definir_ligado,
     definir_mundo_existente,
+    obter_config_mundo,
     snapshot_estado,
 )
 
@@ -59,6 +61,21 @@ def processar_operacao_json(requisicao_json):
                 erro_geracao=estado.get("erro_geracao", ""),
                 operacao_geracao=estado.get("operacao_geracao", "nenhuma"),
             ),
+            ensure_ascii=False,
+        )
+
+    # ROTA: obter_config_mundo
+    if acao == "obter_config_mundo":
+        return json.dumps(
+            _resposta("ok", "ConfiguraÃ§Ã£o de mundo carregada", config_mundo=obter_config_mundo()),
+            ensure_ascii=False,
+        )
+
+    # ROTA: definir_config_mundo
+    if acao == "definir_config_mundo":
+        config = definir_config_mundo(dados.get("config", {}))
+        return json.dumps(
+            _resposta("ok", "ConfiguraÃ§Ã£o de mundo salva", config_mundo=config),
             ensure_ascii=False,
         )
 

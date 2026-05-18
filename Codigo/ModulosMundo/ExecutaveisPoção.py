@@ -4,9 +4,10 @@ import unicodedata
 
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
-from Codigo.ModulosGerais.GerenciadorPokemons import ganhar_xp_pokemon, aprender_ataque_aleatorio
+from Codigo.ModulosGerais.GerenciadorPokemons import ganhar_xp_pokemon, aprender_ataque_aleatorio, aprender_ataque_tm
 
 _CACHE_POCOES = None
+_CACHE_ITENS = None
 
 
 def _normalizar_nome(nome: str) -> str:
@@ -48,6 +49,20 @@ def _dados_pocao(nome_pocao: str) -> dict:
             _CACHE_POCOES = {}
     alvo = _normalizar_nome(nome_pocao)
     return dict(_CACHE_POCOES.get(alvo, {}))
+
+
+def _dados_item_por_nome(nome_item: str) -> dict:
+    global _CACHE_ITENS
+    if _CACHE_ITENS is None:
+        _CACHE_ITENS = {}
+        try:
+            for linha in carregar_csv_dict("Pokemon Global Server - Itens.csv", encoding="utf-8"):
+                nome = str(linha.get("Nome") or "").strip()
+                if nome:
+                    _CACHE_ITENS[_normalizar_nome(nome)] = dict(linha)
+        except OSError:
+            _CACHE_ITENS = {}
+    return dict(_CACHE_ITENS.get(_normalizar_nome(nome_item), {}))
 
 
 def _aplicar_xp(pokemon: dict, quantidade: float):
@@ -127,6 +142,34 @@ def executar_pocao(nome_pocao: str, pokemon: dict) -> dict:
     return {"ok": aplicado, "tipo": "cura", "nome": nome, "valor": fator, "descricao": desc}
 
 
+def executar_tm(pokemon: dict, elite: bool = False) -> dict:
+    nome_item = "Elite TM" if elite else "TM"
+    dados = _dados_item_por_nome(nome_item)
+    nome = str(dados.get("Nome") or nome_item).strip()
+    desc = ""
+    for chave, valor in dados.items():
+        if _normalizar_nome(chave) == _normalizar_nome("Descricao"):
+            desc = str(valor or "")
+            break
+    resultado = aprender_ataque_tm(pokemon, elite=elite)
+    if not bool(resultado.get("ok", False)):
+        return {
+            "ok": False,
+            "tipo": "tm",
+            "elite": bool(elite),
+            "nome": nome,
+            "motivo": str(resultado.get("motivo") or "sem_opcoes"),
+        }
+    return {
+        "ok": True,
+        "tipo": "tm",
+        "elite": bool(elite),
+        "nome": nome,
+        "ataque": resultado.get("ataque"),
+        "descricao": desc,
+    }
+
+
 def executar_pocao_pocao(pokemon: dict) -> dict:
     return executar_pocao("Poção", pokemon)
 
@@ -173,6 +216,14 @@ def executar_revive(pokemon: dict) -> dict:
 
 def executar_revive_maximo(pokemon: dict) -> dict:
     return executar_pocao("Revive Maximo", pokemon)
+
+
+def executar_tm_comum(pokemon: dict) -> dict:
+    return executar_tm(pokemon, elite=False)
+
+
+def executar_elite_tm(pokemon: dict) -> dict:
+    return executar_tm(pokemon, elite=True)
 
 
 def executar_doce(item_doce: dict, pokemon: dict) -> dict:

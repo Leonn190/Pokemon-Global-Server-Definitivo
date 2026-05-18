@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 import unicodedata
 from copy import deepcopy
+from Servidor.Gerais.LoaderCatalogos import carregar_catalogo
 from Servidor.Gerais.LoaderTabelas import carregar_csv_dict
 from typing import Dict, List, Optional
 
@@ -42,6 +43,12 @@ def _inum(v, default=0) -> int:
         return int(float(v))
     except (TypeError, ValueError):
         return int(default)
+
+
+def _normalizar_chave(valor: object) -> str:
+    texto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
+    return " ".join(texto.split())
 
 
 def _normalizar_escala_pokemon(v, default: int = 3) -> int:
@@ -316,7 +323,13 @@ def _carregar_ataques() -> List[Dict[str, object]]:
 
 
 _ATAQUES_DISPONIVEIS = _carregar_ataques()
+_ATAQUES_POR_NOME = {
+    _normalizar_chave(ataque.get("Ataque")): ataque
+    for ataque in _ATAQUES_DISPONIVEIS
+    if _normalizar_chave(ataque.get("Ataque"))
+}
 _FRUTAS_DISPONIVEIS = _carregar_frutas()
+_MOVELIST_AVISOS: set[tuple[str, str]] = set()
 
 
 def _ataque_com_nivel(ataque: Dict[str, object]) -> Dict[str, object]:
@@ -324,12 +337,238 @@ def _ataque_com_nivel(ataque: Dict[str, object]) -> Dict[str, object]:
     dados["Nivel"] = int(dados.get("Nivel", 1) or 1)
     return dados
 
-def gerar_ataque_aleatorio(excluir: Optional[set[str]] = None) -> Optional[Dict[str, object]]:
+
+def _movelist_catalogo() -> Dict[str, object]:
+    return carregar_catalogo("MoveList.json")
+
+
+def _nomes_conhecidos_ataques(estado_pokemon: Dict[str, object], excluir: Optional[set[str]] = None) -> set[str]:
+    estado = _estado_pokemon(estado_pokemon)
+    conhecidos: set[str] = set()
+    if isinstance(excluir, set):
+        conhecidos.update(_normalizar_chave(x) for x in excluir if _normalizar_chave(x))
+    if not isinstance(estado, dict):
+        return conhecidos
+    for chave in ("habilidades", "memorias", "Habilidades", "Memoria", "Ataques"):
+        lista = estado.get(chave)
+        if not isinstance(lista, list):
+            continue
+        for item in lista:
+            nome = ""
+            if isinstance(item, dict):
+                nome = str(item.get("Ataque") or item.get("Nome") or item.get("nome") or "").strip()
+            elif item is not None:
+                nome = str(item).strip()
+            chave_nome = _normalizar_chave(nome)
+            if chave_nome:
+                conhecidos.add(chave_nome)
+    return conhecidos
+
+
+def _garantir_lista_slots(estado: Dict[str, object], chave: str, total_slots: int = 5) -> List[object]:
+    quantidade = max(1, min(5, int(total_slots or 5)))
+    lista = estado.get(chave)
+    if not isinstance(lista, list):
+        lista = []
+    lista = list(lista[:quantidade]) + [None] * max(0, quantidade - len(lista))
+    estado[chave] = lista
+    return lista
+
+
+def _slot_livre_memoria(estado_pokemon: Dict[str, object], total_slots: int = 5) -> tuple[List[object], Optional[int]]:
+    estado = _estado_pokemon(estado_pokemon)
+    if not isinstance(estado, dict):
+        return [], None
+    memorias = _garantir_lista_slots(estado, "memorias", total_slots=total_slots)
+    indice = next((i for i, valor in enumerate(memorias) if valor is None), None)
+    return memorias, indice
+
+
+def _row_base_segura(estado: Dict[str, object]) -> Dict[str, str]:
+    if not isinstance(estado, dict):
+        return {}
+    alvo = str(
+        estado.get("code")
+        or estado.get("Code")
+        or estado.get("especie")
+        or estado.get("Especie")
+        or estado.get("nome")
+        or estado.get("Nome")
+        or ""
+    ).strip()
+    return _row_base_por_pokemon(estado) if alvo else {}
+
+
+def _dados_identidade_pokemon(estado_pokemon: Dict[str, object]) -> Dict[str, object]:
+    estado = _estado_pokemon(estado_pokemon)
+    if not isinstance(estado, dict):
+        estado = {}
+    row = _row_base_segura(estado) if estado else {}
+    return {
+        "estado": estado,
+        "row": row,
+        "especie": str(estado.get("especie") or estado.get("Especie") or "").strip(),
+        "nome": str(estado.get("nome") or estado.get("Nome") or "").strip(),
+        "code": str(estado.get("code") or estado.get("Code") or "").strip(),
+        "linhagem": str(estado.get("linhagem") or estado.get("Linhagem") or row.get("Linhagem") or "").strip(),
+        "estagio": estado.get("estagio", estado.get("Estagio", row.get("Estagio"))),
+    }
+
+
+def _eh_forma_especial(nome: str, row: Dict[str, str]) -> bool:
+    if _row_eh_forma(row):
+        return True
+    chave = _normalizar_chave(nome)
+    return chave.startswith(("mega ", "ultra ", "gigantamax "))
+
+
+def _resolver_movelist_especie(estado_pokemon: Dict[str, object]) -> Optional[Dict[str, object]]:
+    catalogo = _movelist_catalogo()
+    if not catalogo:
+        return None
+    indice = {_normalizar_chave(nome): dados for nome, dados in catalogo.items() if isinstance(dados, dict)}
+    identidade = _dados_identidade_pokemon(estado_pokemon)
+    estado = identidade["estado"]
+    nomes = [
+        identidade.get("especie"),
+        identidade.get("nome"),
+        estado.get("Especie") if isinstance(estado, dict) else "",
+        estado.get("Nome") if isinstance(estado, dict) else "",
+    ]
+    for nome in nomes:
+        chave = _normalizar_chave(nome)
+        if chave in indice:
+            return indice[chave]
+
+    row = identidade.get("row") if isinstance(identidade.get("row"), dict) else {}
+    nome_row = str(row.get("Nome") or "").strip()
+    if not _eh_forma_especial(str(identidade.get("especie") or identidade.get("nome") or nome_row), row):
+        return None
+    linhagem = str(identidade.get("linhagem") or "").strip()
+    finais = _linhagem_regular(linhagem)
+    if finais:
+        nome_final = str(finais[-1].get("Nome") or "").strip()
+        chave_final = _normalizar_chave(nome_final)
+        if chave_final in indice:
+            return indice[chave_final]
+    return None
+
+
+def _peso_intensidade(valor: object) -> float:
+    try:
+        intensidade = int(float(valor))
+    except (TypeError, ValueError):
+        intensidade = 1
+    return {1: 1.0, 2: 1.5, 3: 2.0}.get(intensidade, 1.0)
+
+
+def _multiplicador_nivel_custo(estado_pokemon: Dict[str, object], ataque: Dict[str, object]) -> float:
+    estado = _estado_pokemon(estado_pokemon)
+    nivel = _inum((estado or {}).get("nivel", (estado or {}).get("Nivel", 0)), 0) if isinstance(estado, dict) else 0
+    nivel_p = max(0.0, min(1.0, float(nivel) / 100.0))
+    custo_p = max(0.0, min(1.0, _fnum(ataque.get("Custo"), 0.0) / 120.0))
+    mult = 1.0 + ((nivel_p - 0.5) * custo_p * 0.6)
+    return max(0.70, min(1.30, mult))
+
+
+def escolher_ataque_por_movelist(
+    estado_pokemon: Dict[str, object],
+    categoria: str = "regulares",
+    excluir: Optional[set[str]] = None,
+) -> Optional[Dict[str, object]]:
+    movelist = _resolver_movelist_especie(estado_pokemon)
+    if not isinstance(movelist, dict):
+        return None
+    cat = categoria if categoria in {"regulares", "artificiais"} else "regulares"
+    entradas = movelist.get(cat)
+    if not isinstance(entradas, dict):
+        return None
+    conhecidos = _nomes_conhecidos_ataques(estado_pokemon, excluir=excluir)
+    opcoes: List[Dict[str, object]] = []
+    pesos: List[float] = []
+    for nome, intensidade in entradas.items():
+        chave = _normalizar_chave(nome)
+        ataque = _ATAQUES_POR_NOME.get(chave)
+        if ataque is None:
+            aviso = (cat, str(nome))
+            if aviso not in _MOVELIST_AVISOS:
+                print(f"[MoveList] Ataque inexistente no CSV ignorado: {nome}")
+                _MOVELIST_AVISOS.add(aviso)
+            continue
+        nome_ataque = _normalizar_chave(ataque.get("Ataque"))
+        if nome_ataque in conhecidos:
+            continue
+        peso = _peso_intensidade(intensidade) * _multiplicador_nivel_custo(estado_pokemon, ataque)
+        if peso <= 0:
+            continue
+        opcoes.append(ataque)
+        pesos.append(peso)
+    if not opcoes:
+        return None
+    return _ataque_com_nivel(random.choices(opcoes, weights=pesos, k=1)[0])
+
+
+def _tipos_do_pokemon(estado_pokemon: Dict[str, object]) -> set[str]:
+    estado = _estado_pokemon(estado_pokemon)
+    tipos: List[object] = []
+    if isinstance(estado, dict) and isinstance(estado.get("tipos"), list) and estado.get("tipos"):
+        tipos = list(estado.get("tipos") or [])
+    else:
+        row = _row_base_segura(estado or {}) if isinstance(estado, dict) else {}
+        for idx in (1, 2, 3):
+            tipo = str(row.get(f"Tipo{idx}", "") or "").strip()
+            if tipo:
+                tipos.append(tipo)
+    return {_normalizar_chave(tipo) for tipo in tipos if _normalizar_chave(tipo)}
+
+
+def escolher_ataque_fallback_por_tipo(
+    estado_pokemon: Dict[str, object],
+    excluir: Optional[set[str]] = None,
+) -> Optional[Dict[str, object]]:
+    conhecidos = _nomes_conhecidos_ataques(estado_pokemon, excluir=excluir)
+    tipos = _tipos_do_pokemon(estado_pokemon)
+    opcoes: List[Dict[str, object]] = []
+    pesos: List[float] = []
+    for ataque in _ATAQUES_DISPONIVEIS:
+        nome = _normalizar_chave(ataque.get("Ataque"))
+        if nome in conhecidos:
+            continue
+        tipo = _normalizar_chave(ataque.get("Tipo"))
+        peso = 0.0
+        if tipo in tipos:
+            peso = 2.0
+        elif tipo == "normal":
+            peso = 0.65
+        if peso <= 0:
+            continue
+        peso *= _multiplicador_nivel_custo(estado_pokemon, ataque)
+        opcoes.append(ataque)
+        pesos.append(peso)
+    if opcoes:
+        return _ataque_com_nivel(random.choices(opcoes, weights=pesos, k=1)[0])
+    pool = [atk for atk in _ATAQUES_DISPONIVEIS if _normalizar_chave(atk.get("Ataque")) not in conhecidos]
+    if not pool:
+        return None
+    return _ataque_com_nivel(random.choice(pool))
+
+
+def gerar_ataque_aleatorio(
+    excluir: Optional[set[str]] = None,
+    estado_pokemon: Optional[Dict[str, object]] = None,
+    categoria: str = "regulares",
+) -> Optional[Dict[str, object]]:
     if not _ATAQUES_DISPONIVEIS:
         return None
+    if isinstance(estado_pokemon, dict):
+        movelist = _resolver_movelist_especie(estado_pokemon)
+        if movelist is not None:
+            return escolher_ataque_por_movelist(estado_pokemon, categoria=categoria, excluir=excluir)
+        return escolher_ataque_fallback_por_tipo(estado_pokemon, excluir=excluir)
     pool = _ATAQUES_DISPONIVEIS
     if excluir:
-        pool = [atk for atk in _ATAQUES_DISPONIVEIS if str(atk.get("Ataque", "")).strip().lower() not in excluir]
+        normalizados = {_normalizar_chave(x) for x in excluir}
+        pool = [atk for atk in _ATAQUES_DISPONIVEIS if _normalizar_chave(atk.get("Ataque")) not in normalizados]
     if not pool:
         return None
     return _ataque_com_nivel(random.choice(pool))
@@ -341,41 +580,14 @@ def aprender_ataque_aleatorio(estado_pokemon: Dict[str, object], forcar: bool = 
     if (not forcar) and random.random() > 0.25:
         return False
 
-    memorias = estado_pokemon.get("memorias")
-    if not isinstance(memorias, list):
-        memorias = [None, None, None, None, None]
-    if len(memorias) < 5:
-        memorias = list(memorias) + ([None] * (5 - len(memorias)))
-    memorias = memorias[:5]
-
-    indice_livre = next((i for i, valor in enumerate(memorias) if valor is None), None)
+    memorias, indice_livre = _slot_livre_memoria(estado_pokemon, total_slots=5)
     if indice_livre is None:
-        estado_pokemon["memorias"] = memorias
         return False
 
-    habilidades = estado_pokemon.get("habilidades")
-    if not isinstance(habilidades, list):
-        habilidades = [None, None, None, None, None]
-    if len(habilidades) < 5:
-        habilidades = list(habilidades) + ([None] * (5 - len(habilidades)))
-    habilidades = habilidades[:5]
-
-    conhecidos = {
-        str(x.get("Ataque", "")).strip().lower()
-        for x in memorias
-        if isinstance(x, dict) and str(x.get("Ataque", "")).strip()
-    }
-    conhecidos.update(
-        str(x.get("Ataque", "")).strip().lower()
-        for x in habilidades
-        if isinstance(x, dict) and str(x.get("Ataque", "")).strip()
-    )
-    opcoes = [atk for atk in _ATAQUES_DISPONIVEIS if str(atk.get("Ataque", "")).strip().lower() not in conhecidos]
-    if not opcoes:
-        estado_pokemon["memorias"] = memorias
+    ataque = gerar_ataque_aleatorio(estado_pokemon=estado_pokemon, categoria="regulares")
+    if ataque is None:
         return False
-    memorias[indice_livre] = _ataque_com_nivel(random.choice(opcoes))
-    estado_pokemon["memorias"] = memorias
+    memorias[indice_livre] = ataque
     return True
 
 
@@ -385,9 +597,14 @@ def preencher_habilidades_iniciais(estado_pokemon: Dict[str, object], total_slot
     quantidade = max(1, min(5, int(total_slots or 5)))
     habilidades = [None] * quantidade
     if _ATAQUES_DISPONIVEIS:
-        escolhidos = random.sample(_ATAQUES_DISPONIVEIS, k=min(quantidade, len(_ATAQUES_DISPONIVEIS)))
-        for i, ataque in enumerate(escolhidos):
-            habilidades[i] = _ataque_com_nivel(ataque)
+        estado_pokemon["habilidades"] = habilidades
+        estado_pokemon["memorias"] = [None] * quantidade
+        for i in range(quantidade):
+            ataque = gerar_ataque_aleatorio(estado_pokemon=estado_pokemon, categoria="regulares")
+            if ataque is None:
+                break
+            habilidades[i] = ataque
+            estado_pokemon["habilidades"] = habilidades
     estado_pokemon["habilidades"] = habilidades
     estado_pokemon["memorias"] = [None] * quantidade
 
@@ -405,21 +622,30 @@ def normalizar_habilidades_memorias(estado_pokemon: Dict[str, object], total_slo
     habilidades = list(habilidades[:quantidade]) + [None] * max(0, quantidade - len(habilidades))
     memorias = [None] * quantidade
 
-    conhecidos = {
-        str(x.get("Ataque", "")).strip().lower()
-        for x in habilidades
-        if isinstance(x, dict) and str(x.get("Ataque", "")).strip()
-    }
-    opcoes = [atk for atk in _ATAQUES_DISPONIVEIS if str(atk.get("Ataque", "")).strip().lower() not in conhecidos]
     for i, ataque in enumerate(habilidades):
-        if ataque is None and opcoes:
-            escolhido = random.choice(opcoes)
-            habilidades[i] = _ataque_com_nivel(escolhido)
-            chave = str(escolhido.get("Ataque", "")).strip().lower()
-            opcoes = [atk for atk in opcoes if str(atk.get("Ataque", "")).strip().lower() != chave]
+        if ataque is None:
+            estado_pokemon["habilidades"] = habilidades
+            estado_pokemon["memorias"] = memorias
+            escolhido = gerar_ataque_aleatorio(estado_pokemon=estado_pokemon, categoria="regulares")
+            if escolhido is not None:
+                habilidades[i] = escolhido
 
     estado_pokemon["habilidades"] = habilidades
     estado_pokemon["memorias"] = memorias
+
+
+def aprender_ataque_tm(estado_pokemon: Dict[str, object], elite: bool = False) -> Dict[str, object]:
+    if not isinstance(estado_pokemon, dict) or not _ATAQUES_DISPONIVEIS:
+        return {"ok": False, "motivo": "sem_opcoes"}
+    categoria = "artificiais" if elite else "regulares"
+    memorias, indice_livre = _slot_livre_memoria(estado_pokemon, total_slots=5)
+    if indice_livre is None:
+        return {"ok": False, "motivo": "sem_slot"}
+    ataque = gerar_ataque_aleatorio(estado_pokemon=estado_pokemon, categoria=categoria)
+    if ataque is None:
+        return {"ok": False, "motivo": "sem_opcoes"}
+    memorias[indice_livre] = ataque
+    return {"ok": True, "ataque": ataque, "categoria": categoria}
 
 
 def subir_nivel_pokemon(pokemon: Dict[str, object], vezes: int = 1) -> Dict[str, object]:

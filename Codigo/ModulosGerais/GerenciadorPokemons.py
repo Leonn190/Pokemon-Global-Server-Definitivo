@@ -8,6 +8,7 @@ from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 from Servidor.Gerais.Geradores.GeradorPokemon import (
     ganhar_xp_pokemon,
     aprender_ataque_aleatorio,
+    aprender_ataque_tm,
     evoluir_pokemon,
     materializar_pokemon,
     gerar_bando_confronto,
@@ -18,6 +19,7 @@ from Servidor.Gerais.Geradores.GeradorPokemon import (
 __all__ = [
     "ganhar_xp_pokemon",
     "aprender_ataque_aleatorio",
+    "aprender_ataque_tm",
     "evoluir_pokemon",
     "materializar_pokemon",
     "gerar_bando_confronto",

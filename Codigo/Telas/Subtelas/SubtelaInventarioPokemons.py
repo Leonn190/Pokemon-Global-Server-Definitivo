@@ -365,6 +365,12 @@ class InventarioPokemons:
         info = self._info_item(item)
         return str((info or item).get('Estilo') or (info or item).get('estilo') or '').strip().lower()
 
+    def _item_eh_tm(self, item):
+        if not isinstance(item, dict):
+            return False
+        nome = str(item.get('Nome') or item.get('nome') or '').strip().lower()
+        return nome in {'tm', 'elite tm'}
+
     def _equipavel_para_build(self, item):
         if self._estilo_item(item) != 'equipavel':
             return None
@@ -788,8 +794,11 @@ class InventarioPokemons:
                 self._arrastavel.cancelar()
                 return
 
-            if self._ficha_pokemon.area_animacao_rect().collidepoint(pygame.mouse.get_pos()) and self._estilo_item(item) == 'poção':
-                resultado = _EXEC_POCAO.executar_pocao(str(item.get('Nome') or ''), self._pokemon_analisado)
+            if self._ficha_pokemon.area_animacao_rect().collidepoint(pygame.mouse.get_pos()) and (self._estilo_item(item) == 'poção' or self._item_eh_tm(item)):
+                if self._item_eh_tm(item):
+                    resultado = _EXEC_POCAO.executar_tm(self._pokemon_analisado, elite=str(item.get('Nome') or '').strip().lower() == 'elite tm')
+                else:
+                    resultado = _EXEC_POCAO.executar_pocao(str(item.get('Nome') or ''), self._pokemon_analisado)
                 if not bool(resultado.get('ok', False)):
                     self._retornar_para_origem()
                     return
@@ -1065,7 +1074,7 @@ class InventarioPokemons:
             item_drag = self._arrastavel.Item
             if isinstance(item_drag, dict) and self._estilo_item(item_drag) == 'doce':
                 Doce.desenhar_item_no_rect(tela, item_drag, rect_drag)
-            elif isinstance(item_drag, dict) and self._estilo_item(item_drag) in {'equipavel', 'poção'}:
+            elif isinstance(item_drag, dict) and (self._estilo_item(item_drag) in {'equipavel', 'poção'} or self._item_eh_tm(item_drag)):
                 ItemInventario.desenhar_item_no_rect(tela, item_drag, rect_drag)
             else:
                 PokemonInventario.desenhar_item_no_rect(tela, item_drag, rect_drag, escala_sprite=0.86)

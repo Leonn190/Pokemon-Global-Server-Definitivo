@@ -117,7 +117,7 @@ class PainelAuxiliarPoke:
             nome = str(item.get('Nome') or item.get('nome') or '').strip().lower()
             code = str(item.get('Code') or item.get('code') or '').strip()
             est = self._mapa_estilos.get(('code', code)) or self._mapa_estilos.get(('nome', nome)) or str(item.get("Estilo") or item.get("estilo") or "").strip().lower()
-            if (alvo == "pocoes" and est == "poção") or (alvo == "equipaveis" and est == "equipavel"):
+            if (alvo == "pocoes" and (est == "poção" or nome in {"tm", "elite tm"})) or (alvo == "equipaveis" and est == "equipavel"):
                 saida.append(item)
                 indices.append(idx)
         return saida, indices

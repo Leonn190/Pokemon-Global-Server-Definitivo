@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import pygame
 from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
 from Codigo.ModulosMundo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon_local
@@ -11,6 +13,7 @@ class MinimapaMundo:
         self.margem = int(margem)
         self._cache_key = None
         self._cache_surface = None
+        self._cache_origem = (0, 0)
 
     def desenhar(self, tela: pygame.Surface, servico_mapa, pos_player_mundo: tuple[float, float], angulo: float, layout_dungeon=None, estado_dungeon=None, objetos_mundo=None, perfil=None) -> None:
         area = pygame.Rect(tela.get_width() - self.tamanho - self.margem, self.margem, self.tamanho, self.tamanho)
@@ -28,29 +31,55 @@ class MinimapaMundo:
         chunk_blocos = int(ger.meta.get("chunk_blocos", 10) or 10)
         lado_chunks = 6
         lado_px_logico = lado_chunks * chunk_blocos
-        x0 = int(pos_player_mundo[0]) - (lado_px_logico // 2)
-        y0 = int(pos_player_mundo[1]) - (lado_px_logico // 2)
-        chunk_player = (int(pos_player_mundo[0] // max(1, chunk_blocos)), int(pos_player_mundo[1] // max(1, chunk_blocos)))
-        cache_key = (chunk_player, area.size, lado_px_logico, int(ger.versao_mapa()))
+        x0_visivel = float(pos_player_mundo[0]) - (float(lado_px_logico) / 2.0)
+        y0_visivel = float(pos_player_mundo[1]) - (float(lado_px_logico) / 2.0)
+        margem_cache = max(2, chunk_blocos // 2)
+        lado_cache = lado_px_logico + (margem_cache * 2)
+        precisa_reposicionar = (
+            x0_visivel < self._cache_origem[0]
+            or y0_visivel < self._cache_origem[1]
+            or (x0_visivel + lado_px_logico) > (self._cache_origem[0] + lado_cache)
+            or (y0_visivel + lado_px_logico) > (self._cache_origem[1] + lado_cache)
+        )
+        if precisa_reposicionar or self._cache_surface is None:
+            self._cache_origem = (math.floor(x0_visivel) - margem_cache, math.floor(y0_visivel) - margem_cache)
+        x0, y0 = self._cache_origem
+        cache_key = (self._cache_origem, area.size, lado_px_logico, lado_cache, int(ger.versao_mapa()))
         if self._cache_key != cache_key or self._cache_surface is None:
-            base = pygame.Surface((lado_px_logico, lado_px_logico))
+            base = pygame.Surface((lado_cache, lado_cache))
             base.fill((0, 0, 0))
-            for atlas_key in ger.atlas_keys_no_rect(x0, y0, lado_px_logico, lado_px_logico):
+            area_mundo = pygame.Rect(x0, y0, lado_cache, lado_cache)
+            for atlas_key in ger.atlas_keys_no_rect(x0, y0, lado_cache, lado_cache):
                 atlas = ger.obter_atlas(*atlas_key)
                 if atlas is None:
                     continue
                 rect_atlas = pygame.Rect(atlas.atlas_x * ger.atlas_px, atlas.atlas_y * ger.atlas_px, ger.atlas_px, ger.atlas_px)
-                area_mundo = pygame.Rect(x0, y0, lado_px_logico, lado_px_logico)
                 inter = rect_atlas.clip(area_mundo)
                 if inter.width <= 0 or inter.height <= 0:
                     continue
                 src = pygame.Rect(inter.x - rect_atlas.x, inter.y - rect_atlas.y, inter.width, inter.height)
                 dst = pygame.Rect(inter.x - x0, inter.y - y0, inter.width, inter.height)
                 base.blit(atlas.surface_base, dst, src)
-            self._cache_surface = pygame.transform.smoothscale(base, (area.width, area.height))
+            escala_x = float(area.width) / max(1.0, float(lado_px_logico))
+            escala_y = float(area.height) / max(1.0, float(lado_px_logico))
+            tamanho_cache = (
+                max(1, int(round(lado_cache * escala_x))),
+                max(1, int(round(lado_cache * escala_y))),
+            )
+            self._cache_surface = pygame.transform.smoothscale(base, tamanho_cache)
             self._cache_key = cache_key
         mini = self._cache_surface if self._cache_surface is not None else pygame.Surface((area.width, area.height))
-        tela.blit(mini, area)
+        escala_x = float(area.width) / max(1.0, float(lado_px_logico))
+        escala_y = float(area.height) / max(1.0, float(lado_px_logico))
+        src_x = int(round((x0_visivel - self._cache_origem[0]) * escala_x))
+        src_y = int(round((y0_visivel - self._cache_origem[1]) * escala_y))
+        src = pygame.Rect(
+            max(0, min(mini.get_width() - area.width, src_x)),
+            max(0, min(mini.get_height() - area.height, src_y)),
+            area.width,
+            area.height,
+        )
+        tela.blit(mini, area, src)
         pygame.draw.rect(tela, (8, 8, 8), area, 2)
         self._desenhar_rastreadores(tela, area, pos_player_mundo, lado_px_logico, objetos_mundo, perfil)
 

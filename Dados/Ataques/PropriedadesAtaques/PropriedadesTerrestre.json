@@ -12,10 +12,9 @@
       "estilo_logico": "alvo",
       "modo_execucao": "por_alvo",
       "animacao": {
-        "modelo": "Projetil",
+        "modelo": "EfeitoAlvo",
         "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
+        "efeito_alvo": "ExplosaoPedra"
       },
       "execute_principal": "ataque_rachar_terra",
       "parametros": {
@@ -49,7 +48,7 @@
       "animacao": {
         "modelo": "Projetil",
         "efeito_executor": null,
-        "efeito_alvo": null,
+        "efeito_alvo": "Fumaça",
         "projetil": "Generico"
       },
       "execute_principal": "ataque_areia",
@@ -122,8 +121,8 @@
       "estilo_logico": "ativo",
       "modo_execucao": "uma_vez",
       "animacao": {
-        "modelo": "EfeitoCampo",
-        "efeito_executor": null,
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ImpactoRochoso",
         "efeito_alvo": null
       },
       "execute_principal": "ataque_dominio_do_solo",
@@ -142,8 +141,8 @@
       "estilo_logico": "ativo",
       "modo_execucao": "uma_vez",
       "animacao": {
-        "modelo": "EfeitoCampo",
-        "efeito_executor": null,
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "Fumaça",
         "efeito_alvo": null
       },
       "execute_principal": "ataque_danca_da_areia",
@@ -202,7 +201,7 @@
       "estilo_logico": "alvo",
       "modo_execucao": "por_alvo",
       "animacao": {
-        "modelo": "Avanco",
+        "modelo": "Salto",
         "efeito_executor": null,
         "efeito_alvo": "ImpactoRochoso"
       },
@@ -241,7 +240,7 @@
       "animacao": {
         "modelo": "Projetil",
         "efeito_executor": null,
-        "efeito_alvo": null,
+        "efeito_alvo": "Fumaça",
         "projetil": "Generico"
       },
       "execute_principal": "ataque_tiro_de_lama",
@@ -315,9 +314,10 @@
       "estilo_logico": "ativo",
       "modo_execucao": "uma_vez",
       "animacao": {
-        "modelo": "EfeitoCampo",
-        "efeito_executor": null,
-        "efeito_alvo": null
+        "modelo": "Explosao",
+        "efeito_executor": "ImpactoRochoso",
+        "efeito_alvo": "ImpactoRochoso",
+        "efeito_impacto_secundario": "ExplosaoPedra"
       },
       "execute_principal": "ataque_tremor",
       "parametros": {
@@ -337,9 +337,10 @@
       "estilo_logico": "ativo",
       "modo_execucao": "uma_vez",
       "animacao": {
-        "modelo": "EfeitoCampo",
-        "efeito_executor": null,
-        "efeito_alvo": null
+        "modelo": "Explosao",
+        "efeito_executor": "ExplosaoPedra",
+        "efeito_alvo": "ImpactoRochoso",
+        "efeito_impacto_secundario": "ExplosaoPedra"
       },
       "execute_principal": "ataque_quebra_chao",
       "parametros": {
@@ -362,7 +363,7 @@
       "animacao": {
         "modelo": "EfeitoAlvo",
         "efeito_executor": null,
-        "efeito_alvo": "ImpactoRochoso"
+        "efeito_alvo": "ExplosaoPedra"
       },
       "execute_principal": "ataque_fissura",
       "parametros": {
@@ -395,9 +396,10 @@
       "estilo_logico": "ativo",
       "modo_execucao": "uma_vez",
       "animacao": {
-        "modelo": "EfeitoCampo",
-        "efeito_executor": null,
-        "efeito_alvo": null
+        "modelo": "Explosao",
+        "efeito_executor": "ImpactoRochoso",
+        "efeito_alvo": "ImpactoRochoso",
+        "efeito_impacto_secundario": "ExplosaoPedra"
       },
       "execute_principal": "ataque_terremoto",
       "parametros": {
@@ -424,7 +426,7 @@
       "animacao": {
         "modelo": "Projetil",
         "efeito_executor": null,
-        "efeito_alvo": null,
+        "efeito_alvo": "Fumaça",
         "projetil": "Generico"
       },
       "execute_principal": "ataque_poeira_nos_olhos",

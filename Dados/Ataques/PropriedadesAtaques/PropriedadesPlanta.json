@@ -8,10 +8,30 @@
       "custo": 50,
       "custo_ap": 45,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": "ChicoteMultiplo",
+        "efeito_alvo": "DomoVerde"
+      },
       "execute_principal": "ataque_raizes",
-      "parametros": {"tipo": "planta", "efeito": "Enraizado", "aprimoramento": {}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "efeito": "Enraizado",
+        "aprimoramento": {}
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "92": {
       "ID": 92,
@@ -19,9 +39,19 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "DomoVerde",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_casco_vivo",
-      "parametros": {"tipo": "planta", "escala_mag_dur": 0.25, "aprimoramento": {"escala_mag_dur": 0.30}}
+      "parametros": {
+        "tipo": "planta",
+        "escala_mag_dur": 0.25,
+        "aprimoramento": {
+          "escala_mag_dur": 0.3
+        }
+      }
     },
     "93": {
       "ID": 93,
@@ -29,10 +59,35 @@
       "custo": 40,
       "custo_ap": 45,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": "ChicoteMultiplo",
+        "efeito_alvo": "ChicoteMultiplo"
+      },
       "execute_principal": "ataque_chicote_de_vinhas",
-      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "bonus_crc": 20, "aprimoramento": {"escala_atk": 0.85, "bonus_crc": 25}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "normal",
+        "escala_atk": 0.75,
+        "bonus_crc": 20,
+        "aprimoramento": {
+          "escala_atk": 0.85,
+          "bonus_crc": 25
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "94": {
       "ID": 94,
@@ -40,9 +95,21 @@
       "custo": 25,
       "custo_ap": 30,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_sintese",
-      "parametros": {"tipo": "planta", "recuperacao_energia_mult": 1.80, "recuperacao_energia_sol_forte_mult": 3.00, "aprimoramento": {"recuperacao_energia_mult": 2.20, "recuperacao_energia_sol_forte_mult": 3.30}}
+      "parametros": {
+        "tipo": "planta",
+        "recuperacao_energia_mult": 1.8,
+        "recuperacao_energia_sol_forte_mult": 3.0,
+        "aprimoramento": {
+          "recuperacao_energia_mult": 2.2,
+          "recuperacao_energia_sol_forte_mult": 3.3
+        }
+      }
     },
     "95": {
       "ID": 95,
@@ -50,9 +117,19 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_trevo_da_sorte",
-      "parametros": {"tipo": "planta", "escala_mag_crc": 0.20, "aprimoramento": {"escala_mag_crc": 0.25}}
+      "parametros": {
+        "tipo": "planta",
+        "escala_mag_crc": 0.2,
+        "aprimoramento": {
+          "escala_mag_crc": 0.25
+        }
+      }
     },
     "96": {
       "ID": 96,
@@ -60,10 +137,35 @@
       "custo": 40,
       "custo_ap": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": "DomoVerde",
+        "efeito_alvo": "BolhasVerdes"
+      },
       "execute_principal": "ataque_dreno",
-      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa_dano": 0.65, "escala_spa_cura": 0.35, "aprimoramento": {"escala_spa_dano": 0.72, "escala_spa_cura": 0.42}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "especial",
+        "escala_spa_dano": 0.65,
+        "escala_spa_cura": 0.35,
+        "aprimoramento": {
+          "escala_spa_dano": 0.72,
+          "escala_spa_cura": 0.42
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "97": {
       "ID": 97,
@@ -71,10 +173,36 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "BolhasVerdes",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_seiva_misteriosa",
-      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 0.75, "bonus_dano_envenenado": 0.35, "aprimoramento": {"escala_spa": 0.82, "bonus_dano_envenenado": 0.45}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "especial",
+        "escala_spa": 0.75,
+        "bonus_dano_envenenado": 0.35,
+        "aprimoramento": {
+          "escala_spa": 0.82,
+          "bonus_dano_envenenado": 0.45
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "98": {
       "ID": 98,
@@ -82,10 +210,35 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "ExplosaoVerde",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_tiro_de_semente",
-      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "efeito_removido": "Regeneracao", "aprimoramento": {"escala_atk": 0.85}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "normal",
+        "escala_atk": 0.75,
+        "efeito_removido": "Regeneracao",
+        "aprimoramento": {
+          "escala_atk": 0.85
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "99": {
       "ID": 99,
@@ -93,10 +246,34 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": "BolhasVerdes",
+        "efeito_alvo": "BolhasVerdes"
+      },
       "execute_principal": "ataque_absorver",
-      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 0.35, "qtd_efeitos_roubados": 1, "aprimoramento": {"escala_spa": 0.45}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "especial",
+        "escala_spa": 0.35,
+        "qtd_efeitos_roubados": 1,
+        "aprimoramento": {
+          "escala_spa": 0.45
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "100": {
       "ID": 100,
@@ -106,10 +283,40 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "Corte"
+      },
       "execute_principal": "ataque_folha_navalha",
-      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.80, "fator_per_proximo": 0.50, "minimo_proximo": 0.20, "maximo_proximo": 0.80, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.88, "fator_per_proximo": 0.60, "minimo_proximo": 0.25, "maximo_proximo": 0.90}},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "normal",
+        "escala_atk": 0.8,
+        "fator_per_proximo": 0.5,
+        "minimo_proximo": 0.2,
+        "maximo_proximo": 0.8,
+        "permite_area_vazia": true,
+        "aprimoramento": {
+          "escala_atk": 0.88,
+          "fator_per_proximo": 0.6,
+          "minimo_proximo": 0.25,
+          "maximo_proximo": 0.9
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "101": {
       "ID": 101,
@@ -119,9 +326,28 @@
       "estilo_logico": "ativo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_flecha_de_madeira",
-      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.70, "bonus_atk_por_area": 0.05, "bonus_atk_max": 0.40, "reducao_apos_atravessar": 0.40, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.78, "bonus_atk_por_area": 0.06, "bonus_atk_max": 0.48, "reducao_apos_atravessar": 0.35}}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "normal",
+        "escala_atk": 0.7,
+        "bonus_atk_por_area": 0.05,
+        "bonus_atk_max": 0.4,
+        "reducao_apos_atravessar": 0.4,
+        "permite_area_vazia": true,
+        "aprimoramento": {
+          "escala_atk": 0.78,
+          "bonus_atk_por_area": 0.06,
+          "bonus_atk_max": 0.48,
+          "reducao_apos_atravessar": 0.35
+        }
+      }
     },
     "102": {
       "ID": 102,
@@ -129,9 +355,36 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "DomoVerde",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_crescimento",
-      "parametros": {"tipo": "planta", "atributos_regulares": ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"], "percentual": 0.04, "quantidade": 3, "percentual_sol_forte": 0.05, "quantidade_sol_forte": 4, "aprimoramento": {"percentual": 0.05, "quantidade": 3, "percentual_sol_forte": 0.06, "quantidade_sol_forte": 4}}
+      "parametros": {
+        "tipo": "planta",
+        "atributos_regulares": [
+          "Atk",
+          "SpA",
+          "Def",
+          "SpD",
+          "Mag",
+          "Ene",
+          "Vel",
+          "Per",
+          "Int"
+        ],
+        "percentual": 0.04,
+        "quantidade": 3,
+        "percentual_sol_forte": 0.05,
+        "quantidade_sol_forte": 4,
+        "aprimoramento": {
+          "percentual": 0.05,
+          "quantidade": 3,
+          "percentual_sol_forte": 0.06,
+          "quantidade_sol_forte": 4
+        }
+      }
     },
     "103": {
       "ID": 103,
@@ -139,9 +392,21 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_danca_das_petalas",
-      "parametros": {"tipo": "planta", "escala_mag_vel": 0.18, "inclui_usuario": true, "adjacencia_diagonal": true, "aprimoramento": {"escala_mag_vel": 0.22}}
+      "parametros": {
+        "tipo": "planta",
+        "escala_mag_vel": 0.18,
+        "inclui_usuario": true,
+        "adjacencia_diagonal": true,
+        "aprimoramento": {
+          "escala_mag_vel": 0.22
+        }
+      }
     },
     "104": {
       "ID": 104,
@@ -151,10 +416,40 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": "ChicoteMultiplo",
+        "efeito_alvo": "ExplosaoVerde"
+      },
       "execute_principal": "ataque_tornado_de_folhas",
-      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 0.65, "escala_vel_alvo_debuff": 0.10, "escala_mag_usuario_debuff": 0.10, "nunca_erra": true, "sempre_acerta": true, "permite_area_vazia": true, "aprimoramento": {"escala_spa": 0.72, "escala_vel_alvo_debuff": 0.12, "escala_mag_usuario_debuff": 0.12}},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "especial",
+        "escala_spa": 0.65,
+        "escala_vel_alvo_debuff": 0.1,
+        "escala_mag_usuario_debuff": 0.1,
+        "nunca_erra": true,
+        "sempre_acerta": true,
+        "permite_area_vazia": true,
+        "aprimoramento": {
+          "escala_spa": 0.72,
+          "escala_vel_alvo_debuff": 0.12,
+          "escala_mag_usuario_debuff": 0.12
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "105": {
       "ID": 105,
@@ -164,10 +459,45 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "usar_alvos_selecionados": true, "multiplos_principais": true, "simultaneo": true},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "ExplosaoVerde",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "efeito_impacto_secundario": "BolhasVerdes",
+        "usar_alvos_selecionados": true,
+        "multiplos_principais": true,
+        "simultaneo": true
+      },
       "execute_principal": "ataque_bomba_de_sementes",
-      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "quantidade_areas": 2, "splash_frac": 0.25, "splash_em_area_vazia": true, "splash_usa_dano_base_teorico": true, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.82, "splash_frac": 0.30}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "normal",
+        "escala_atk": 0.75,
+        "quantidade_areas": 2,
+        "splash_frac": 0.25,
+        "splash_em_area_vazia": true,
+        "splash_usa_dano_base_teorico": true,
+        "permite_area_vazia": true,
+        "aprimoramento": {
+          "escala_atk": 0.82,
+          "splash_frac": 0.3
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 2,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "106": {
       "ID": 106,
@@ -175,10 +505,40 @@
       "custo": 65,
       "custo_ap": 75,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": "BolhasVerdes"
+      },
       "execute_principal": "ataque_flor_magica",
-      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa_dano": 0.50, "escala_mag_dano": 0.50, "escala_mag_para_spa": 0.06, "escala_spa_para_mag": 0.06, "buffs_usam_valores_pre_buff": true, "aprimoramento": {"escala_spa_dano": 0.55, "escala_mag_dano": 0.55, "escala_mag_para_spa": 0.08, "escala_spa_para_mag": 0.08}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "especial",
+        "escala_spa_dano": 0.5,
+        "escala_mag_dano": 0.5,
+        "escala_mag_para_spa": 0.06,
+        "escala_spa_para_mag": 0.06,
+        "buffs_usam_valores_pre_buff": true,
+        "aprimoramento": {
+          "escala_spa_dano": 0.55,
+          "escala_mag_dano": 0.55,
+          "escala_mag_para_spa": 0.08,
+          "escala_spa_para_mag": 0.08
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "107": {
       "ID": 107,
@@ -186,10 +546,35 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "GasRoxo"
+      },
       "execute_principal": "ataque_murchar",
-      "parametros": {"tipo": "planta", "escala_vida_alvo": 0.06, "escala_mag_usuario": 0.08, "preservar_percentual_vida_atual": true, "aprimoramento": {"escala_vida_alvo": 0.07, "escala_mag_usuario": 0.10}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "escala_vida_alvo": 0.06,
+        "escala_mag_usuario": 0.08,
+        "preservar_percentual_vida_atual": true,
+        "aprimoramento": {
+          "escala_vida_alvo": 0.07,
+          "escala_mag_usuario": 0.1
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "108": {
       "ID": 108,
@@ -199,10 +584,38 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": "SuperNova",
+        "efeito_alvo": "SuperNova"
+      },
       "execute_principal": "ataque_raio_solar",
-      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 1.00, "escala_spa_sol_forte": 1.25, "reducao_spa_por_alvo": 0.15, "permite_area_vazia": true, "aprimoramento": {"escala_spa": 1.10, "escala_spa_sol_forte": 1.35, "reducao_spa_por_alvo": 0.12}},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "especial",
+        "escala_spa": 1.0,
+        "escala_spa_sol_forte": 1.25,
+        "reducao_spa_por_alvo": 0.15,
+        "permite_area_vazia": true,
+        "aprimoramento": {
+          "escala_spa": 1.1,
+          "escala_spa_sol_forte": 1.35,
+          "reducao_spa_por_alvo": 0.12
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     }
   },
   "_comentario": "Ataques de planta 91-108 implementados no padrao de propriedades por ataque."

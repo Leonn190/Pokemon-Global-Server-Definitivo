@@ -9,11 +9,30 @@
       "custo_ap": 45,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "GasRoxo",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_envenenar",
       "descricao": "Aplica Envenenado no alvo.",
-      "parametros": {"tipo": "venenoso"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "145": {
       "ID": 145,
@@ -22,11 +41,32 @@
       "custo_ap": 40,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasColoridas",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_farpa",
       "descricao": "Causa dano fisico e pode envenenar se o acerto for critico.",
-      "parametros": {"tipo": "venenoso", "mult_atk": 0.45, "chance_critico_forcado": 100.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_atk": 0.45,
+        "chance_critico_forcado": 100.0
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "146": {
       "ID": 146,
@@ -35,10 +75,18 @@
       "custo_ap": 40,
       "tipo": "venenoso",
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoCampo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "GasRoxo",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_poluicao",
       "descricao": "Transforma Chuva em Chuva Acida.",
-      "parametros": {"tipo": "venenoso", "clima_origem": "Chuva", "clima_destino": "Chuva Ácida"}
+      "parametros": {
+        "tipo": "venenoso",
+        "clima_origem": "Chuva",
+        "clima_destino": "Chuva Ácida"
+      }
     },
     "147": {
       "ID": 147,
@@ -47,11 +95,30 @@
       "custo_ap": 40,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "BolhasVerdes"
+      },
       "execute_principal": "ataque_acido",
       "descricao": "Reduz permanentemente a maior defesa do alvo.",
-      "parametros": {"tipo": "venenoso", "mult_spa_reducao": 0.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_spa_reducao": 0.15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "148": {
       "ID": 148,
@@ -62,11 +129,32 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoCampo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "GasRoxo"
+      },
       "execute_principal": "ataque_esporos_conectados",
       "descricao": "Atinge inimigos ativos do lado escolhido que estejam Envenenados ou Intoxicados.",
-      "parametros": {"tipo": "venenoso", "mult_spa": 0.55, "bonus_por_inimigo_atingido": 0.1, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "arena_inimiga", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_spa": 0.55,
+        "bonus_por_inimigo_atingido": 0.1,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "arena_inimiga",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "149": {
       "ID": 149,
@@ -75,11 +163,29 @@
       "custo_ap": 45,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "GasRoxo"
+      },
       "execute_principal": "ataque_fumaca_toxica",
       "descricao": "Aplica Envenenado ou Intoxicado conforme estado do alvo e critico contextual.",
-      "parametros": {"tipo": "venenoso"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "150": {
       "ID": 150,
@@ -90,11 +196,31 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoCampo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BolhasVerdes"
+      },
       "execute_principal": "ataque_contaminar",
       "descricao": "Muda uma area inimiga para Contaminada.",
-      "parametros": {"tipo": "venenoso", "terreno": "Contaminada", "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "terreno": "Contaminada",
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "151": {
       "ID": 151,
@@ -104,11 +230,35 @@
       "tipo": "venenoso",
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoLinha", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "GasRoxo"
+      },
       "execute_principal": "ataque_gas_venenoso",
       "descricao": "Causa dano especial na linha e dobra a duracao de venenos temporarios.",
-      "parametros": {"tipo": "venenoso", "mult_spa": 0.45, "efeitos_dobrados": ["Envenenado", "Intoxicado"], "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_spa": 0.45,
+        "efeitos_dobrados": [
+          "Envenenado",
+          "Intoxicado"
+        ],
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "152": {
       "ID": 152,
@@ -118,11 +268,35 @@
       "tipo": "venenoso",
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoLinha", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "Fumaça"
+      },
       "execute_principal": "ataque_gas_corrosivo",
       "descricao": "Causa dano especial na linha e dobra reducoes permanentes de Def e SpD.",
-      "parametros": {"tipo": "venenoso", "mult_spa": 0.45, "atributos_reducao_dobrada": ["Def", "SpD"], "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_spa": 0.45,
+        "atributos_reducao_dobrada": [
+          "Def",
+          "SpD"
+        ],
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "153": {
       "ID": 153,
@@ -131,11 +305,33 @@
       "custo_ap": 70,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "ExplosaoVerde",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "efeito_impacto_secundario": "BolhasVerdes"
+      },
       "execute_principal": "ataque_bomba_de_lodo",
       "descricao": "Causa dano no alvo principal e envenena inimigos adjacentes.",
-      "parametros": {"tipo": "venenoso", "mult_spa": 0.8},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_spa": 0.8
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "154": {
       "ID": 154,
@@ -144,11 +340,32 @@
       "custo_ap": 65,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "RedemoinhoCosmico"
+      },
       "execute_principal": "ataque_vortex_venenoso",
       "descricao": "Causa dano especial maior conforme os passos de veneno do alvo.",
-      "parametros": {"tipo": "venenoso", "mult_spa_base": 0.6, "bonus_spa_por_passo": 0.04, "limite_passos": 15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_spa_base": 0.6,
+        "bonus_spa_por_passo": 0.04,
+        "limite_passos": 15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "155": {
       "ID": 155,
@@ -157,11 +374,31 @@
       "custo_ap": 55,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BolhasVerdes"
+      },
       "execute_principal": "ataque_poco",
       "descricao": "Causa dano especial e remove a energia atual de alvo envenenado.",
-      "parametros": {"tipo": "venenoso", "mult_spa": 0.35, "percentual_energia_atual": 1.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_spa": 0.35,
+        "percentual_energia_atual": 1.0
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "156": {
       "ID": 156,
@@ -170,11 +407,32 @@
       "custo_ap": 65,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": "BolhasVerdes",
+        "efeito_alvo": "Garra"
+      },
       "execute_principal": "ataque_extracao",
       "descricao": "Converte passos de veneno em Vamp, remove venenos e causa dano fisico.",
-      "parametros": {"tipo": "venenoso", "vamp_por_passo": 2.0, "vamp_max": 20.0, "mult_atk": 0.75},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "vamp_por_passo": 2.0,
+        "vamp_max": 20.0,
+        "mult_atk": 0.75
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "157": {
       "ID": 157,
@@ -183,11 +441,32 @@
       "custo_ap": 40,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "BolhasVerdes",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_armadura_mole",
       "descricao": "Reduz permanentemente a Per do alvo.",
-      "parametros": {"tipo": "venenoso", "mult_per_alvo": 0.1, "mult_mag_usuario": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "venenoso",
+        "mult_per_alvo": 0.1,
+        "mult_mag_usuario": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "158": {
       "ID": 158,
@@ -196,10 +475,17 @@
       "custo_ap": 0,
       "tipo": "venenoso",
       "estilo_logico": "passivo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "DomoVerde",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_imunizado",
       "descricao": "O usuario recebe Imune permanentemente por passiva.",
-      "parametros": {"tipo": "venenoso", "efeito_interno": "Imune"}
+      "parametros": {
+        "tipo": "venenoso",
+        "efeito_interno": "Imune"
+      }
     }
   },
   "_comentario": "Ataques venenosos 144 a 158."

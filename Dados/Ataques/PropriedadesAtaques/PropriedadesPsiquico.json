@@ -11,9 +11,30 @@
       "custo_ap": 40,
       "estilo_logico": "alvo",
       "execute_principal": "executar_confusao",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "Confuso", "projetil": "Generico"},
-      "parametros": {"tipo": "psiquico", "efeito": "Confuso", "negativo": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": "OrbesRoxos",
+        "efeito_alvo": "EstouroMagico",
+        "projetil": "Generico"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "efeito": "Confuso",
+        "negativo": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "193": {
       "ID": 193,
@@ -25,9 +46,29 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "execute_principal": "executar_teleporte",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "permite_area_vazia": true, "percentual_recupera_critico": 0.5},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "RedemoinhoCosmico",
+        "efeito_alvo": null
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "permite_area_vazia": true,
+        "percentual_recupera_critico": 0.5
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "194": {
       "ID": 194,
@@ -38,8 +79,15 @@
       "custo_ap": 0,
       "estilo_logico": "passivo",
       "execute_principal": "executar_olho_que_tudo_ve",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "ignora_furtivo_equipe": true}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "ignora_furtivo_equipe": true
+      }
     },
     "195": {
       "ID": 195,
@@ -50,9 +98,30 @@
       "custo_ap": 50,
       "estilo_logico": "alvo",
       "execute_principal": "executar_toque_mental",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "categoria": "normal", "mult_atk": 0.75, "remove_positivo_critico": 1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": "FeixeRoxo",
+        "efeito_alvo": "EstouroMagico"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "categoria": "normal",
+        "mult_atk": 0.75,
+        "remove_positivo_critico": 1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "196": {
       "ID": 196,
@@ -63,9 +132,30 @@
       "custo_ap": 55,
       "estilo_logico": "alvo",
       "execute_principal": "executar_cabecada_zen",
-      "animacao": {"modelo": "Impacto", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "categoria": "normal", "mult_atk": 0.85, "efeito_remover": "Imune"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": "EstouroMagico"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "categoria": "normal",
+        "mult_atk": 0.85,
+        "efeito_remover": "Imune"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "197": {
       "ID": 197,
@@ -76,8 +166,16 @@
       "custo_ap": 55,
       "estilo_logico": "ativo",
       "execute_principal": "executar_super_meditacao",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "percentual_int_energia": 0.2, "remove_negativos": true}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "percentual_int_energia": 0.2,
+        "remove_negativos": true
+      }
     },
     "198": {
       "ID": 198,
@@ -88,9 +186,31 @@
       "custo_ap": 65,
       "estilo_logico": "alvo",
       "execute_principal": "executar_disturbio",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "categoria": "especial", "mult_spa": 0.65, "bonus_por_efeito": 0.2, "bonus_maximo": 0.8},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "RedemoinhoCosmico"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "categoria": "especial",
+        "mult_spa": 0.65,
+        "bonus_por_efeito": 0.2,
+        "bonus_maximo": 0.8
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "199": {
       "ID": 199,
@@ -101,8 +221,17 @@
       "custo_ap": 50,
       "estilo_logico": "ativo",
       "execute_principal": "executar_protecao_mental",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "efeito": "Imune", "duracao_imune": 6, "estado_se_imune": "protegido"}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "BarreiraCelular",
+        "efeito_alvo": null
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "efeito": "Imune",
+        "duracao_imune": 6,
+        "estado_se_imune": "protegido"
+      }
     },
     "200": {
       "ID": 200,
@@ -113,8 +242,16 @@
       "custo_ap": 0,
       "estilo_logico": "passivo",
       "execute_principal": "executar_turbomente",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "atributo": "Amp", "percentual_int_amp": 0.15}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": null
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "atributo": "Amp",
+        "percentual_int_amp": 0.15
+      }
     },
     "201": {
       "ID": 201,
@@ -126,12 +263,37 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "execute_principal": "executar_teletransporte",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "permite_area_vazia": true},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "RedemoinhoCosmico",
+        "efeito_alvo": "RedemoinhoCosmico"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "permite_area_vazia": true
+      },
       "alvificacao": {
         "alvos": [
-          {"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false},
-          {"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          },
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
         ]
       }
     },
@@ -145,12 +307,36 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "execute_principal": "executar_transferencia_mental",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "bonus_passos": 1, "bonus_passos_critico": 2},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": "EstouroMagico"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "bonus_passos": 1,
+        "bonus_passos_critico": 2
+      },
       "alvificacao": {
         "alvos": [
-          {"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false},
-          {"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          },
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
         ]
       }
     },
@@ -163,9 +349,31 @@
       "custo_ap": 70,
       "estilo_logico": "alvo",
       "execute_principal": "executar_ataque_psicologico",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "categoria": "especial", "mult_spa": 0.35, "mult_int": 0.9, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": "FeixeRoxo",
+        "efeito_alvo": "ExplosaoRoxa"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "categoria": "especial",
+        "mult_spa": 0.35,
+        "mult_int": 0.9,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "204": {
       "ID": 204,
@@ -176,9 +384,31 @@
       "custo_ap": 80,
       "estilo_logico": "alvo",
       "execute_principal": "executar_ultrapsiquico",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "categoria": "especial", "mult_spa": 0.6, "bonus_spa_por_passo": 0.03, "limite_passos": 25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "RedemoinhoCosmico"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "categoria": "especial",
+        "mult_spa": 0.6,
+        "bonus_spa_por_passo": 0.03,
+        "limite_passos": 25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "205": {
       "ID": 205,
@@ -189,8 +419,17 @@
       "custo_ap": 35,
       "estilo_logico": "ativo",
       "execute_principal": "executar_instinto",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "atributo": "Int", "percentual_mag": 0.2, "percentual_int": 0.1}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaAmarela",
+        "efeito_alvo": null
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "atributo": "Int",
+        "percentual_mag": 0.2,
+        "percentual_int": 0.1
+      }
     },
     "206": {
       "ID": 206,
@@ -201,9 +440,31 @@
       "custo_ap": 85,
       "estilo_logico": "alvo",
       "execute_principal": "executar_raio_psiquico",
-      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "categoria": "especial", "escala_inicial_spa": 1.0, "reducao_spa_por_alvo": 0.15, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": "FeixeRoxo",
+        "efeito_alvo": "EstouroMagico"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "categoria": "especial",
+        "escala_inicial_spa": 1.0,
+        "reducao_spa_por_alvo": 0.15,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "207": {
       "ID": 207,
@@ -214,9 +475,29 @@
       "custo_ap": 40,
       "estilo_logico": "alvo",
       "execute_principal": "executar_barragem_mental",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
-      "parametros": {"tipo": "psiquico", "percentual_mag": 0.18, "percentual_int": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": "BarreiraCelular"
+      },
+      "parametros": {
+        "tipo": "psiquico",
+        "percentual_mag": 0.18,
+        "percentual_int": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     }
   },
   "_comentario": "Ataques psiquicos do CSV oficial. Custo AP foi mantido em custo_ap, sem alterar acuracia."

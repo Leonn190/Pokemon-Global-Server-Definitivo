@@ -49,7 +49,7 @@ Os números abaixo são atualizados automaticamente pelo `Ferramentas/Atualizado
 | Pokémon registrados | **1.292** |
 | Ataques registrados | **328** |
 | Efeitos registrados | **51** |
-| Itens registrados | **144** |
+| Itens registrados | **146** |
 | Equipáveis registrados | **64** |
 | NPCs cadastrados | **96** |
 | Estruturas naturais | **25** |
@@ -66,20 +66,20 @@ Os números abaixo são atualizados automaticamente pelo `Ferramentas/Atualizado
 | Categoria | Quantidade atual |
 |---|---:|
 | Pastas | **1.388** |
-| Arquivos | **74.269** |
-| Arquivos de texto | **641** |
-| Peso dos arquivos de texto | **6418.47 KB** |
-| Tamanho total | **1.920 GB (2.061.691.970 bytes)** |
+| Arquivos | **74.304** |
+| Arquivos de texto | **676** |
+| Peso dos arquivos de texto | **6847.64 KB** |
+| Tamanho total | **1.921 GB (2.062.131.436 bytes)** |
 | Dias desde a criação do projeto | **351** |
-| Linhas totais gerais | **167.581** |
-| Commits (projeto) | **725** |
+| Linhas totais gerais | **184.719** |
+| Commits (projeto) | **736** |
 | Arquivos .py | **270** |
-| Linhas totais .py | **86.068** |
-| Tamanho total .py | **3791.86 KB** |
+| Linhas totais .py | **86.387** |
+| Tamanho total .py | **3804.14 KB** |
 | Classes encontradas | **248** |
-| Funções encontradas | **1.744** |
-| Métodos encontrados | **3.354** |
-| Total funções + métodos | **5.098** |
+| Funções encontradas | **1.763** |
+| Métodos encontrados | **3.355** |
+| Total funções + métodos | **5.118** |
 
 ## 4. Features principais e conceitos
 

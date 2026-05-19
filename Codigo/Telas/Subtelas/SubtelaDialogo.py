@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import unicodedata
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
@@ -41,6 +42,7 @@ class SubtelaDialogo(Subtela):
         ao_iniciar_batalha: Optional[Callable[[Dict[str, object]], None]] = None,
         ao_registrar_ganho: Optional[Callable[[Dict[str, object]], None]] = None,
         ator_local=None,
+        tempo_mundo: dict | None = None,
     ):
         super().__init__()
         self.Ativa = True
@@ -48,6 +50,7 @@ class SubtelaDialogo(Subtela):
         self._ao_iniciar_batalha = ao_iniciar_batalha
         self._ao_registrar_ganho = ao_registrar_ganho
         self._ator_local = ator_local
+        self._tempo_mundo = dict(tempo_mundo or {}) if isinstance(tempo_mundo, dict) else {}
 
         if self._ator_local is not None and not isinstance(getattr(self._ator_local, "SetorDialogo", None), dict):
             self._ator_local.SetorDialogo = {}
@@ -60,6 +63,7 @@ class SubtelaDialogo(Subtela):
         self._npc_code = str(estado.get("npc_code") or self._npc.get("code") or self._npc_id or self._npc_nome)
         self._npc_tipo_estadio = str(estado.get("estadio_tipo") or estado.get("estadio") or self._npc.get("estadio_tipo") or self._npc.get("estadio") or "").strip()
         self._npc_cargo = self._inferir_cargo_npc(estado)
+        self._npc_categoria_vendedor = self._categoria_vendedor(estado)
 
         self._player_nome = str(player_nome or "VocÃª")
         self._player_skin = str(player_skin or "1.png")
@@ -84,6 +88,8 @@ class SubtelaDialogo(Subtela):
             tipo_estadio_npc=self._npc_tipo_estadio,
             callback_ganho=self._ao_registrar_ganho,
             catalogo_estado=estado.get("loja") if isinstance(estado.get("loja"), dict) else None,
+            categoria_vendedor=self._npc_categoria_vendedor,
+            tempo_mundo=self._tempo_mundo,
         )
 
         self._leitor = LeitorDialogo(
@@ -137,6 +143,18 @@ class SubtelaDialogo(Subtela):
             return LeitorDialogo.normalizar_cargo(texto)
         estilo = str(estado.get("estilo") or self._npc.get("estilo") or "").strip().lower()
         return "vendedor" if estilo == "vendedor" else "dissociado"
+
+    def _categoria_vendedor(self, estado: Dict[str, object]) -> str:
+        bruto = estado.get("categoria") or self._npc.get("categoria") or ""
+        texto = unicodedata.normalize("NFKD", str(bruto or "")).encode("ascii", "ignore").decode("ascii")
+        texto = " ".join(texto.strip().lower().split())
+        if texto in {"moeda", "moedas", "dinheiro"}:
+            return "moedas"
+        if texto in {"item", "itens"}:
+            return "item"
+        if texto in {"pokemon", "pokemons"}:
+            return "pokemon"
+        return texto
 
     @staticmethod
     def _mapear_icones_itens() -> dict[str, Path]:

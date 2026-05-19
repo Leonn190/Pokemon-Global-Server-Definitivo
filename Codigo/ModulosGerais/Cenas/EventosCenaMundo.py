@@ -51,6 +51,7 @@ class EventosCenaMundoMixin:
         npc_id = int(npc_obj.get("id", 0) or 0)
         self._npc_interacao_id = npc_id
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
+        tempo_mundo = self.ControladorMundo.tempo_mundo_atual() if self.ControladorMundo is not None else {"dia": 0}
         jogo.GerenciadorSubtelas.abrir(SubtelaDialogo(
             player_nome=str(getattr(player, "Nome", "") or client_id),
             player_skin=str(getattr(player, "NomeSkin", "S1.png")),
@@ -59,6 +60,7 @@ class EventosCenaMundoMixin:
             ao_iniciar_batalha=lambda contexto: self._iniciar_batalha_por_dialogo(jogo, contexto),
             ao_registrar_ganho=self.ElementosHud.registrar_ganho,
             ator_local=player,
+            tempo_mundo=tempo_mundo,
         ))
 
     def _iniciar_batalha_por_dialogo(self, jogo, contexto_dialogo: dict) -> None:

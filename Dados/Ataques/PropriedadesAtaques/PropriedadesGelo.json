@@ -12,8 +12,39 @@
       "custo_ap": 30,
       "execute_principal": "nevoafria",
       "descricao": "O inimigo perde (10% de SpA do alvo) + (10% da Mag do usuario) em SpA.",
-      "parametros": {"tipo": "gelo", "mult_spa_alvo": 0.1, "mult_mag_usuario": 0.1, "aprimoramento": {"mult_spa_alvo": 0.12, "mult_mag_usuario": 0.1}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "mult_spa_alvo": 0.1,
+        "mult_mag_usuario": 0.1,
+        "aprimoramento": {
+          "mult_spa_alvo": 0.12,
+          "mult_mag_usuario": 0.1
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "FluxoAzul",
+        "duracao": 0.55,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "110": {
       "ID": 110,
@@ -25,8 +56,38 @@
       "custo_ap": 40,
       "execute_principal": "cristalizar",
       "descricao": "Se o alvo estiver Encharcado, remove Encharcado e aplica Congelado. Se o alvo nao estiver Encharcado, causa (45% de SpA) como dano especial.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa_dano": 0.45, "aprimoramento": {"mult_spa_encharcado": 0.35}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "mult_spa_dano": 0.45,
+        "aprimoramento": {
+          "mult_spa_encharcado": 0.35
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasAzuis",
+        "duracao": 0.55,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "111": {
       "ID": 111,
@@ -39,8 +100,53 @@
       "acuracia": 50.0,
       "execute_principal": "gelinho",
       "descricao": "Tem 50% de chance de errar. Causa (65% de SpA) como dano especial. Ganha +25 pontos de chance de acerto se o alvo estiver Congelado ou se o clima for Nevasca.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "acuracia": 50.0, "mult_spa": 0.65, "bonus_acerto_condicional": 25.0, "condicoes_bonus_acerto": [{"tipo": "alvo_efeito", "nome": "Congelado"}, {"tipo": "clima", "nome": "Nevasca"}], "aprimoramento": {"mult_spa": 0.75, "bonus_acerto_condicional": 30.0}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "acuracia": 50.0,
+        "mult_spa": 0.65,
+        "bonus_acerto_condicional": 25.0,
+        "condicoes_bonus_acerto": [
+          {
+            "tipo": "alvo_efeito",
+            "nome": "Congelado"
+          },
+          {
+            "tipo": "clima",
+            "nome": "Nevasca"
+          }
+        ],
+        "aprimoramento": {
+          "mult_spa": 0.75,
+          "bonus_acerto_condicional": 30.0
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasAzuis",
+        "projetil": "Generico",
+        "velocidade": 8.0,
+        "tamanho": 16,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "112": {
       "ID": 112,
@@ -52,8 +158,49 @@
       "custo_ap": 40,
       "execute_principal": "olharfrio",
       "descricao": "O alvo perde 15% do seu maior atributo regular.",
-      "parametros": {"tipo": "gelo", "percentual_reducao": 0.15, "atributos_regulares": ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"], "aprimoramento": {"percentual_reducao": 0.18}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "percentual_reducao": 0.15,
+        "atributos_regulares": [
+          "Atk",
+          "SpA",
+          "Def",
+          "SpD",
+          "Mag",
+          "Ene",
+          "Vel",
+          "Per",
+          "Int"
+        ],
+        "aprimoramento": {
+          "percentual_reducao": 0.18
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": null,
+        "efeito_alvo": "MarcaAzul",
+        "duracao": 0.35,
+        "largura": 0.9,
+        "cor": [
+          180,
+          232,
+          245
+        ]
+      }
     },
     "113": {
       "ID": 113,
@@ -65,8 +212,37 @@
       "custo_ap": 55,
       "execute_principal": "congelamentotatico",
       "descricao": "Escolhe o usuário ou um aliado. O alvo recebe Congelado e Regeneração.",
-      "parametros": {"tipo": "gelo", "duracao": 6, "aprimoramento": {"barreira_mult_mag": 0.2}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "duracao": 6,
+        "aprimoramento": {
+          "barreira_mult_mag": 0.2
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular",
+        "duracao": 0.6,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "114": {
       "ID": 114,
@@ -78,8 +254,40 @@
       "custo_ap": 75,
       "execute_principal": "geloverdadeiro",
       "descricao": "Causa (80% de SpA) como dano especial e ignora Def e SpD do alvo.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.8, "ignorar_defesa": true, "aprimoramento": {"mult_spa": 0.9}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "mult_spa": 0.8,
+        "ignorar_defesa": true,
+        "aprimoramento": {
+          "mult_spa": 0.9
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasAzuis",
+        "duracao": 0.58,
+        "largura": 1.25,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "115": {
       "ID": 115,
@@ -93,8 +301,40 @@
       "custo_ap": 65,
       "execute_principal": "raioaurora",
       "descricao": "Causa (85% de SpA) como dano especial. Se for critico, aplica Congelado no alvo.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.85, "permite_area_vazia": true, "aprimoramento": {"mult_spa": 0.95}},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "mult_spa": 0.85,
+        "permite_area_vazia": true,
+        "aprimoramento": {
+          "mult_spa": 0.95
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "MagiaAzul",
+        "duracao": 0.68,
+        "largura": 1.35,
+        "cor": [
+          170,
+          220,
+          255
+        ]
+      }
     },
     "116": {
       "ID": 116,
@@ -106,7 +346,22 @@
       "custo_ap": 40,
       "execute_principal": "nevasca",
       "descricao": "Muda o clima para Nevasca.",
-      "parametros": {"tipo": "gelo", "clima": "Nevasca", "aprimoramento": {}}
+      "parametros": {
+        "tipo": "gelo",
+        "clima": "Nevasca",
+        "aprimoramento": {}
+      },
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null,
+        "duracao": 0.75,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "117": {
       "ID": 117,
@@ -118,8 +373,41 @@
       "custo_ap": 55,
       "execute_principal": "tumbadegelo",
       "descricao": "Se alvo estiver Congelado, dobra a duracao do Congelado e causa (70% de SpA) como dano especial. Se nao estiver Congelado, nao causa dano; porem, se o clima for Nevasca, aplica Congelado e causa (35% de SpA) como dano especial.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa_congelado": 0.7, "mult_spa_nevasca": 0.35, "duracao": 6, "aprimoramento": {"mult_spa_congelado": 0.8, "mult_spa_nevasca": 0.45}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "mult_spa_congelado": 0.7,
+        "mult_spa_nevasca": 0.35,
+        "duracao": 6,
+        "aprimoramento": {
+          "mult_spa_congelado": 0.8,
+          "mult_spa_nevasca": 0.45
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular",
+        "duracao": 0.65,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "118": {
       "ID": 118,
@@ -129,11 +417,38 @@
       "estilo_logico": "alvo",
       "custo": 55,
       "custo_ap": 65,
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ExplosaoPedra",
+        "velocidade": 8.2,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "quebragelo",
       "descricao": "Causa (70% de Atk) como dano normal. Se alvo estiver Congelado, causa +70% de dano e remove Congelado. Se for critico, remove apenas metade da duracao do Congelado.",
-      "parametros": {"tipo": "gelo", "categoria": "normal", "mult_atk": 0.7, "bonus_dano_congelado": 0.7, "aprimoramento": {"mult_atk": 0.78, "bonus_dano_congelado": 0.8}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "normal",
+        "mult_atk": 0.7,
+        "bonus_dano_congelado": 0.7,
+        "aprimoramento": {
+          "mult_atk": 0.78,
+          "bonus_dano_congelado": 0.8
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "119": {
       "ID": 119,
@@ -145,8 +460,48 @@
       "custo_ap": 60,
       "execute_principal": "ataquepolar",
       "descricao": "Causa (75% de Atk) como dano normal. Se o usuario estiver em uma das pontas da arena, causa +25% de dano. Se o alvo tambem estiver em uma das pontas da arena, causa mais +25% de dano.",
-      "parametros": {"tipo": "gelo", "categoria": "normal", "mult_atk": 0.75, "bonus_ponta_usuario": 0.25, "bonus_ponta_alvo": 0.25, "areas_ponta": ["A1", "A3", "A7", "A9", "I1", "I3", "I7", "I9"], "aprimoramento": {"mult_atk": 0.85, "bonus_ponta_usuario": 0.3, "bonus_ponta_alvo": 0.3}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "normal",
+        "mult_atk": 0.75,
+        "bonus_ponta_usuario": 0.25,
+        "bonus_ponta_alvo": 0.25,
+        "areas_ponta": [
+          "A1",
+          "A3",
+          "A7",
+          "A9",
+          "I1",
+          "I3",
+          "I7",
+          "I9"
+        ],
+        "aprimoramento": {
+          "mult_atk": 0.85,
+          "bonus_ponta_usuario": 0.3,
+          "bonus_ponta_alvo": 0.3
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasAzuis",
+        "velocidade": 8.6,
+        "distancia_parada": "contato"
+      }
     },
     "120": {
       "ID": 120,
@@ -158,7 +513,40 @@
       "custo_ap": 90,
       "execute_principal": "avalanche",
       "descricao": "Causa (60% de SpA) como dano especial a todos os inimigos. Se o clima for Nevasca, causa +25% de dano. Contra alvos Encharcados, causa mais +25% de dano.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.6, "bonus_nevasca": 0.25, "bonus_encharcado": 0.25, "aprimoramento": {"mult_spa": 0.68, "bonus_nevasca": 0.3, "bonus_encharcado": 0.3}}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "mult_spa": 0.6,
+        "bonus_nevasca": 0.25,
+        "bonus_encharcado": 0.25,
+        "aprimoramento": {
+          "mult_spa": 0.68,
+          "bonus_nevasca": 0.3,
+          "bonus_encharcado": 0.3
+        }
+      },
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": "Fumaça",
+        "efeito_alvo": "ExplosaoPedra",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "efeito_impacto_secundario": "FacasAzuis",
+        "velocidade": 7.0,
+        "tamanho": 24,
+        "raio_explosao": 1.8,
+        "duracao_onda": 0.55,
+        "cor": [
+          152,
+          208,
+          225
+        ],
+        "cor_onda": [
+          190,
+          235,
+          255
+        ]
+      }
     },
     "121": {
       "ID": 121,
@@ -170,8 +558,45 @@
       "custo_ap": 35,
       "execute_principal": "boladeneve",
       "descricao": "Se o alvo estiver Congelado, nao causa dano. Se nao estiver Congelado, causa (45% de SpA) como dano especial e adiciona 1 stack de Bola de Neve. A cada 3 stacks, remove os stacks e aplica Congelado.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.45, "stacks_para_congelar": 3, "stacks_por_uso": 1, "nome_contador": "Bola de Neve", "duracao": 6, "aprimoramento": {"mult_spa": 0.52, "mult_spa_extra_ao_congelar": 0.2}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "mult_spa": 0.45,
+        "stacks_para_congelar": 3,
+        "stacks_por_uso": 1,
+        "nome_contador": "Bola de Neve",
+        "duracao": 6,
+        "aprimoramento": {
+          "mult_spa": 0.52,
+          "mult_spa_extra_ao_congelar": 0.2
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "ExplosaoPedra",
+        "projetil": "Generico",
+        "velocidade": 7.6,
+        "tamanho": 22,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "122": {
       "ID": 122,
@@ -183,8 +608,43 @@
       "custo_ap": 80,
       "execute_principal": "reinadodegelo",
       "descricao": "Causa (80% de SpA) como dano especial. Para cada Pokémon Congelado em campo, causa +10% de dano, até +60%.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.8, "bonus_por_congelado": 0.1, "bonus_max": 0.6, "aprimoramento": {"mult_spa": 0.9, "bonus_por_congelado": 0.12, "bonus_max": 0.72}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "mult_spa": 0.8,
+        "bonus_por_congelado": 0.1,
+        "bonus_max": 0.6,
+        "aprimoramento": {
+          "mult_spa": 0.9,
+          "bonus_por_congelado": 0.12,
+          "bonus_max": 0.72
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "RaioAzul",
+        "duracao": 0.62,
+        "largura": 1.55,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     },
     "123": {
       "ID": 123,
@@ -198,8 +658,42 @@
       "custo_ap": 85,
       "execute_principal": "raiodegelo",
       "descricao": "Causa (100% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",
-      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 1.0, "reducao_spa_por_alvo": 0.15, "permite_area_vazia": true, "aprimoramento": {"mult_spa": 1.1, "reducao_spa_por_alvo": 0.12}},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "mult_spa": 1.0,
+        "reducao_spa_por_alvo": 0.15,
+        "permite_area_vazia": true,
+        "aprimoramento": {
+          "mult_spa": 1.1,
+          "reducao_spa_por_alvo": 0.12
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      },
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "RaioAzul",
+        "duracao": 0.64,
+        "largura": 1.45,
+        "cor": [
+          152,
+          208,
+          225
+        ]
+      }
     }
   },
   "_comentario": "Ataques de gelo 109-123 implementados no padrao de propriedades por ataque."

@@ -8,11 +8,38 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": null,
+        "efeito_alvo": "FeixeRoxo",
+        "duracao": 0.42,
+        "largura": 1.1,
+        "cor": [
+          96,
+          90,
+          143
+        ]
+      },
       "execute_principal": "ataque_selar_arcano",
       "descricao": "O inimigo perde Mag baseada na Mag do alvo e na Mag do usuario.",
-      "parametros": {"tipo": "fantasma", "mag_alvo_pct": 0.10, "mag_usuario_pct": 0.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "mag_alvo_pct": 0.1,
+        "mag_usuario_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "238": {
       "ID": 238,
@@ -20,11 +47,32 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "OrbesRoxos",
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_desorientar",
       "descricao": "O inimigo perde Int baseada na Int do alvo e na Mag do usuario.",
-      "parametros": {"tipo": "fantasma", "int_alvo_pct": 0.10, "mag_usuario_pct": 0.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "int_alvo_pct": 0.1,
+        "mag_usuario_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "239": {
       "ID": 239,
@@ -32,11 +80,34 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": "GasRoxo",
+        "efeito_alvo": "OrbesRoxos",
+        "velocidade": 9.5,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_atravessar",
       "descricao": "Causa dano especial e rouba um efeito positivo aleatorio do alvo.",
-      "parametros": {"tipo": "fantasma", "spa_pct": 0.40, "qtd_efeitos_roubar": 1, "tipo_efeito_roubado": "positivo"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "spa_pct": 0.4,
+        "qtd_efeitos_roubar": 1,
+        "tipo_efeito_roubado": "positivo"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "240": {
       "ID": 240,
@@ -44,11 +115,33 @@
       "custo": 35,
       "custo_ap": 45,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "GasRoxo",
+        "velocidade": 8.0,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_lambida",
       "descricao": "Causa dano normal. Neste ataque, o Vamp do usuario conta em dobro.",
-      "parametros": {"tipo": "fantasma", "atk_pct": 0.65, "vamp_mult": 2.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "atk_pct": 0.65,
+        "vamp_mult": 2.0
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "241": {
       "ID": 241,
@@ -56,11 +149,32 @@
       "custo": 35,
       "custo_ap": 45,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "ExplosaoRoxa",
+        "duracao": 0.5
+      },
       "execute_principal": "ataque_toque_do_medo",
       "descricao": "Causa dano especial dobrado se o alvo estiver Paralisado.",
-      "parametros": {"tipo": "fantasma", "spa_pct": 0.40, "mult_alvo_paralisado": 2.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "spa_pct": 0.4,
+        "mult_alvo_paralisado": 2.0
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "242": {
       "ID": 242,
@@ -68,11 +182,36 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "EstouroMagico",
+        "velocidade": 8.5,
+        "altura": 1.35,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_susto",
       "descricao": "Causa dano normal. Forca critico contra alvo Dormindo ou em Nevoa; critico aplica Paralisado.",
-      "parametros": {"tipo": "fantasma", "atk_pct": 0.60, "critico_se_alvo_dormindo": true, "critico_se_clima": "Névoa", "efeito_critico": "Paralisado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "atk_pct": 0.6,
+        "critico_se_alvo_dormindo": true,
+        "critico_se_clima": "Névoa",
+        "efeito_critico": "Paralisado"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "243": {
       "ID": 243,
@@ -80,11 +219,31 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "GasRoxo",
+        "duracao": 0.65
+      },
       "execute_principal": "ataque_maldade",
       "descricao": "Aplica um efeito negativo aleatorio no alvo.",
-      "parametros": {"tipo": "fantasma", "qtd_efeitos_negativos": 1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "qtd_efeitos_negativos": 1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "244": {
       "ID": 244,
@@ -92,11 +251,39 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "FeixeRoxo",
+        "projetil": "Generico",
+        "velocidade": 9.0,
+        "tamanho": 18,
+        "cor": [
+          112,
+          88,
+          180
+        ]
+      },
       "execute_principal": "ataque_golpe_espelhado",
       "descricao": "Causa dano especial maior se usuario e alvo estiverem em areas de mesmo numero.",
-      "parametros": {"tipo": "fantasma", "spa_pct": 0.75, "mult_mesmo_numero_area": 1.50},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "spa_pct": 0.75,
+        "mult_mesmo_numero_area": 1.5
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "245": {
       "ID": 245,
@@ -104,11 +291,39 @@
       "custo": 65,
       "custo_ap": 75,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "OrbesRoxos",
+        "duracao": 0.55,
+        "largura": 1.35,
+        "cor": [
+          96,
+          90,
+          143
+        ]
+      },
       "execute_principal": "ataque_mao_espectral",
       "descricao": "Causa dano especial e move o alvo para o inicio da fileira da arena dele.",
-      "parametros": {"tipo": "fantasma", "spa_pct": 0.70, "mult_dano_ocupante_destino": 1.20, "mover_para_inicio_fileira": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "spa_pct": 0.7,
+        "mult_dano_ocupante_destino": 1.2,
+        "mover_para_inicio_fileira": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "246": {
       "ID": 246,
@@ -116,11 +331,39 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "FeixeMagenta",
+        "projetil": "Generico",
+        "velocidade": 10.0,
+        "tamanho": 20,
+        "cor": [
+          185,
+          80,
+          210
+        ]
+      },
       "execute_principal": "ataque_pulso_de_plasma",
       "descricao": "Causa dano especial e aplica Enfraquecido se for critico.",
-      "parametros": {"tipo": "fantasma", "spa_pct": 0.85, "efeito_critico": "Enfraquecido"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "spa_pct": 0.85,
+        "efeito_critico": "Enfraquecido"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "247": {
       "ID": 247,
@@ -128,11 +371,32 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": "GasRoxo",
+        "duracao": 0.7
+      },
       "execute_principal": "ataque_devorador_de_pecados",
       "descricao": "Remove efeitos negativos do alvo e converte passos removidos em Vamp permanente.",
-      "parametros": {"tipo": "fantasma", "vamp_por_passo": 3, "vamp_max": 30},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["qualquer_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "vamp_por_passo": 3,
+        "vamp_max": 30
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "qualquer_lado"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "248": {
       "ID": 248,
@@ -140,11 +404,31 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "GasRoxo",
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_maldicao",
       "descricao": "Aplica Amaldiçoado no alvo.",
-      "parametros": {"tipo": "fantasma", "efeito": "Amaldiçoado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "efeito": "Amaldiçoado"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "249": {
       "ID": 249,
@@ -152,11 +436,33 @@
       "custo": 35,
       "custo_ap": 45,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "EstouroMagico",
+        "velocidade": 10.5,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_jogada_de_sorte",
       "descricao": "Tem chance alta de nao fazer nada; se funcionar, causa dano normal alto.",
-      "parametros": {"tipo": "fantasma", "chance_nao_fazer_nada": 0.70, "atk_pct": 1.60},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "chance_nao_fazer_nada": 0.7,
+        "atk_pct": 1.6
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "250": {
       "ID": 250,
@@ -164,11 +470,40 @@
       "custo": 65,
       "custo_ap": 75,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "RedemoinhoCosmico",
+        "projetil": "Generico",
+        "velocidade": 8.5,
+        "tamanho": 22,
+        "cor": [
+          98,
+          80,
+          170
+        ]
+      },
       "execute_principal": "ataque_ataque_fantasmagorico",
       "descricao": "Causa dano especial com bonus se o alvo estiver Amaldiçoado e se houver Nevoa.",
-      "parametros": {"tipo": "fantasma", "spa_pct": 0.85, "bonus_alvo_amaldicoado": 0.35, "bonus_clima_nevoa": 0.25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "spa_pct": 0.85,
+        "bonus_alvo_amaldicoado": 0.35,
+        "bonus_clima_nevoa": 0.25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "251": {
       "ID": 251,
@@ -176,10 +511,18 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaVermelha",
+        "efeito_alvo": null,
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_sede_de_sangue_fantasma",
       "descricao": "O usuario ganha Vamp baseado em Mag.",
-      "parametros": {"tipo": "fantasma", "mag_pct": 0.25}
+      "parametros": {
+        "tipo": "fantasma",
+        "mag_pct": 0.25
+      }
     },
     "252": {
       "ID": 252,
@@ -187,11 +530,49 @@
       "custo": 70,
       "custo_ap": 80,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "ExplosaoRoxa",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "efeito_impacto_secundario": "GasRoxo",
+        "velocidade": 8.0,
+        "tamanho": 24,
+        "raio_explosao": 1.55,
+        "duracao_onda": 0.45,
+        "cor": [
+          96,
+          90,
+          143
+        ],
+        "cor_onda": [
+          136,
+          78,
+          180
+        ]
+      },
       "execute_principal": "ataque_explosao_fantasma",
       "descricao": "Causa dano especial no alvo principal, dano real reduzido aos adjacentes e Vampirico neles.",
-      "parametros": {"tipo": "fantasma", "spa_pct": 0.90, "splash_dano_real_pct": 0.10, "efeito_adjacentes": "Vampírico"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "spa_pct": 0.9,
+        "splash_dano_real_pct": 0.1,
+        "efeito_adjacentes": "Vampírico"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "253": {
       "ID": 253,
@@ -199,11 +580,34 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "CorteDuploRoxo",
+        "velocidade": 8.4,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_golpe_cruel",
       "descricao": "Causa dano normal maior conforme passos positivos de efeitos negativos no alvo.",
-      "parametros": {"tipo": "fantasma", "atk_pct": 0.70, "bonus_por_passo_negativo": 0.03, "max_passos_considerados": 25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "atk_pct": 0.7,
+        "bonus_por_passo_negativo": 0.03,
+        "max_passos_considerados": 25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "254": {
       "ID": 254,
@@ -211,10 +615,20 @@
       "custo": 0,
       "custo_ap": 0,
       "estilo_logico": "passivo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "GasRoxo",
+        "efeito_alvo": null,
+        "duracao": 0.7
+      },
       "execute_principal": "ataque_fantasma",
       "descricao": "O usuario perde Acuracia e Amp, mas fica Furtivo permanentemente.",
-      "parametros": {"tipo": "fantasma", "perda_acuracia": 25, "perda_amp": 25, "efeito_permanente": "Furtivo"}
+      "parametros": {
+        "tipo": "fantasma",
+        "perda_acuracia": 25,
+        "perda_amp": 25,
+        "efeito_permanente": "Furtivo"
+      }
     },
     "255": {
       "ID": 255,
@@ -222,11 +636,39 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "OrbesRoxos",
+        "projetil": "Generico",
+        "velocidade": 8.0,
+        "tamanho": 18,
+        "cor": [
+          96,
+          90,
+          143
+        ]
+      },
       "execute_principal": "ataque_azar",
       "descricao": "O inimigo perde CrC baseado em valor fixo e Mag do usuario.",
-      "parametros": {"tipo": "fantasma", "perda_fixa_crc": 5, "mag_usuario_pct": 0.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "fantasma",
+        "perda_fixa_crc": 5,
+        "mag_usuario_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     }
   },
   "_comentario": "Ataques fantasma Code 237 a 255 sincronizados com o CSV."

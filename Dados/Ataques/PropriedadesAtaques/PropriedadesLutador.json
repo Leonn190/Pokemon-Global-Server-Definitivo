@@ -8,9 +8,21 @@
       "custo": 25,
       "custo_ap": 30,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EstouroVermelho",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_grito_de_guerra",
-      "parametros": {"tipo": "lutador", "mult_mag_atk": 0.2, "mult_atk_atk": 0.1, "aprimoramento": {"mult_mag_atk": 0.22, "mult_atk_atk": 0.12}}
+      "parametros": {
+        "tipo": "lutador",
+        "mult_mag_atk": 0.2,
+        "mult_atk_atk": 0.1,
+        "aprimoramento": {
+          "mult_mag_atk": 0.22,
+          "mult_atk_atk": 0.12
+        }
+      }
     },
     "125": {
       "ID": 125,
@@ -18,9 +30,20 @@
       "custo": 0,
       "custo_ap": 0,
       "estilo_logico": "passivo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EstouroVermelho",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_implacavel",
-      "parametros": {"tipo": "lutador", "efeito": "Imparavel", "permanente": true, "aprimoramento": {"bonus_dur": 5}}
+      "parametros": {
+        "tipo": "lutador",
+        "efeito": "Imparavel",
+        "permanente": true,
+        "aprimoramento": {
+          "bonus_dur": 5
+        }
+      }
     },
     "126": {
       "ID": 126,
@@ -28,10 +51,33 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Karate"
+      },
       "execute_principal": "ataque_soco",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.9, "aprimoramento": {"mult_atk": 1.0}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.9,
+        "aprimoramento": {
+          "mult_atk": 1.0
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "127": {
       "ID": 127,
@@ -39,9 +85,30 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_treinar",
-      "parametros": {"tipo": "lutador", "atributos_regulares": ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"], "percentual_bonus": 0.1, "aprimoramento": {"percentual_bonus": 0.12}}
+      "parametros": {
+        "tipo": "lutador",
+        "atributos_regulares": [
+          "Atk",
+          "SpA",
+          "Def",
+          "SpD",
+          "Mag",
+          "Ene",
+          "Vel",
+          "Per",
+          "Int"
+        ],
+        "percentual_bonus": 0.1,
+        "aprimoramento": {
+          "percentual_bonus": 0.12
+        }
+      }
     },
     "128": {
       "ID": 128,
@@ -50,13 +117,45 @@
       "custo_ap": 65,
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "Karate"
+      },
       "execute_principal": "ataque_acrobacia",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.65, "mult_vel": 0.25, "aprimoramento": {"mult_atk": 0.72, "mult_vel": 0.3}},
-      "alvificacao": {"alvos": [
-        {"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": false, "inclui_reserva": false},
-        {"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}
-      ]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.65,
+        "mult_vel": 0.25,
+        "aprimoramento": {
+          "mult_atk": 0.72,
+          "mult_vel": 0.3
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          },
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "129": {
       "ID": 129,
@@ -64,9 +163,17 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_concentracao",
-      "parametros": {"tipo": "lutador", "energia_aprimorado": 10, "aprimoramento": {}}
+      "parametros": {
+        "tipo": "lutador",
+        "energia_aprimorado": 10,
+        "aprimoramento": {}
+      }
     },
     "130": {
       "ID": 130,
@@ -74,10 +181,33 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_lancamento",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.55, "aprimoramento": {"mult_atk": 0.65}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.55,
+        "aprimoramento": {
+          "mult_atk": 0.65
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "131": {
       "ID": 131,
@@ -85,9 +215,30 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_treino_em_grupo",
-      "parametros": {"tipo": "lutador", "atributos_regulares": ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"], "percentual_por_aliado": 0.05, "aprimoramento": {"percentual_por_aliado": 0.06}}
+      "parametros": {
+        "tipo": "lutador",
+        "atributos_regulares": [
+          "Atk",
+          "SpA",
+          "Def",
+          "SpD",
+          "Mag",
+          "Ene",
+          "Vel",
+          "Per",
+          "Int"
+        ],
+        "percentual_por_aliado": 0.05,
+        "aprimoramento": {
+          "percentual_por_aliado": 0.06
+        }
+      }
     },
     "132": {
       "ID": 132,
@@ -95,10 +246,37 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Karate"
+      },
       "execute_principal": "ataque_karate",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.7, "mult_crc": 0.4, "mult_focado": 1.25, "aprimoramento": {"mult_atk": 0.78, "mult_crc": 0.45, "mult_focado": 1.3}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.7,
+        "mult_crc": 0.4,
+        "mult_focado": 1.25,
+        "aprimoramento": {
+          "mult_atk": 0.78,
+          "mult_crc": 0.45,
+          "mult_focado": 1.3
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "133": {
       "ID": 133,
@@ -106,10 +284,38 @@
       "custo": 60,
       "custo_ap": 70,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": "Karate"
+      },
       "execute_principal": "ataque_soco_carregado",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.55, "mult_energia_atual": 0.45, "percentual_recupera_critico": 0.25, "mult_sem_movimento": 1.25, "aprimoramento": {"mult_atk": 0.62, "mult_energia_atual": 0.5, "mult_sem_movimento": 1.3}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.55,
+        "mult_energia_atual": 0.45,
+        "percentual_recupera_critico": 0.25,
+        "mult_sem_movimento": 1.25,
+        "aprimoramento": {
+          "mult_atk": 0.62,
+          "mult_energia_atual": 0.5,
+          "mult_sem_movimento": 1.3
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "134": {
       "ID": 134,
@@ -117,10 +323,36 @@
       "custo": 70,
       "custo_ap": 80,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Karate"
+      },
       "execute_principal": "ataque_socos_multiplos",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "hits": 4, "mult_atk": 0.22, "mult_ene": 0.12, "aprimoramento": {"mult_atk": 0.25, "mult_ene": 0.14}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "hits": 4,
+        "mult_atk": 0.22,
+        "mult_ene": 0.12,
+        "aprimoramento": {
+          "mult_atk": 0.25,
+          "mult_ene": 0.14
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "135": {
       "ID": 135,
@@ -128,10 +360,35 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso", "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "Karate",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_missil_de_punho",
-      "parametros": {"tipo": "lutador", "categoria": "especial", "mult_spa": 0.8, "sempre_acerta": true, "aprimoramento": {"mult_spa": 0.9}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "especial",
+        "mult_spa": 0.8,
+        "sempre_acerta": true,
+        "aprimoramento": {
+          "mult_spa": 0.9
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "136": {
       "ID": 136,
@@ -139,9 +396,17 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaAmarela",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_chamar_para_briga",
-      "parametros": {"tipo": "lutador", "energia_aprimorado": 5, "aprimoramento": {}}
+      "parametros": {
+        "tipo": "lutador",
+        "energia_aprimorado": 5,
+        "aprimoramento": {}
+      }
     },
     "137": {
       "ID": 137,
@@ -149,10 +414,35 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_chute_pirueta_aereo",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.8, "mult_alvo_aereo": 1.4, "aprimoramento": {"mult_atk": 0.88, "mult_alvo_aereo": 1.5}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.8,
+        "mult_alvo_aereo": 1.4,
+        "aprimoramento": {
+          "mult_atk": 0.88,
+          "mult_alvo_aereo": 1.5
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "138": {
       "ID": 138,
@@ -162,10 +452,40 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Karate"
+      },
       "execute_principal": "ataque_chute_duplo",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.65, "mult_adjacentes": 1.25, "quantidade_minima": 1, "quantidade_maxima": 2, "permite_area_vazia": true, "aprimoramento": {"mult_atk": 0.72, "mult_adjacentes": 1.3}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade_minima": 1, "quantidade_maxima": 2, "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.65,
+        "mult_adjacentes": 1.25,
+        "quantidade_minima": 1,
+        "quantidade_maxima": 2,
+        "permite_area_vazia": true,
+        "aprimoramento": {
+          "mult_atk": 0.72,
+          "mult_adjacentes": 1.3
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade_minima": 1,
+            "quantidade_maxima": 2,
+            "quantidade": 2,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "139": {
       "ID": 139,
@@ -173,10 +493,35 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": "MarcaAmarela",
+        "efeito_alvo": "Karate"
+      },
       "execute_principal": "ataque_contra_ataque",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.7, "mult_contra": 1.45, "aprimoramento": {"mult_atk": 0.78, "mult_contra": 1.55}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.7,
+        "mult_contra": 1.45,
+        "aprimoramento": {
+          "mult_atk": 0.78,
+          "mult_contra": 1.55
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "140": {
       "ID": 140,
@@ -184,10 +529,33 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_submissao",
-      "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.85, "aprimoramento": {"mult_atk": 0.95}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "categoria": "normal",
+        "mult_atk": 0.85,
+        "aprimoramento": {
+          "mult_atk": 0.95
+        }
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "141": {
       "ID": 141,
@@ -196,11 +564,39 @@
       "custo_ap": 65,
       "tipo": "lutador",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "EstouroVermelho"
+      },
       "execute_principal": "ataque_cauter",
       "descricao": "Remove defesas ativas do alvo antes de causar dano e aplica Cauterizado.",
-      "parametros": {"tipo": "lutador", "sempre_acerta": true, "mult_atk": 0.7, "bonus_por_efeito": 0.2, "efeitos_quebrados": ["Protegido", "Refletindo", "Evasivo", "Imparavel"], "duracao_cauterizado": 6},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "sempre_acerta": true,
+        "mult_atk": 0.7,
+        "bonus_por_efeito": 0.2,
+        "efeitos_quebrados": [
+          "Protegido",
+          "Refletindo",
+          "Evasivo",
+          "Imparavel"
+        ],
+        "duracao_cauterizado": 6
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "142": {
       "ID": 142,
@@ -209,10 +605,18 @@
       "custo_ap": 55,
       "tipo": "lutador",
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "Barreira",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_postura_de_combatente",
       "descricao": "O usuario recebe Imparavel e Fortificado temporariamente.",
-      "parametros": {"tipo": "lutador", "duracao_imparavel": 6, "duracao_fortificado": 6}
+      "parametros": {
+        "tipo": "lutador",
+        "duracao_imparavel": 6,
+        "duracao_fortificado": 6
+      }
     },
     "143": {
       "ID": 143,
@@ -221,11 +625,31 @@
       "custo_ap": 55,
       "tipo": "lutador",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "Barreira"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "Barreira"
+      },
       "execute_principal": "ataque_barragem_punho_guardiao",
       "descricao": "Concede barreira a um aliado ou ao proprio usuario.",
-      "parametros": {"tipo": "lutador", "mult_mag_barreira": 0.2, "mult_atk_barreira": 0.12},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "lutador",
+        "mult_mag_barreira": 0.2,
+        "mult_atk_barreira": 0.12
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     }
   },
   "_comentario": "Ataques lutador Code 124 a 143 adaptados ao sistema atual de batalha."

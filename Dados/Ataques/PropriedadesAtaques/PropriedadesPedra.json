@@ -9,11 +9,21 @@
       "custo": 25,
       "custo_ap": 30,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ImpactoRochoso",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_casca_de_pedra",
       "descricao": "O usuario ganha (20% de Mag) + (10% de Def) em Def.",
-      "parametros": {"tipo": "pedra", "mag_pct": 0.20, "def_pct": 0.10},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "pedra",
+        "mag_pct": 0.2,
+        "def_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     },
     "223": {
       "ID": 223,
@@ -22,11 +32,32 @@
       "custo": 45,
       "custo_ap": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "Barreira"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "Barreira"
+      },
       "execute_principal": "ataque_barragem_rochosa",
       "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (15% de Def).",
-      "parametros": {"tipo": "pedra", "mag_pct": 0.18, "def_pct": 0.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "mag_pct": 0.18,
+        "def_pct": 0.15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "224": {
       "ID": 224,
@@ -35,11 +66,33 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso", "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_pedregulho",
       "descricao": "Causa (100% de Atk) como dano normal, mas o alvo usa 150% da propria Def na reducao deste dano.",
-      "parametros": {"tipo": "pedra", "categoria": "normal", "atk_pct": 1.00, "def_alvo_reducao_mult": 1.50},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "normal",
+        "atk_pct": 1.0,
+        "def_alvo_reducao_mult": 1.5
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "225": {
       "ID": 225,
@@ -48,11 +101,22 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_polida_estrategica",
       "descricao": "O usuario perde 5% da Vida Maxima e ganha 15% de Vel. Se for critico, perde apenas 3% da Vida Maxima.",
-      "parametros": {"tipo": "pedra", "perda_vida_pct": 0.05, "perda_vida_pct_critico": 0.03, "vel_pct": 0.15},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "pedra",
+        "perda_vida_pct": 0.05,
+        "perda_vida_pct_critico": 0.03,
+        "vel_pct": 0.15
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     },
     "226": {
       "ID": 226,
@@ -61,11 +125,25 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "efeito_impacto_secundario": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_chuva_aspera",
       "descricao": "Escolhe 3 areas aleatorias inimigas. Cada Pokemon atingido recebe (65% de Atk) como dano normal.",
-      "parametros": {"tipo": "pedra", "categoria": "normal", "qtd_areas": 3, "atk_pct": 0.65},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "normal",
+        "qtd_areas": 3,
+        "atk_pct": 0.65
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     },
     "227": {
       "ID": 227,
@@ -74,11 +152,33 @@
       "custo": 40,
       "custo_ap": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso", "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasBrancas",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_fragmento_incisivo",
       "descricao": "Causa (65% de Atk) como dano normal e aplica Quebrado no alvo.",
-      "parametros": {"tipo": "pedra", "categoria": "normal", "atk_pct": 0.65, "efeito": "Quebrado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "normal",
+        "atk_pct": 0.65,
+        "efeito": "Quebrado"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "228": {
       "ID": 228,
@@ -87,11 +187,33 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso", "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "MagiaAzul",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_pedra_especial",
       "descricao": "Causa (70% de SpA) + (20% de Atk) como dano especial.",
-      "parametros": {"tipo": "pedra", "categoria": "especial", "spa_pct": 0.70, "atk_pct": 0.20},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "especial",
+        "spa_pct": 0.7,
+        "atk_pct": 0.2
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "229": {
       "ID": 229,
@@ -100,11 +222,37 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso", "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_pedra_dupla",
       "descricao": "Escolhe ate 2 alvos. Causa (75% de Atk) como dano normal em cada alvo. Este ataque nao pode ser critico.",
-      "parametros": {"tipo": "pedra", "categoria": "normal", "max_alvos": 2, "min_alvos": 1, "atk_pct": 0.75, "pode_critico": false},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "quantidade_minima": 1, "quantidade_maxima": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "normal",
+        "max_alvos": 2,
+        "min_alvos": 1,
+        "atk_pct": 0.75,
+        "pode_critico": false
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 2,
+            "quantidade_minima": 1,
+            "quantidade_maxima": 2,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "230": {
       "ID": 230,
@@ -113,11 +261,26 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_poder_anciao",
       "descricao": "O usuario ganha (5% de Mag) em Atk, SpA, Def e SpD.",
-      "parametros": {"tipo": "pedra", "mag_pct": 0.05, "atributos": ["Atk", "SpA", "Def", "SpD"]},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "pedra",
+        "mag_pct": 0.05,
+        "atributos": [
+          "Atk",
+          "SpA",
+          "Def",
+          "SpD"
+        ]
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     },
     "231": {
       "ID": 231,
@@ -126,11 +289,33 @@
       "custo": 65,
       "custo_ap": 75,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "CorteDourado"
+      },
       "execute_principal": "ataque_lamina_de_cristal",
       "descricao": "Causa (45% de Atk) + (45% de SpA) como dano. Se a SpD do alvo for menor que a Def, o dano e especial e zera variacoes positivas permanentes de SpD. Caso contrario, o dano e normal e zera variacoes positivas permanentes de Def.",
-      "parametros": {"tipo": "pedra", "atk_pct": 0.45, "spa_pct": 0.45, "atributo_comparacao_especial": "SpD", "atributo_comparacao_normal": "Def"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "atk_pct": 0.45,
+        "spa_pct": 0.45,
+        "atributo_comparacao_especial": "SpD",
+        "atributo_comparacao_normal": "Def"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "232": {
       "ID": 232,
@@ -139,11 +324,21 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": "Barreira"},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "Barreira",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_escudo_de_pedra",
       "descricao": "Dobra a Barreira atual do usuario. Se o usuario nao tiver Barreira, ganha 10% de Def.",
-      "parametros": {"tipo": "pedra", "barreira_mult": 2.0, "barreira_sem_barreira_def_pct": 0.10},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "pedra",
+        "barreira_mult": 2.0,
+        "barreira_sem_barreira_def_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     },
     "233": {
       "ID": 233,
@@ -153,12 +348,35 @@
       "custo_ap": 75,
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": "ImpactoRochoso",
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_rolagem",
       "descricao": "Causa dano em linha baseado em (80% de Def). A cada inimigo atingido, o proximo recebe 25% menos dano baseado em Def. O usuario recebe 8% do dano causado a cada inimigo atingido.",
       "permite_area_vazia": true,
-      "parametros": {"tipo": "pedra", "categoria": "normal", "def_pct": 0.80, "reducao_por_alvo_mult": 0.75, "recoil_dano_causado_pct": 0.08, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "normal",
+        "def_pct": 0.8,
+        "reducao_por_alvo_mult": 0.75,
+        "recoil_dano_causado_pct": 0.08,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "234": {
       "ID": 234,
@@ -167,11 +385,32 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_impacto_rochoso",
       "descricao": "Causa (130% de Def) como dano normal, mas o usuario perde 10% de Def depois do ataque.",
-      "parametros": {"tipo": "pedra", "categoria": "normal", "def_pct": 1.30, "perda_def_pct": 0.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "normal",
+        "def_pct": 1.3,
+        "perda_def_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "235": {
       "ID": 235,
@@ -180,11 +419,34 @@
       "custo": 70,
       "custo_ap": 80,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_pedra_colossal",
       "descricao": "Causa (80% de Atk) como dano normal e remove 1 equipavel aleatorio do alvo durante a batalha.",
-      "parametros": {"tipo": "pedra", "categoria": "normal", "atk_pct": 0.80, "qtd_equipaveis_remover": 1, "remocao_temporaria_batalha": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "normal",
+        "atk_pct": 0.8,
+        "qtd_equipaveis_remover": 1,
+        "remocao_temporaria_batalha": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "236": {
       "ID": 236,
@@ -194,11 +456,25 @@
       "custo_ap": 110,
       "estilo_logico": "ativo",
       "modo_execucao": "uma_vez",
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": "ImpactoRochoso",
+        "efeito_alvo": "ImpactoRochoso",
+        "efeito_impacto_secundario": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_autodestruicao",
       "descricao": "Causa (150% de Atk) como dano normal a todos os Pokemon adjacentes ao usuario. O usuario recebe 80% do dano causado a si mesmo e ganha Imortal por 1 passo.",
-      "parametros": {"tipo": "pedra", "categoria": "normal", "atk_pct": 1.50, "recoil_dano_causado_pct": 0.80, "efeito_usuario": "Imortal", "duracao_imortal_passos": 1},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "pedra",
+        "categoria": "normal",
+        "atk_pct": 1.5,
+        "recoil_dano_causado_pct": 0.8,
+        "efeito_usuario": "Imortal",
+        "duracao_imortal_passos": 1
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     }
   },
   "_comentario": "Ataques pedra Code 222 a 236 conforme CSV oficial. Custo AP foi mantido em custo_ap, sem tratar como acuracia."

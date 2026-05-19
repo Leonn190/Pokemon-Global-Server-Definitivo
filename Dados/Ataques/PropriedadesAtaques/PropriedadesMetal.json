@@ -9,11 +9,32 @@
       "custo": 25,
       "custo_ap": 30,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "Fumaça",
+        "projetil": "Generico"
+      },
       "execute_principal": "ataque_ferrugem",
       "descricao": "O inimigo perde 10% da Def atual/final do alvo + 10% da Mag atual/final do usuario em Def.",
-      "parametros": {"tipo": "metal", "percentual_def_alvo": 0.10, "percentual_mag_usuario": 0.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "percentual_def_alvo": 0.1,
+        "percentual_mag_usuario": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "287": {
       "ID": 287,
@@ -22,11 +43,21 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "CorteDourado",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_afiar",
       "descricao": "O usuario ganha 20% de Mag + 10% de Per em Per.",
-      "parametros": {"tipo": "metal", "percentual_mag_usuario": 0.20, "percentual_per_usuario": 0.10},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "metal",
+        "percentual_mag_usuario": 0.2,
+        "percentual_per_usuario": 0.1
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     },
     "288": {
       "ID": 288,
@@ -35,11 +66,22 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_metalurgia",
       "descricao": "Todos os aliados adjacentes perdem 4% da Vida Maxima e ganham Per equivalente a 15% da Mag do usuario. Se for critico, usam 20% da Mag.",
-      "parametros": {"tipo": "metal", "percentual_vida_maxima_perdida": 0.04, "percentual_mag_per_normal": 0.15, "percentual_mag_per_critico": 0.20},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "metal",
+        "percentual_vida_maxima_perdida": 0.04,
+        "percentual_mag_per_normal": 0.15,
+        "percentual_mag_per_critico": 0.2
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     },
     "289": {
       "ID": 289,
@@ -49,11 +91,33 @@
       "custo_ap": 60,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "CorteDourado"
+      },
       "execute_principal": "ataque_corte_e_recorte",
       "descricao": "Causa 55% de Atk + 25% de Per + 25% de Vamp como dano normal.",
-      "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_atk": 0.55, "multiplicador_per": 0.25, "multiplicador_vamp": 0.25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "normal",
+        "multiplicador_atk": 0.55,
+        "multiplicador_per": 0.25,
+        "multiplicador_vamp": 0.25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "290": {
       "ID": 290,
@@ -62,11 +126,33 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": "Barreira", "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": "Barreira",
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_barreira_ofensiva",
       "descricao": "O usuario ganha uma barreira equivalente a 15% de Mag e causa 80% da Barreira atual do usuario como dano normal, limitado a 120% de Mag.",
-      "parametros": {"tipo": "metal", "categoria": "normal", "percentual_mag_barreira": 0.15, "percentual_barreira_atual_dano": 0.80, "limite_percentual_mag_dano": 1.20},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "normal",
+        "percentual_mag_barreira": 0.15,
+        "percentual_barreira_atual_dano": 0.8,
+        "limite_percentual_mag_dano": 1.2
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "291": {
       "ID": 291,
@@ -77,11 +163,33 @@
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "modo_execucao": "uma_vez",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "RaioAzul"
+      },
       "execute_principal": "ataque_ima",
       "descricao": "Causa 65% de SpA como dano especial em linha e puxa todos os inimigos atingidos 1 area para frente. Se algum inimigo ja estiver na ultima area possivel, recebe +30% de dano.",
-      "parametros": {"tipo": "metal", "categoria": "especial", "multiplicador_spa": 0.65, "bonus_dano_ultima_area": 0.30, "deslocamento_puxao": 1},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "especial",
+        "multiplicador_spa": 0.65,
+        "bonus_dano_ultima_area": 0.3,
+        "deslocamento_puxao": 1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "292": {
       "ID": 292,
@@ -91,11 +199,32 @@
       "custo_ap": 70,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_impacto_de_aco",
       "descricao": "Causa 55% de Def + 55% de SpD como dano normal.",
-      "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_def": 0.55, "multiplicador_spd": 0.55},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "normal",
+        "multiplicador_def": 0.55,
+        "multiplicador_spd": 0.55
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "293": {
       "ID": 293,
@@ -105,11 +234,32 @@
       "custo_ap": 60,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_cabecada_de_ferro",
       "descricao": "Causa 115% de Atk como dano normal. Este ataque nao usa Per no dano.",
-      "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_atk": 1.15, "usar_per_no_dano": false},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "normal",
+        "multiplicador_atk": 1.15,
+        "usar_per_no_dano": false
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "294": {
       "ID": 294,
@@ -118,11 +268,32 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "CorteDourado"
+      },
       "execute_principal": "ataque_cauda_de_ferro",
       "descricao": "Causa 80% de Atk como dano normal e remove 15% da Def BASE do alvo.",
-      "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_atk": 0.80, "percentual_def_base_removida": 0.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "normal",
+        "multiplicador_atk": 0.8,
+        "percentual_def_base_removida": 0.15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "295": {
       "ID": 295,
@@ -132,11 +303,31 @@
       "custo_ap": 55,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_britadeira",
       "descricao": "Causa 160% de Per como dano normal.",
-      "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_per": 1.60},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "normal",
+        "multiplicador_per": 1.6
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "296": {
       "ID": 296,
@@ -145,11 +336,33 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "CorteDourado"
+      },
       "execute_principal": "ataque_super_fincada",
       "descricao": "Causa 60% de Atk + 25% de Per como dano normal. O alvo perde permanentemente Def e SpD equivalentes a 25% de Per do usuario.",
-      "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_atk": 0.60, "multiplicador_per_dano": 0.25, "percentual_per_reducao_def_spd": 0.25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "normal",
+        "multiplicador_atk": 0.6,
+        "multiplicador_per_dano": 0.25,
+        "percentual_per_reducao_def_spd": 0.25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "297": {
       "ID": 297,
@@ -160,11 +373,35 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "efeito_impacto_secundario": "ImpactoRochoso"
+      },
       "execute_principal": "ataque_liga_metalica",
       "descricao": "Escolhe exatamente 2 areas. Causa 65% de Atk + 35% de Def como dano normal nos alvos. Soma a Def dos alvos atingidos; se a Def do usuario for maior que essa soma, causa +45% de dano.",
-      "parametros": {"tipo": "metal", "categoria": "normal", "quantidade_alvos": 2, "multiplicador_atk": 0.65, "multiplicador_def": 0.35, "bonus_dano_se_def_maior_soma": 0.45},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "metal",
+        "categoria": "normal",
+        "quantidade_alvos": 2,
+        "multiplicador_atk": 0.65,
+        "multiplicador_def": 0.35,
+        "bonus_dano_se_def_maior_soma": 0.45
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 2,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "298": {
       "ID": 298,
@@ -173,11 +410,21 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null
+      },
       "execute_principal": "ataque_treinamento_de_metal",
       "descricao": "O usuario ganha aleatoriamente +12 de CrD ou +12 de CrC.",
-      "parametros": {"tipo": "metal", "bonus_crd": 12, "bonus_crc": 12},
-      "alvificacao": {"alvos": []}
+      "parametros": {
+        "tipo": "metal",
+        "bonus_crd": 12,
+        "bonus_crc": 12
+      },
+      "alvificacao": {
+        "alvos": []
+      }
     }
   },
   "_comentario": "Ataques metal Code 286 a 298 conforme CSV oficial."

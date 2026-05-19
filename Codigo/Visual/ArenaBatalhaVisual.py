@@ -125,20 +125,21 @@ class ArenaBatalhaVisual:
                 continue
             raio = max(float(rect.width), float(rect.height)) / altura * 0.58
             raio = max(0.020, min(0.115, raio))
-            for efeito in self.ordenar_efeitos(efeitos)[:3]:
-                if len(saida) >= 18:
-                    break
-                codigo = int(self.CODIGOS_SHADER.get(efeito, 0))
-                if codigo <= 0:
-                    continue
-                saida.append({
-                    "area_id": str(area_id),
-                    "tipo": efeito,
-                    "codigo": codigo,
-                    "pos_uv": [cx, cy],
-                    "raio": raio,
-                    "power": 1.0,
-                })
+            efeitos_ordenados = self.ordenar_efeitos(efeitos)
+            if not efeitos_ordenados:
+                continue
+            efeito = efeitos_ordenados[0]
+            codigo = int(self.CODIGOS_SHADER.get(efeito, 0))
+            if codigo <= 0:
+                continue
+            saida.append({
+                "area_id": str(area_id),
+                "tipo": efeito,
+                "codigo": codigo,
+                "pos_uv": [cx, cy],
+                "raio": raio,
+                "power": 1.0,
+            })
         return saida
 
     @staticmethod

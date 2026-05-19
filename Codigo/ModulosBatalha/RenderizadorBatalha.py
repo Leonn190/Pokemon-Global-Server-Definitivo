@@ -27,6 +27,7 @@ class RenderizadorBatalha:
         if b.montador_jogadas is not None:
             areas_destacadas = b.montador_jogadas.areas_destacadas()
             reservas_destacadas = b.montador_jogadas.reservas_destacadas()
+        b.arena.desenhar_efeitos_areas(surface, b.camera)
         b.arena.desenhar_areas(
             surface,
             b.camera,

@@ -148,6 +148,11 @@ class ControladorBatalha:
             for chave in ("regras", "regras_mundo"):
                 if chave not in estado and isinstance(estado_cliente.get(chave), dict):
                     estado[chave] = estado_cliente[chave]
+            arena_cliente = estado_cliente.get("arena") if isinstance(estado_cliente.get("arena"), dict) else {}
+            if "efeitos_areas" in estado_cliente or "efeitos_areas" in arena_cliente:
+                arena_estado = dict(estado.get("arena") or {})
+                arena_estado.setdefault("efeitos_areas", copy.deepcopy(arena_cliente.get("efeitos_areas", estado_cliente.get("efeitos_areas"))))
+                estado["arena"] = arena_estado
         self.rodada_atual = int(estado.get("rodada_atual", 1) or 1)
         self.lado_jogador = int(estado.get("lado_jogador", 50) or 50)
         self.tipo_batalha = str(estado.get("tipo_batalha") or self.tipo_batalha)
@@ -155,6 +160,8 @@ class ControladorBatalha:
         self.clima_atual = estado.get("clima_atual")
 
         contexto_arena = dict(estado.get("arena") or {})
+        if "efeitos_areas" not in contexto_arena and "efeitos_areas" in estado:
+            contexto_arena["efeitos_areas"] = copy.deepcopy(estado.get("efeitos_areas"))
         self.arena = Arena(contexto_arena)
 
         if self.camera is None:

@@ -9,6 +9,7 @@ import pygame
 from Codigo.ModulosMundo.Geradores.EstruturaNaturais import EstruturaNaturalFake, tipo_estrutura_natural_por_codigo
 from Codigo.ModulosGerais.GerenciadorTiles import GerenciadorTiles
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Visual.ArenaBatalhaVisual import ArenaBatalhaVisual
 
 Vector2 = Tuple[float, float]
 
@@ -44,11 +45,14 @@ class Arena:
         self._areas: list[dict[str, object]] = []
         self._areas_por_id: dict[str, dict[str, object]] = {}
         self._ocupacao_areas: dict[str, object] = {}
+        self._efeitos_areas: dict[str, set[str]] = {}
+        self._visual_arena = ArenaBatalhaVisual()
         self._slots_reserva: dict[str, list[dict[str, object]]] = {"jogador": [], "inimigo": []}
         self._textos_indices_area: dict[str, Texto] = {}
 
         self._montar()
         self.criar_areas_batalha()
+        self._carregar_efeitos_areas_contexto(self.Contexto.get("efeitos_areas"))
 
     def _retangulo_arena(self) -> pygame.Rect:
         cx, cy = float(self.Centro[0]), float(self.Centro[1])
@@ -307,6 +311,91 @@ class Arena:
                 texto_idx.draw(texto_layer)
                 texto_layer.set_alpha(110)
                 surface.blit(texto_layer, rect_tela.topleft)
+
+    def _carregar_efeitos_areas_contexto(self, bruto) -> None:
+        if isinstance(bruto, dict):
+            for area_id, efeitos in bruto.items():
+                self.definir_efeitos_area(area_id, efeitos)
+            return
+        if isinstance(bruto, list):
+            for item in bruto:
+                if not isinstance(item, dict):
+                    continue
+                area_id = item.get("area_id") or item.get("id") or item.get("area")
+                efeitos = item.get("efeitos")
+                if efeitos is None and item.get("efeito") is not None:
+                    efeitos = [item.get("efeito")]
+                self.definir_efeitos_area(area_id, efeitos)
+
+    @staticmethod
+    def _lista_efeitos(efeitos) -> list[object]:
+        if efeitos is None:
+            return []
+        if isinstance(efeitos, (str, bytes)):
+            return [efeitos]
+        try:
+            return list(efeitos)
+        except TypeError:
+            return [efeitos]
+
+    def _normalizar_efeito_area(self, efeito) -> str | None:
+        return ArenaBatalhaVisual.normalizar_efeito(efeito)
+
+    def definir_efeitos_area(self, area_id, efeitos) -> None:
+        aid = str(area_id or "").strip().upper()
+        if not aid or aid not in self._areas_por_id:
+            return
+        normalizados = {
+            efeito_norm
+            for efeito_norm in (self._normalizar_efeito_area(efeito) for efeito in self._lista_efeitos(efeitos))
+            if efeito_norm
+        }
+        if normalizados:
+            self._efeitos_areas[aid] = normalizados
+        else:
+            self._efeitos_areas.pop(aid, None)
+
+    def adicionar_efeito_area(self, area_id, efeito) -> None:
+        aid = str(area_id or "").strip().upper()
+        if not aid or aid not in self._areas_por_id:
+            return
+        efeito_norm = self._normalizar_efeito_area(efeito)
+        if not efeito_norm:
+            return
+        self._efeitos_areas.setdefault(aid, set()).add(efeito_norm)
+
+    def remover_efeito_area(self, area_id, efeito) -> None:
+        aid = str(area_id or "").strip().upper()
+        efeito_norm = self._normalizar_efeito_area(efeito)
+        if not aid or not efeito_norm:
+            return
+        efeitos = self._efeitos_areas.get(aid)
+        if not efeitos:
+            return
+        efeitos.discard(efeito_norm)
+        if not efeitos:
+            self._efeitos_areas.pop(aid, None)
+
+    def limpar_efeitos_area(self, area_id) -> None:
+        aid = str(area_id or "").strip().upper()
+        if aid:
+            self._efeitos_areas.pop(aid, None)
+
+    def limpar_efeitos_areas(self) -> None:
+        self._efeitos_areas.clear()
+
+    def obter_efeitos_area(self, area_id) -> set[str]:
+        aid = str(area_id or "").strip().upper()
+        return set(self._efeitos_areas.get(aid, set()))
+
+    def areas_com_efeitos(self) -> dict[str, set[str]]:
+        return {aid: set(efeitos) for aid, efeitos in self._efeitos_areas.items() if efeitos}
+
+    def desenhar_efeitos_areas(self, surface, camera) -> None:
+        self._visual_arena.desenhar_efeitos_areas(surface, camera, self)
+
+    def coletar_efeitos_areas_shader(self, tamanho_tela, camera):
+        return self._visual_arena.coletar_efeitos_shader(self, camera, tamanho_tela)
 
     def obter_area_por_id(self, area_id):
         return self._areas_por_id.get(str(area_id or "").strip())

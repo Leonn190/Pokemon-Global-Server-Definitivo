@@ -97,6 +97,16 @@ class CompositorModernGL:
         "steel": 17,
         "fairy": 18,
     }
+    _TIPOS_AREA_BATALHA = {
+        "destruido": 1,
+        "queimado": 2,
+        "envenenado": 3,
+        "congelado": 4,
+        "eletrificado": 5,
+        "encharcado": 6,
+        "amaldicoado": 7,
+        "abencoado": 8,
+    }
 
     def __init__(self) -> None:
         if moderngl is None:
@@ -278,6 +288,36 @@ class CompositorModernGL:
             codigo_power = float(codigo) + power * 0.1
             self._uniform(f"u_estado_batalha_{i}", (float(pos[0]), float(pos[1]), float(raio), float(codigo_power)))
 
+    def _aplicar_uniformes_areas_batalha(self, areas_batalha) -> None:
+        max_areas = 18
+        for i in range(max_areas):
+            self._uniform(f"u_area_batalha_{i}", (0.0, 0.0, 0.0, 0.0))
+        if not isinstance(areas_batalha, list):
+            return
+        slot = 0
+        for item in areas_batalha:
+            if slot >= max_areas:
+                break
+            if not isinstance(item, dict):
+                continue
+            pos = self._vec2(item.get("pos_uv", item.get("uv", (0.5, 0.5))))
+            try:
+                raio = self._clamp(float(item.get("raio", item.get("radius", 0.0)) or 0.0), 0.0, 1.0)
+                power = self._clamp(float(item.get("power", item.get("intensidade", 0.0)) or 0.0), 0.0, 1.0)
+            except (TypeError, ValueError):
+                continue
+            try:
+                codigo = int(float(item.get("codigo", 0) or 0))
+            except (TypeError, ValueError):
+                codigo = 0
+            if codigo <= 0:
+                codigo = int(self._TIPOS_AREA_BATALHA.get(self._chave_texto(item.get("tipo")), 0))
+            if codigo <= 0 or raio <= 0.001 or power <= 0.001:
+                continue
+            codigo_power = float(codigo) + power * 0.1
+            self._uniform(f"u_area_batalha_{slot}", (float(pos[0]), float(pos[1]), float(raio), float(codigo_power)))
+            slot += 1
+
     def _cor_rgb_normalizada(self, valor, padrao=(1.0, 1.0, 1.0)) -> tuple[float, float, float, float]:
         try:
             if isinstance(valor, (list, tuple)) and len(valor) >= 3:
@@ -346,6 +386,7 @@ class CompositorModernGL:
         texto_cinematico_power = self._clamp(float(dados.get("texto_cinematico_power", 0.0) or 0.0), 0.0, 1.0)
         dungeon_power = self._clamp(float(dados.get("dungeon_power", 0.0) or 0.0), 0.0, 1.0)
         estados_batalha = list(dados.get("battle_status_targets", dados.get("estados_batalha_shader", [])) or [])
+        areas_batalha = list(dados.get("battle_area_fx", dados.get("areas_batalha_shader", [])) or [])
         ataques_batalha = list(dados.get("battle_attack_fx", dados.get("ataques_batalha_shader", [])) or [])
         estados_batalha_ativos = False
         for item in estados_batalha:
@@ -354,6 +395,16 @@ class CompositorModernGL:
             try:
                 if float(item.get("power", item.get("intensidade", 0.0)) or 0.0) > 0.001:
                     estados_batalha_ativos = True
+                    break
+            except (TypeError, ValueError):
+                continue
+        areas_batalha_ativas = False
+        for item in areas_batalha:
+            if not isinstance(item, dict):
+                continue
+            try:
+                if float(item.get("power", item.get("intensidade", 0.0)) or 0.0) > 0.001:
+                    areas_batalha_ativas = True
                     break
             except (TypeError, ValueError):
                 continue
@@ -376,6 +427,7 @@ class CompositorModernGL:
                 or texto_cinematico_power > 0.001
                 or dungeon_power > 0.001
                 or estados_batalha_ativos
+                or areas_batalha_ativas
                 or ataques_batalha_ativos
             )
         )
@@ -409,6 +461,7 @@ class CompositorModernGL:
         self._uniform("u_battle_sand_power", float(self._clamp(float(dados.get("battle_sand_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_fog_power", float(self._clamp(float(dados.get("battle_fog_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_acid_power", float(self._clamp(float(dados.get("battle_acid_power", 0.0) or 0.0), 0.0, 1.0)))
+        self._aplicar_uniformes_areas_batalha(areas_batalha)
         self._aplicar_uniformes_estados_batalha(estados_batalha)
         self._aplicar_uniformes_ataques_batalha(ataques_batalha)
 

@@ -22,6 +22,13 @@ EVENTOS_IMPACTO = {
     "pokemon_alterou_atributo",
 }
 
+EVENTOS_AREA_ARENA = {
+    "area_recebeu_efeito",
+    "area_removeu_efeito",
+    "area_limpou_efeitos",
+    "area_definiu_efeitos",
+}
+
 MODELOS_ATAQUE_SHADER = {
     "Projetil": 1,
     "Laser": 2,
@@ -100,6 +107,9 @@ class ControladorAnimacoes:
         ctrl = self.controlador
         out = []
 
+        if tipo in EVENTOS_AREA_ARENA:
+            self._aplicar_evento_area_arena(tipo, dados)
+            return []
         if tipo == "ataque_usado":
             out.extend(self._animar_ataque_usado(dados))
         elif tipo in {"ataque_acertou", "ataque_sem_alvo_real"}:
@@ -192,6 +202,26 @@ class ControladorAnimacoes:
                 out.append(self.animator.exibir_cartucho_atributo(poke, atributo, valor, positivo=self._positivo(valor, dados)))
 
         return [a for a in out if a is not None]
+
+    def _aplicar_evento_area_arena(self, tipo, dados) -> None:
+        arena = getattr(self.controlador, "arena", None)
+        if arena is None:
+            return
+        area_id = dados.get("area_id") or dados.get("id") or dados.get("area")
+        if tipo == "area_recebeu_efeito" and hasattr(arena, "adicionar_efeito_area"):
+            arena.adicionar_efeito_area(area_id, dados.get("efeito") or dados.get("efeito_nome") or dados.get("efeito_code"))
+        elif tipo == "area_removeu_efeito" and hasattr(arena, "remover_efeito_area"):
+            arena.remover_efeito_area(area_id, dados.get("efeito") or dados.get("efeito_nome") or dados.get("efeito_code"))
+        elif tipo == "area_limpou_efeitos":
+            if area_id and hasattr(arena, "limpar_efeitos_area"):
+                arena.limpar_efeitos_area(area_id)
+            elif hasattr(arena, "limpar_efeitos_areas"):
+                arena.limpar_efeitos_areas()
+        elif tipo == "area_definiu_efeitos" and hasattr(arena, "definir_efeitos_area"):
+            efeitos = dados.get("efeitos")
+            if efeitos is None and dados.get("efeito") is not None:
+                efeitos = [dados.get("efeito")]
+            arena.definir_efeitos_area(area_id, efeitos)
 
     def _animar_ataque_usado(self, dados):
         return self.animador_ataques.animar_ataque_usado(dados)

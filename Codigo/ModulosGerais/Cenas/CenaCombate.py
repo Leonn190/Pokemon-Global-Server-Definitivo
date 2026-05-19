@@ -274,6 +274,12 @@ class CenaCombate:
             efeito["tipo"] = "batalha"
             efeito["battle_status_targets"] = estados
             efeito["ativo"] = True
+        areas = self._coletar_areas_shader_batalha(tamanho_tela)
+        if areas:
+            efeito["tipo"] = "batalha"
+            efeito["battle_area_fx"] = areas
+            efeito["areas_batalha_shader"] = areas
+            efeito["ativo"] = True
         ataques = []
         controlador_animacoes = getattr(getattr(self, "ControladorBatalha", None), "controlador_animacoes", None)
         if controlador_animacoes is not None and hasattr(controlador_animacoes, "coletar_ataques_shader_batalha"):
@@ -385,6 +391,17 @@ class CenaCombate:
                     break
                 saida.append({"pos_uv": (cx, cy), "radius": raio, "tipo": codigo, "power": power})
         return saida
+
+    def _coletar_areas_shader_batalha(self, tamanho_tela):
+        controlador = getattr(self, "ControladorBatalha", None)
+        arena = getattr(controlador, "arena", None) if controlador is not None else None
+        camera = getattr(controlador, "camera", None) if controlador is not None else getattr(self, "Camera", None)
+        if arena is None or camera is None or not hasattr(arena, "coletar_efeitos_areas_shader"):
+            return []
+        try:
+            return list(arena.coletar_efeitos_areas_shader(tamanho_tela, camera) or [])
+        except Exception:
+            return []
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         eventos_ui = list(getattr(self, "_eventos_ui_atual", EVENTOS) or [])

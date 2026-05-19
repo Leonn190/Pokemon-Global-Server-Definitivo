@@ -73,13 +73,16 @@ class Loja:
         categoria = self._categoria_vendedor_normalizada()
         if categoria == "item":
             padrao = self._gerar_ofertas_compra_itens()
+            secreta = self._gerar_ofertas_compra_itens(bonus_preco=1.20, sufixo_seed="secreta")
         elif categoria == "pokemon":
             padrao = self._gerar_ofertas_compra_pokemons()
+            secreta = self._gerar_ofertas_compra_pokemons(bonus_preco=1.20, sufixo_seed="secreta")
         else:
             padrao = self._carregar_loja_padrao()
+            secreta = self._carregar_loja_secreta()
         return {
             "padrao": padrao,
-            "secreta": self._carregar_loja_secreta(),
+            "secreta": secreta,
             "presentes": presentes,
             "presente_1": [dict(o) for o in presentes if str(o.get("id") or "") == "presente_1"],
             "presente_2": [dict(o) for o in presentes if str(o.get("id") or "") == "presente_2"],
@@ -201,7 +204,7 @@ class Loja:
         rng = self._rng_ofertas(f"preco:{sufixo}")
         return float(minimo) + (float(maximo) - float(minimo)) * rng.random()
 
-    def _gerar_ofertas_compra_itens(self) -> list[dict]:
+    def _gerar_ofertas_compra_itens(self, bonus_preco: float = 1.0, sufixo_seed: str = "") -> list[dict]:
         inventario = getattr(self._ator_local, "Inventario", None)
         itens_inv = list(getattr(inventario, "Itens", []) or []) if inventario is not None else []
         itens_catalogo = self._carregar_itens_por_nome()
@@ -231,13 +234,14 @@ class Loja:
             rng_qtd = self._rng_ofertas(f"qtd_item:{chave}")
             quantidade = rng_qtd.randint(1, qtd_limite)
             mult = self._multiplicador_preco(f"item:{chave}")
-            preco = max(1, int(round(quantidade * valor * mult)))
+            preco = max(1, int(round(quantidade * valor * mult * float(bonus_preco or 1.0))))
             candidatos.append(
                 {
                     "ordem": self._rng_ofertas(f"ordem_item:{chave}").random(),
                     "oferta": {
                         "id": f"compra_item_{chave}",
                         "tipo": "comprar_item_player",
+                        "tipo_loja": "secreta" if sufixo_seed == "secreta" else "padrao",
                         "item_nome": str(item.get("Nome") or item.get("nome") or "Item"),
                         "item_chave": chave,
                         "quantidade": quantidade,
@@ -304,17 +308,17 @@ class Loja:
         origem = self._normalizar_ascii(self._pokemon_valor(pokemon, "origem", "Origem", "source", "Source", default=""))
         return origem in {"inicial", "starter", "pokemon inicial"}
 
-    def _preco_pokemon(self, pokemon, chave: str) -> int:
+    def _preco_pokemon(self, pokemon, chave: str, bonus_preco: float = 1.0) -> int:
         nivel = max(0, self._pokemon_int(pokemon, "Nivel", "nivel", "Level", "level", default=0))
         raridade = max(1, self._pokemon_int(pokemon, "Raridade", "raridade", default=1))
         iv = max(0, self._pokemon_int(pokemon, "IV", "iv", default=0))
         valor = max(5.0, (float(nivel) * float(raridade) * float(iv)) / 100.0)
         if self._pokemon_inicial(pokemon):
             valor *= 1.5
-        valor *= self._multiplicador_preco(f"pokemon:{chave}")
+        valor *= self._multiplicador_preco(f"pokemon:{chave}") * float(bonus_preco or 1.0)
         return max(5, int(round(valor)))
 
-    def _gerar_ofertas_compra_pokemons(self) -> list[dict]:
+    def _gerar_ofertas_compra_pokemons(self, bonus_preco: float = 1.0, sufixo_seed: str = "") -> list[dict]:
         inventario = getattr(self._ator_local, "Inventario", None)
         pokemons = list(getattr(inventario, "Pokemons", []) or []) if inventario is not None else []
         nivel_vendedor = max(0, self._nivel_vendedor())
@@ -328,13 +332,14 @@ class Loja:
             chave = self._pokemon_chave_estavel(pokemon, indice=indice, incluir_indice=True)
             fingerprint = self._pokemon_chave_estavel(pokemon, incluir_indice=False)
             nome = self._pokemon_nome(pokemon)
-            preco = self._preco_pokemon(pokemon, chave)
+            preco = self._preco_pokemon(pokemon, chave, bonus_preco=bonus_preco)
             candidatos.append(
                 {
                     "ordem": self._rng_ofertas(f"ordem_pokemon:{chave}").random(),
                     "oferta": {
                         "id": f"compra_pokemon_{chave}",
                         "tipo": "comprar_pokemon_player",
+                        "tipo_loja": "secreta" if sufixo_seed == "secreta" else "padrao",
                         "pokemon_chave": chave,
                         "pokemon_fingerprint": fingerprint,
                         "pokemon_nome": nome,
@@ -475,6 +480,11 @@ class Loja:
                 self._catalogo["padrao"] = self._gerar_ofertas_compra_pokemons()
             return [o for o in self._catalogo.get("padrao", []) if isinstance(o, dict)]
         if tipo == "secreta":
+            categoria = self._categoria_vendedor_normalizada()
+            if categoria == "item":
+                self._catalogo["secreta"] = self._gerar_ofertas_compra_itens(bonus_preco=1.20, sufixo_seed="secreta")
+            elif categoria == "pokemon":
+                self._catalogo["secreta"] = self._gerar_ofertas_compra_pokemons(bonus_preco=1.20, sufixo_seed="secreta")
             return [o for o in self._catalogo.get("secreta", []) if isinstance(o, dict)]
         if tipo in {"presente_1", "presente_2"}:
             try:
@@ -499,7 +509,7 @@ class Loja:
         ofertas = self._ofertas_por_tipo(tipo)
         if tipo not in {"padrao", "secreta", "presente", "presente_1", "presente_2"}:
             return
-        if tipo == "padrao" and not ofertas and self._categoria_vendedor_normalizada() in {"item", "pokemon"} and not self._status_compra:
+        if tipo in {"padrao", "secreta"} and not ofertas and self._categoria_vendedor_normalizada() in {"item", "pokemon"} and not self._status_compra:
             self._status_compra = "Nada interessante para negociar agora."
 
         w, h = tela_size
@@ -625,6 +635,12 @@ class Loja:
                 for idx, slot in enumerate(slots):
                     if self._pokemon_chave_estavel(slot, incluir_indice=False) == alvo_fingerprint:
                         slots[idx] = None
+                        if isinstance(time, dict):
+                            if "Slots" in time:
+                                time["Slots"] = slots
+                            if "slots" in time:
+                                time["slots"] = slots
+                        return
                 if isinstance(time, dict):
                     if "Slots" in time:
                         time["Slots"] = slots
@@ -652,20 +668,20 @@ class Loja:
             quantidade = int(max(1, int(oferta.get("quantidade", 1) or 1)))
             if inventario is None or not self._remover_quantidade_item(str(oferta.get("item_chave") or ""), quantidade):
                 self._status_compra = "Item indisponivel"
-                self.montar_botoes("padrao", self._tamanho_loja_montado or (1280, 720))
+                self.montar_botoes(str(oferta.get("tipo_loja") or "padrao"), self._tamanho_loja_montado or (1280, 720))
                 return
             preco = max(1, int(oferta.get("preco", 1) or 1))
             nome = str(oferta.get("item_nome") or "Item")
             self._pagar_moedas_player(preco)
             self._emitir_ganho("moedas", "Moedas", preco)
             self._status_compra = f"Vendeu {nome} x{quantidade} por {preco} moedas"
-            self.montar_botoes("padrao", self._tamanho_loja_montado or (1280, 720))
+            self.montar_botoes(str(oferta.get("tipo_loja") or "padrao"), self._tamanho_loja_montado or (1280, 720))
             return
         if tipo == "comprar_pokemon_player":
             fingerprint = str(oferta.get("pokemon_fingerprint") or "")
             if inventario is None or not self._remover_pokemon_por_chave(str(oferta.get("pokemon_chave") or ""), fingerprint):
                 self._status_compra = "Oferta indisponivel"
-                self.montar_botoes("padrao", self._tamanho_loja_montado or (1280, 720))
+                self.montar_botoes(str(oferta.get("tipo_loja") or "padrao"), self._tamanho_loja_montado or (1280, 720))
                 return
             preco = max(5, int(oferta.get("preco", 5) or 5))
             nome = str(oferta.get("pokemon_nome") or "Pokemon")
@@ -673,7 +689,7 @@ class Loja:
             self._pagar_moedas_player(preco)
             self._emitir_ganho("moedas", "Moedas", preco)
             self._status_compra = f"Vendeu {nome} Nv. {nivel} por {preco} moedas"
-            self.montar_botoes("padrao", self._tamanho_loja_montado or (1280, 720))
+            self.montar_botoes(str(oferta.get("tipo_loja") or "padrao"), self._tamanho_loja_montado or (1280, 720))
             return
         if oferta_id.startswith("presente_") and self._presente_ja_coletado(oferta_id):
             self._status_compra = "Esse presente já foi resgatado"

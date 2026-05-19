@@ -212,6 +212,7 @@ class ControladorAnimacoes:
             impacto_abs = self._impacto_explosao_para_alvo(contexto, alvo_id)
             if impacto_abs is not None:
                 contexto.setdefault("impactos", {})[alvo_id] = impacto_abs
+                contexto["fim"] = max(float(contexto.get("fim", 0.0) or 0.0), float(impacto_abs) + 0.35)
                 efeito_sec = (contexto.get("animacao") or {}).get("efeito_impacto_secundario")
                 alvo = self.controlador.pokemons_por_id.get(alvo_id)
                 if efeito_sec and alvo is not None:
@@ -272,10 +273,18 @@ class ControladorAnimacoes:
                 fim = float(ctx.get("fim", inicio) or inicio)
             except (TypeError, ValueError):
                 continue
-            if fim <= inicio or self._tempo > fim:
-                continue
 
             modelo = str(ctx.get("modelo") or "")
+            fim_visual = fim
+            if modelo == "Explosao" and isinstance(ctx.get("impactos"), dict):
+                for impacto in ctx.get("impactos", {}).values():
+                    try:
+                        fim_visual = max(fim_visual, float(impacto) + 0.35)
+                    except (TypeError, ValueError):
+                        continue
+            if fim_visual <= inicio or self._tempo > fim_visual:
+                continue
+
             modelo_codigo = MODELOS_ATAQUE_SHADER.get(modelo, 0)
             if modelo_codigo <= 0:
                 continue
@@ -299,10 +308,10 @@ class ControladorAnimacoes:
             if not self._uv_em_margem(origem_uv) and not self._uv_em_margem(alvo_uv):
                 continue
 
-            duracao = max(0.001, fim - inicio)
+            duracao = max(0.001, fim_visual - inicio)
             fase = max(0.0, min(1.0, (self._tempo - inicio) / duracao))
             fade_in = max(0.0, min(1.0, (self._tempo - inicio) / 0.10))
-            fade_out = max(0.0, min(1.0, (fim - self._tempo) / 0.16))
+            fade_out = max(0.0, min(1.0, (fim_visual - self._tempo) / 0.16))
             power = max(0.0, min(1.0, fade_in, fade_out))
             impacto_power = self._impacto_power_shader(ctx)
             if impacto_power > power:

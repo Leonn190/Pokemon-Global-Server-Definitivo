@@ -9,9 +9,30 @@
       "custo_ap": 50,
       "estilo_logico": "alvo",
       "execute_principal": "ataque_benção",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
-      "parametros": {"tipo": "fada", "efeito_aplicado": "Abençoado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": "ChuvaBrilhante",
+        "duracao": 0.75
+      },
+      "parametros": {
+        "tipo": "fada",
+        "efeito_aplicado": "Abençoado"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "300": {
       "ID": 300,
@@ -20,9 +41,31 @@
       "custo_ap": 45,
       "estilo_logico": "alvo",
       "execute_principal": "ataque_barragem_arcana",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "fada", "percentual_mag_barreira": 0.2, "percentual_spa_barreira": 0.12},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "MagiaMagenta",
+        "efeito_alvo": "BarreiraCelular",
+        "duracao": 0.65
+      },
+      "parametros": {
+        "tipo": "fada",
+        "percentual_mag_barreira": 0.2,
+        "percentual_spa_barreira": 0.12
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "301": {
       "ID": 301,
@@ -31,8 +74,19 @@
       "custo_ap": 40,
       "estilo_logico": "ativo",
       "execute_principal": "ataque_canalizar",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "fada", "atributo": "Mag", "percentual_mag_1": 0.2, "percentual_mag_2": 0.1, "percentual_mag_total": 0.3}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MagiaMagenta",
+        "efeito_alvo": null,
+        "duracao": 0.75
+      },
+      "parametros": {
+        "tipo": "fada",
+        "atributo": "Mag",
+        "percentual_mag_1": 0.2,
+        "percentual_mag_2": 0.1,
+        "percentual_mag_total": 0.3
+      }
     },
     "302": {
       "ID": 302,
@@ -41,9 +95,31 @@
       "custo_ap": 35,
       "estilo_logico": "alvo",
       "execute_principal": "ataque_amolecer",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
-      "parametros": {"tipo": "fada", "atributo": "CrD", "reducao_base_crd": 5, "percentual_mag_usuario": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "RasgosRosa",
+        "duracao": 0.45
+      },
+      "parametros": {
+        "tipo": "fada",
+        "atributo": "CrD",
+        "reducao_base_crd": 5,
+        "percentual_mag_usuario": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "303": {
       "ID": 303,
@@ -52,8 +128,18 @@
       "custo_ap": 50,
       "estilo_logico": "ativo",
       "execute_principal": "ataque_brilho",
-      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "fada", "multiplicador_mag": 0.8, "efeito_requerido": "Furtivo", "efeito_remover": "Furtivo"}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null,
+        "duracao": 0.95
+      },
+      "parametros": {
+        "tipo": "fada",
+        "multiplicador_mag": 0.8,
+        "efeito_requerido": "Furtivo",
+        "efeito_remover": "Furtivo"
+      }
     },
     "304": {
       "ID": 304,
@@ -62,8 +148,19 @@
       "custo_ap": 65,
       "estilo_logico": "ativo",
       "execute_principal": "ataque_salvamento",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "fada", "efeitos_aplicados": ["Regeneração", "Imune"]}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "DomoVerde",
+        "efeito_alvo": null,
+        "duracao": 0.85
+      },
+      "parametros": {
+        "tipo": "fada",
+        "efeitos_aplicados": [
+          "Regeneração",
+          "Imune"
+        ]
+      }
     },
     "305": {
       "ID": 305,
@@ -73,9 +170,40 @@
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "execute_principal": "ataque_toque_fabuloso",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
-      "parametros": {"tipo": "fada", "multiplicador_spa": 0.75, "efeitos_critico_garantido": ["Encantado", "Abençoado", "Amplificado"]},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": null,
+        "efeito_alvo": "MagiaMagenta",
+        "duracao": 0.48,
+        "largura": 1.15,
+        "cor": [
+          220,
+          154,
+          196
+        ]
+      },
+      "parametros": {
+        "tipo": "fada",
+        "multiplicador_spa": 0.75,
+        "efeitos_critico_garantido": [
+          "Encantado",
+          "Abençoado",
+          "Amplificado"
+        ]
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "306": {
       "ID": 306,
@@ -85,9 +213,37 @@
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "execute_principal": "ataque_corte_das_fadas",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
-      "parametros": {"tipo": "fada", "percentual_soma_mag_base": 0.5, "percentual_soma_mag_extra_por_aliado_fada": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "CorteRosa",
+        "projetil": "Generico",
+        "velocidade": 10.5,
+        "tamanho": 18,
+        "cor": [
+          240,
+          174,
+          220
+        ]
+      },
+      "parametros": {
+        "tipo": "fada",
+        "percentual_soma_mag_base": 0.5,
+        "percentual_soma_mag_extra_por_aliado_fada": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "307": {
       "ID": 307,
@@ -96,8 +252,17 @@
       "custo_ap": 75,
       "estilo_logico": "ativo",
       "execute_principal": "ataque_chuva_cintilante",
-      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "fada", "efeito_aplicado": "Furtivo", "percentual_vida_perdida_cura": 0.1}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null,
+        "duracao": 1.05
+      },
+      "parametros": {
+        "tipo": "fada",
+        "efeito_aplicado": "Furtivo",
+        "percentual_vida_perdida_cura": 0.1
+      }
     },
     "308": {
       "ID": 308,
@@ -108,9 +273,36 @@
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
       "execute_principal": "ataque_vento_fada",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
-      "parametros": {"tipo": "fada", "multiplicador_spa": 0.7, "multiplicador_mag": 0.2},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "RasgosRosa",
+        "duracao": 0.62,
+        "largura": 11,
+        "cor": [
+          235,
+          170,
+          218
+        ]
+      },
+      "parametros": {
+        "tipo": "fada",
+        "multiplicador_spa": 0.7,
+        "multiplicador_mag": 0.2
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "309": {
       "ID": 309,
@@ -119,9 +311,40 @@
       "custo_ap": 40,
       "estilo_logico": "alvo",
       "execute_principal": "ataque_bondade",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "fada", "efeitos_positivos_possiveis": ["Abençoado", "Amplificado", "Fortificado", "Focado", "Energizado", "Preparado", "Regeneração", "Imune", "Furtivo"]},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "MagiaAzul",
+        "efeito_alvo": "MarcaBrilhosa",
+        "duracao": 0.65
+      },
+      "parametros": {
+        "tipo": "fada",
+        "efeitos_positivos_possiveis": [
+          "Abençoado",
+          "Amplificado",
+          "Fortificado",
+          "Focado",
+          "Energizado",
+          "Preparado",
+          "Regeneração",
+          "Imune",
+          "Furtivo"
+        ]
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "310": {
       "ID": 310,
@@ -130,8 +353,33 @@
       "custo_ap": 65,
       "estilo_logico": "ativo",
       "execute_principal": "ataque_luz_purificadora",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "fada", "efeitos_negativos": ["Queimado", "Envenenado", "Intoxicado", "Congelado", "Dormindo", "Paralisado", "Enraizado", "Cauterizado", "Descarregado", "Encharcado", "Atordoado", "Quebrado", "Enfraquecido", "Confuso", "Bloqueado", "Amaldiçoado"]}
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "AtemporalRosa",
+        "efeito_alvo": null,
+        "duracao": 0.95
+      },
+      "parametros": {
+        "tipo": "fada",
+        "efeitos_negativos": [
+          "Queimado",
+          "Envenenado",
+          "Intoxicado",
+          "Congelado",
+          "Dormindo",
+          "Paralisado",
+          "Enraizado",
+          "Cauterizado",
+          "Descarregado",
+          "Encharcado",
+          "Atordoado",
+          "Quebrado",
+          "Enfraquecido",
+          "Confuso",
+          "Bloqueado",
+          "Amaldiçoado"
+        ]
+      }
     },
     "311": {
       "ID": 311,
@@ -141,9 +389,38 @@
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "execute_principal": "ataque_de_positividade",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
-      "parametros": {"tipo": "fada", "multiplicador_spa": 0.65, "bonus_dano_por_passo_positivo": 0.03, "max_passos_considerados": 25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": "EstouroMagico",
+        "projetil": "Generico",
+        "velocidade": 9.5,
+        "tamanho": 20,
+        "cor": [
+          250,
+          210,
+          245
+        ]
+      },
+      "parametros": {
+        "tipo": "fada",
+        "multiplicador_spa": 0.65,
+        "bonus_dano_por_passo_positivo": 0.03,
+        "max_passos_considerados": 25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "312": {
       "ID": 312,
@@ -152,9 +429,30 @@
       "custo_ap": 35,
       "estilo_logico": "alvo",
       "execute_principal": "ataque_encanto",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
-      "parametros": {"tipo": "fada", "efeito_aplicado": "Encantado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "MagiaMagenta",
+        "efeito_alvo": "AtemporalRosa",
+        "duracao": 0.7
+      },
+      "parametros": {
+        "tipo": "fada",
+        "efeito_aplicado": "Encantado"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     }
   }
 }

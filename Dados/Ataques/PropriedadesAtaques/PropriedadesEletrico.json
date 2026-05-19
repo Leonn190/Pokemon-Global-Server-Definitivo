@@ -9,10 +9,51 @@
       "custo_ap": 70,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": null},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "SuperDescarga",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "velocidade": 9.0,
+        "tamanho": 18,
+        "cor": [
+          224,
+          199,
+          61
+        ],
+        "efeito_impacto_secundario": "RajadaAmarela",
+        "raio_explosao": 1.45,
+        "duracao_onda": 0.36,
+        "largura_onda": 1.0,
+        "cor_onda": [
+          245,
+          220,
+          70
+        ]
+      },
       "execute_principal": "ataque_bola_eletrica",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.80, "escala_spa": 0.80, "splash_frac": 0.50, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "mult_spa": 0.8,
+        "escala_spa": 0.8,
+        "splash_frac": 0.5,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "80": {
       "ID": 80,
@@ -21,10 +62,33 @@
       "custo_ap": 40,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "EnergiaAzul",
+        "duracao": 0.6
+      },
       "execute_principal": "ataque_energizar",
-      "parametros": {"tipo": "eletrico", "efeito": "Energizado", "negativo": false, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "efeito": "Energizado",
+        "negativo": false,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "81": {
       "ID": 81,
@@ -33,10 +97,40 @@
       "custo_ap": 65,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": null,
+        "efeito_alvo": "SuperDescarga",
+        "duracao": 0.42,
+        "largura": 1.25,
+        "cor": [
+          224,
+          199,
+          61
+        ],
+        "simultaneo": true
+      },
       "execute_principal": "ataque_choque_duplo",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.70, "quantidade_alvos": 2, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "mult_spa": 0.7,
+        "quantidade_alvos": 2,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 2,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "82": {
       "ID": 82,
@@ -46,10 +140,40 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": "SuperDescarga",
+        "duracao": 0.62,
+        "largura": 1.8,
+        "cor": [
+          245,
+          220,
+          70
+        ]
+      },
       "execute_principal": "ataque_descarga_total",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.45, "mult_energia": 1.20, "gasta_toda_energia": true, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "mult_spa": 0.45,
+        "mult_energia": 1.2,
+        "gasta_toda_energia": true,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "83": {
       "ID": 83,
@@ -58,10 +182,40 @@
       "custo_ap": 55,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": "EnergiaAzul",
+        "duracao": 0.55,
+        "largura": 1.25,
+        "cor": [
+          224,
+          199,
+          61
+        ]
+      },
       "execute_principal": "ataque_vampirismo_energetico",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.45, "roubo_pct_energia": 0.25, "roubo_crit_vamp_pct": 0.15, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "mult_spa": 0.45,
+        "roubo_pct_energia": 0.25,
+        "roubo_crit_vamp_pct": 0.15,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "84": {
       "ID": 84,
@@ -70,10 +224,40 @@
       "custo_ap": 60,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": null,
+        "efeito_alvo": "SuperDescarga",
+        "duracao": 0.45,
+        "largura": 1.25,
+        "cor": [
+          224,
+          199,
+          61
+        ]
+      },
       "execute_principal": "ataque_eletrochoque",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.65, "replica_pct_base": 0.50, "contador_alvo": "eletrochoque_usos", "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "mult_spa": 0.65,
+        "replica_pct_base": 0.5,
+        "contador_alvo": "eletrochoque_usos",
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "85": {
       "ID": 85,
@@ -82,10 +266,39 @@
       "custo_ap": 50,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": null,
+        "efeito_alvo": "RajadaAmarela",
+        "duracao": 0.32,
+        "largura": 1.0,
+        "cor": [
+          245,
+          220,
+          70
+        ]
+      },
       "execute_principal": "ataque_curto",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.55, "mult_energia_alvo": 0.25, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "mult_spa": 0.55,
+        "mult_energia_alvo": 0.25,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "86": {
       "ID": 86,
@@ -94,10 +307,41 @@
       "custo_ap": 65,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Raio",
+        "efeito_executor": null,
+        "efeito_alvo": "SuperDescarga",
+        "duracao": 0.5,
+        "largura": 1.55,
+        "cor": [
+          245,
+          220,
+          70
+        ]
+      },
       "execute_principal": "ataque_choque_do_trovao",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.80, "efeito_critico": "Paralisado", "sempre_acerta_se_alvo_efeito": "Encharcado", "critico_forcado_se_alvo_efeito": "Encharcado", "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "mult_spa": 0.8,
+        "efeito_critico": "Paralisado",
+        "sempre_acerta_se_alvo_efeito": "Encharcado",
+        "critico_forcado_se_alvo_efeito": "Encharcado",
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "87": {
       "ID": 87,
@@ -105,9 +349,20 @@
       "custo": 75,
       "custo_ap": 85,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "SuperDescarga",
+        "duracao": 0.75,
+        "usar_alvos_selecionados": true
+      },
       "execute_principal": "ataque_ultra_raio_aleatorio",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 1.35, "sorteia_area_arena": true}
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "mult_spa": 1.35,
+        "sorteia_area_arena": true
+      }
     },
     "88": {
       "ID": 88,
@@ -115,9 +370,18 @@
       "custo": 40,
       "custo_ap": 45,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": null,
+        "duracao": 0.65
+      },
       "execute_principal": "ataque_amplificar",
-      "parametros": {"tipo": "eletrico", "atributo": "Amp", "percentual_mag": 0.25}
+      "parametros": {
+        "tipo": "eletrico",
+        "atributo": "Amp",
+        "percentual_mag": 0.25
+      }
     },
     "89": {
       "ID": 89,
@@ -125,9 +389,18 @@
       "custo": 55,
       "custo_ap": 50,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "SuperDescarga",
+        "efeito_alvo": null,
+        "duracao": 0.95
+      },
       "execute_principal": "ataque_danca_eletrica",
-      "parametros": {"tipo": "eletrico", "clima": "Tempestade de Raios", "alias_clima": "Tempestade Eletrica"}
+      "parametros": {
+        "tipo": "eletrico",
+        "clima": "Tempestade de Raios",
+        "alias_clima": "Tempestade Eletrica"
+      }
     },
     "90": {
       "ID": 90,
@@ -136,10 +409,33 @@
       "custo_ap": 45,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": "BarreiraCelular",
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_barragem_energetica",
-      "parametros": {"tipo": "eletrico", "percentual_mag": 0.18, "percentual_ene": 0.12, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "eletrico",
+        "percentual_mag": 0.18,
+        "percentual_ene": 0.12,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     }
   },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."

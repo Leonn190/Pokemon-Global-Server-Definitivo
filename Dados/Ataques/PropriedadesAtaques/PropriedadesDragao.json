@@ -8,10 +8,19 @@
       "custo": 25,
       "custo_ap": 30,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "DomoVerde",
+        "efeito_alvo": null,
+        "duracao": 0.7
+      },
       "execute_principal": "ataque_escama_mistica",
       "descricao": "O usuário ganha (20% de Mag) + (10% de SpD) em SpD.",
-      "parametros": {"tipo": "dragao", "mag_pct": 0.20, "spd_pct": 0.10}
+      "parametros": {
+        "tipo": "dragao",
+        "mag_pct": 0.2,
+        "spd_pct": 0.1
+      }
     },
     "257": {
       "ID": 257,
@@ -19,11 +28,33 @@
       "custo": 45,
       "custo_ap": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "FeixeRoxo",
+        "efeito_alvo": "BarreiraCelular",
+        "duracao": 0.65
+      },
       "execute_principal": "ataque_barragem_draconica",
       "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (15% de SpD).",
-      "parametros": {"tipo": "dragao", "mag_pct": 0.18, "spd_pct": 0.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "mag_pct": 0.18,
+        "spd_pct": 0.15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "258": {
       "ID": 258,
@@ -31,11 +62,32 @@
       "custo": 25,
       "custo_ap": 30,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "Estouro",
+        "efeito_alvo": "RajadaAmarela",
+        "duracao": 0.45
+      },
       "execute_principal": "ataque_rugido",
       "descricao": "O inimigo perde (10% de Atk do alvo) + (10% da Mag do usuário) em Atk.",
-      "parametros": {"tipo": "dragao", "atk_alvo_pct": 0.10, "mag_usuario_pct": 0.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "atk_alvo_pct": 0.1,
+        "mag_usuario_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "259": {
       "ID": 259,
@@ -43,11 +95,37 @@
       "custo": 60,
       "custo_ap": 70,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Garra",
+        "velocidade": 8.8,
+        "altura": 1.0,
+        "distancia_parada": "contato",
+        "retornar": true
+      },
       "execute_principal": "ataque_garra_do_dragao",
       "descricao": "Causa dano usando o melhor caminho contra o alvo: se a Def do alvo for menor que a SpD, causa (85% de Atk) como dano normal e remove 20% da Def; caso contrário, causa (85% de SpA) como dano especial e remove 20% da SpD.",
-      "parametros": {"tipo": "dragao", "atk_pct": 0.85, "spa_pct": 0.85, "perda_def_pct": 0.20, "perda_spd_pct": 0.20},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "atk_pct": 0.85,
+        "spa_pct": 0.85,
+        "perda_def_pct": 0.2,
+        "perda_spd_pct": 0.2
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "260": {
       "ID": 260,
@@ -55,11 +133,37 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": "EstouroVermelho",
+        "efeito_alvo": "ExplosaoRoxa",
+        "velocidade": 9.2,
+        "altura": 1.0,
+        "distancia_parada": "contato",
+        "retornar": true
+      },
       "execute_principal": "ataque_ultraje",
       "descricao": "Causa exatamente 27 de dano fixo. Este dano não recebe aumento, redução, crítico, defesa, resistência, fraqueza, Amp ou qualquer outro modificador.",
-      "parametros": {"tipo": "dragao", "dano_fixo": 27, "ignora_modificadores": true, "respeita_barreira": true, "pode_critico": false},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "dano_fixo": 27,
+        "ignora_modificadores": true,
+        "respeita_barreira": true,
+        "pode_critico": false
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "261": {
       "ID": 261,
@@ -67,11 +171,39 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "FeixeRoxo",
+        "duracao": 0.62,
+        "largura": 1.35,
+        "cor": [
+          105,
+          95,
+          210
+        ]
+      },
       "execute_principal": "ataque_sopro_do_dragao",
       "descricao": "Causa (70% de SpA) como dano especial e remove 1 efeito positivo aleatório do alvo. Se for crítico, remove 2 efeitos positivos aleatórios.",
-      "parametros": {"tipo": "dragao", "spa_pct": 0.70, "remover_efeitos_positivos": 1, "remover_efeitos_positivos_critico": 2},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "spa_pct": 0.7,
+        "remover_efeitos_positivos": 1,
+        "remover_efeitos_positivos_critico": 2
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "262": {
       "ID": 262,
@@ -79,11 +211,40 @@
       "custo": 40,
       "custo_ap": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasColoridas",
+        "projetil": "Generico",
+        "velocidade": 10.0,
+        "tamanho": 16,
+        "cor": [
+          110,
+          105,
+          205
+        ]
+      },
       "execute_principal": "ataque_tiro_de_escamas",
       "descricao": "Causa (55% de Atk) como dano normal. O alvo ganha 2% de Def, mas este ataque causa +15% de dano para cada vez que Tiro de Escamas já foi usado nesse alvo.",
-      "parametros": {"tipo": "dragao", "atk_pct": 0.55, "bonus_dano_por_uso": 0.15, "bonus_def_alvo_pct": 0.02},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "atk_pct": 0.55,
+        "bonus_dano_por_uso": 0.15,
+        "bonus_def_alvo_pct": 0.02
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "263": {
       "ID": 263,
@@ -91,10 +252,30 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null,
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_sem_fraquezas",
       "descricao": "O usuário ganha 25% no seu pior atributo regular, exceto Vida.",
-      "parametros": {"tipo": "dragao", "ganho_pct": 0.25, "qtd_atributos": 1, "atributos_regulares": ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"]}
+      "parametros": {
+        "tipo": "dragao",
+        "ganho_pct": 0.25,
+        "qtd_atributos": 1,
+        "atributos_regulares": [
+          "Atk",
+          "SpA",
+          "Def",
+          "SpD",
+          "Mag",
+          "Ene",
+          "Vel",
+          "Per",
+          "Int"
+        ]
+      }
     },
     "264": {
       "ID": 264,
@@ -102,10 +283,21 @@
       "custo": 70,
       "custo_ap": 80,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "BarreiraCelular",
+        "efeito_alvo": null,
+        "duracao": 0.85
+      },
       "execute_principal": "ataque_juramento_do_dracomante",
       "descricao": "O usuário ganha Imortal por 1 passo e uma barreira equivalente a (120% de Mag). Se for crítico, a barreira usa (150% de Mag).",
-      "parametros": {"tipo": "dragao", "efeito": "Imortal", "duracao_imortal_passos": 1, "mag_barreira_pct": 1.20, "mag_barreira_pct_critico": 1.50}
+      "parametros": {
+        "tipo": "dragao",
+        "efeito": "Imortal",
+        "duracao_imortal_passos": 1,
+        "mag_barreira_pct": 1.2,
+        "mag_barreira_pct_critico": 1.5
+      }
     },
     "265": {
       "ID": 265,
@@ -113,11 +305,35 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "velocidade": 7.3,
+        "altura": 1.55,
+        "distancia_parada": "contato",
+        "retornar": true
+      },
       "execute_principal": "ataque_golpe_destrutivo",
       "descricao": "Causa (90% de Atk) como dano normal. Se for crítico, transforma a área do alvo em Destruída.",
-      "parametros": {"tipo": "dragao", "atk_pct": 0.90, "area_critico": "Destruida"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "atk_pct": 0.9,
+        "area_critico": "Destruida"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "266": {
       "ID": 266,
@@ -125,11 +341,36 @@
       "custo": 60,
       "custo_ap": 70,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": "RedemoinhoCosmico",
+        "efeito_alvo": "ExplosaoRoxa",
+        "velocidade": 8.0,
+        "altura": 1.15,
+        "distancia_parada": "contato",
+        "retornar": true
+      },
       "execute_principal": "ataque_investida_draconica",
       "descricao": "Causa (110% de Atk) como dano normal. O usuário recebe 20% do dano causado. Se errar, recebe dano equivalente a 30% do dano base deste ataque.",
-      "parametros": {"tipo": "dragao", "atk_pct": 1.10, "recoil_dano_causado_pct": 0.20, "recoil_erro_dano_base_pct": 0.30},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "atk_pct": 1.1,
+        "recoil_dano_causado_pct": 0.2,
+        "recoil_erro_dano_base_pct": 0.3
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "267": {
       "ID": 267,
@@ -138,11 +379,34 @@
       "custo_ap": 40,
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
-      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": "DomoVerde",
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_territorio_sagrado",
       "descricao": "Escolhe uma área aliada e transforma essa área em Sagrada.",
-      "parametros": {"tipo": "dragao", "area_resultante": "Sagrada", "permite_area_vazia": true, "lado": "aliado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "area_resultante": "Sagrada",
+        "permite_area_vazia": true,
+        "lado": "aliado"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     },
     "268": {
       "ID": 268,
@@ -150,11 +414,38 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "FeixeRoxo",
+        "projetil": "Generico",
+        "velocidade": 10.5,
+        "tamanho": 18,
+        "cor": [
+          135,
+          125,
+          230
+        ]
+      },
       "execute_principal": "ataque_lanca_eterea",
       "descricao": "Causa (110% de SpD) como dano especial.",
-      "parametros": {"tipo": "dragao", "spd_pct": 1.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {
+        "tipo": "dragao",
+        "spd_pct": 1.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false,
+            "inclui_reserva": false
+          }
+        ]
+      }
     }
   },
   "_comentario": "Ataques dragao Code 256 a 268 conforme CSV oficial. Custo AP foi mantido em custo_ap, sem tratar como acuracia."

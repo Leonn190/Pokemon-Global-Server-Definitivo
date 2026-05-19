@@ -8,10 +8,31 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Karate",
+        "velocidade": 10.5,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_investida",
-      "parametros": {"tipo": "normal", "mult_atk": 0.9, "percentual_recuo": 0.2},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 0.9,
+        "percentual_recuo": 0.2
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "2": {
       "ID": 2,
@@ -19,10 +40,38 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "ChuvaBrilhante", "projetil": "Biscoito"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "ChuvaBrilhante",
+        "projetil": "Generico",
+        "velocidade": 6.5,
+        "tamanho": 14,
+        "cor": [
+          187,
+          176,
+          151
+        ]
+      },
       "execute_principal": "ataque_biscoito",
-      "parametros": {"tipo": "normal", "percentual_cura": 0.5, "percentual_stack": 0.1, "percentual_stack_critico": 0.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "percentual_cura": 0.5,
+        "percentual_stack": 0.1,
+        "percentual_stack_critico": 0.15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "3": {
       "ID": 3,
@@ -30,9 +79,17 @@
       "custo": 20,
       "custo_ap": 25,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "EstouroVermelho", "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EstouroVermelho",
+        "efeito_alvo": null,
+        "duracao": 0.65
+      },
       "execute_principal": "ataque_enraivecer",
-      "parametros": {"tipo": "normal", "limite_vida": 0.4}
+      "parametros": {
+        "tipo": "normal",
+        "limite_vida": 0.4
+      }
     },
     "4": {
       "ID": 4,
@@ -40,9 +97,16 @@
       "custo": 25,
       "custo_ap": 20,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "MarcaAmarela", "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaAmarela",
+        "efeito_alvo": null,
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_provocar",
-      "parametros": {"tipo": "normal"}
+      "parametros": {
+        "tipo": "normal"
+      }
     },
     "5": {
       "ID": 5,
@@ -50,10 +114,28 @@
       "custo": 40,
       "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular",
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_proteger",
-      "parametros": {"tipo": "normal"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "6": {
       "ID": 6,
@@ -61,10 +143,30 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "Garra"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Garra",
+        "velocidade": 11.0,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_arranhar",
-      "parametros": {"tipo": "normal", "mult_atk": 1.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 1.0
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "7": {
       "ID": 7,
@@ -72,9 +174,17 @@
       "custo": 15,
       "custo_ap": 20,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "EnergiaAzul", "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": null,
+        "duracao": 0.65
+      },
       "execute_principal": "ataque_recarga",
-      "parametros": {"tipo": "normal", "multiplicador_custo_real": 1.5}
+      "parametros": {
+        "tipo": "normal",
+        "multiplicador_custo_real": 1.5
+      }
     },
     "8": {
       "ID": 8,
@@ -82,10 +192,37 @@
       "custo": 30,
       "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": "EnergiaAzul"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "EnergiaAzul",
+        "projetil": "Generico",
+        "velocidade": 9.0,
+        "tamanho": 14,
+        "cor": [
+          187,
+          176,
+          151
+        ]
+      },
       "execute_principal": "ataque_energia",
-      "parametros": {"tipo": "normal", "mult_spa": 0.85, "categoria": "especial"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_spa": 0.85,
+        "categoria": "especial"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "9": {
       "ID": 9,
@@ -93,10 +230,37 @@
       "custo": 90,
       "custo_ap": 100,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": "RaioAzul"},
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "Explosao",
+        "duracao": 0.72,
+        "largura": 16,
+        "cor": [
+          245,
+          225,
+          150
+        ]
+      },
       "execute_principal": "ataque_hiper_raio",
-      "parametros": {"tipo": "normal", "mult_spa": 1.2, "reducao_por_alvo": 0.2, "categoria": "especial"},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_spa": 1.2,
+        "reducao_por_alvo": 0.2,
+        "categoria": "especial"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "10": {
       "ID": 10,
@@ -104,10 +268,32 @@
       "custo": 75,
       "custo_ap": 85,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Salto", "efeito_executor": null, "efeito_alvo": "CorteDourado"},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "CorteDourado",
+        "velocidade": 8.0,
+        "altura": 1.6,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_guilhotina",
-      "parametros": {"tipo": "normal", "mult_atk": 0.6, "limite_execucao_critico": 0.3},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 0.6,
+        "limite_execucao_critico": 0.3
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "11": {
       "ID": 11,
@@ -115,10 +301,37 @@
       "custo": 25,
       "custo_ap": 30,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "TirosAmarelos", "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "TirosAmarelos",
+        "projetil": "Generico",
+        "velocidade": 13.0,
+        "tamanho": 10,
+        "cor": [
+          240,
+          225,
+          150
+        ]
+      },
       "execute_principal": "ataque_disparo",
-      "parametros": {"tipo": "normal", "mult_atk": 0.75, "sempre_acerta": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 0.75,
+        "sempre_acerta": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "12": {
       "ID": 12,
@@ -126,10 +339,31 @@
       "custo": 45,
       "custo_ap": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "velocidade": 9.0,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_chifrada",
-      "parametros": {"tipo": "normal", "mult_atk": 0.7, "mult_per": 0.3},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 0.7,
+        "mult_per": 0.3
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "13": {
       "ID": 13,
@@ -137,10 +371,39 @@
       "custo": 60,
       "custo_ap": 70,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "FacasBrancas", "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasBrancas",
+        "projetil": "Generico",
+        "velocidade": 12.0,
+        "tamanho": 12,
+        "intervalo": 0.12,
+        "cor": [
+          225,
+          225,
+          215
+        ],
+        "usar_alvos_selecionados": true
+      },
       "execute_principal": "ataque_golpe_precavido",
-      "parametros": {"tipo": "normal", "mult_atk": 0.8, "quantidade_alvos": 3},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 3, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 0.8,
+        "quantidade_alvos": 3
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 3,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "14": {
       "ID": 14,
@@ -148,10 +411,31 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Karate",
+        "velocidade": 9.0,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_pancada_seca",
-      "parametros": {"tipo": "normal", "mult_atk": 0.65, "percentual_ene_usuario": 0.25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 0.65,
+        "percentual_ene_usuario": 0.25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "15": {
       "ID": 15,
@@ -159,10 +443,34 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "velocidade": 6.5,
+        "altura": 1.8,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_esmagar",
-      "parametros": {"tipo": "normal", "mult_peso": 0.4, "kg_por_bloco": 40, "reducao_por_bloco": 0.15, "minimo_dano": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_peso": 0.4,
+        "kg_por_bloco": 40,
+        "reducao_por_bloco": 0.15,
+        "minimo_dano": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "16": {
       "ID": 16,
@@ -170,10 +478,28 @@
       "custo": 70,
       "custo_ap": 80,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": "MarcaBrilhosa", "efeito_alvo": "MarcaBrilhosa"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": "MarcaBrilhosa",
+        "duracao": 0.7
+      },
       "execute_principal": "ataque_transformar",
-      "parametros": {"tipo": "normal"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["qualquer"], "exige_area_ocupada": true}]}
+      "parametros": {
+        "tipo": "normal"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "qualquer"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
+      }
     },
     "17": {
       "ID": 17,
@@ -181,10 +507,32 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "FacasBrancas"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasBrancas",
+        "velocidade": 15.0,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_rapido",
-      "parametros": {"tipo": "normal", "mult_atk": 0.5, "mult_vel": 0.3, "prioridade_acao": 100},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 0.5,
+        "mult_vel": 0.3,
+        "prioridade_acao": 100
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "18": {
       "ID": 18,
@@ -192,10 +540,28 @@
       "custo": 30,
       "custo_ap": 30,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": "MarcaBrilhosa", "efeito_alvo": "MarcaBrilhosa"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": "MarcaBrilhosa",
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_mimica",
-      "parametros": {"tipo": "normal"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "19": {
       "ID": 19,
@@ -203,9 +569,16 @@
       "custo": 0,
       "custo_ap": 0,
       "estilo_logico": "passivo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "MarcaBrilhosa", "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null,
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_normalizar",
-      "parametros": {"tipo": "normal"}
+      "parametros": {
+        "tipo": "normal"
+      }
     },
     "20": {
       "ID": 20,
@@ -213,10 +586,28 @@
       "custo": 60,
       "custo_ap": 70,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "MarcaAzul"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "Engrenagem",
+        "duracao": 0.65
+      },
       "execute_principal": "ataque_resetar",
-      "parametros": {"tipo": "normal"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["qualquer"], "exige_area_ocupada": true}]}
+      "parametros": {
+        "tipo": "normal"
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "qualquer"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
+      }
     },
     "21": {
       "ID": 21,
@@ -224,9 +615,18 @@
       "custo": 55,
       "custo_ap": 65,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "BarreiraCelular", "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "BarreiraCelular",
+        "efeito_alvo": null,
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_tankar",
-      "parametros": {"tipo": "normal", "mult_mag_defesa": 0.2, "mult_mag_barreira_critico": 0.3}
+      "parametros": {
+        "tipo": "normal",
+        "mult_mag_defesa": 0.2,
+        "mult_mag_barreira_critico": 0.3
+      }
     },
     "22": {
       "ID": 22,
@@ -234,10 +634,31 @@
       "custo": 40,
       "custo_ap": 45,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "FacasBrancas"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasBrancas",
+        "velocidade": 11.5,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_estocada",
-      "parametros": {"tipo": "normal", "mult_atk": 0.8, "bonus_primeiro_ataque": 0.25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 0.8,
+        "bonus_primeiro_ataque": 0.25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "23": {
       "ID": 23,
@@ -245,10 +666,49 @@
       "custo": 60,
       "custo_ap": 70,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Explosão", "efeito_executor": null, "efeito_alvo": "SuperNova", "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": "SuperNova"},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "SuperNova",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "velocidade": 8.0,
+        "tamanho": 20,
+        "cor": [
+          210,
+          200,
+          165
+        ],
+        "efeito_impacto_secundario": "SuperNova",
+        "raio_explosao": 1.6,
+        "duracao_onda": 0.42,
+        "largura_onda": 1.0,
+        "cor_onda": [
+          245,
+          230,
+          165
+        ]
+      },
       "execute_principal": "ataque_bola_climatica",
-      "parametros": {"tipo": "normal", "categoria": "especial", "mult_spa": 0.75, "mult_spa_clima": 1.0, "dano_adjacente": 0.5},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "categoria": "especial",
+        "mult_spa": 0.75,
+        "mult_spa_clima": 1.0,
+        "dano_adjacente": 0.5
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "24": {
       "ID": 24,
@@ -256,10 +716,31 @@
       "custo": 45,
       "custo_ap": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "Mordida"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "Mordida",
+        "velocidade": 9.5,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_hiper_presa",
-      "parametros": {"tipo": "normal", "mult_atk": 1.05, "limite_critico": 80},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "normal",
+        "mult_atk": 1.05,
+        "limite_critico": 80
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "25": {
       "ID": 25,
@@ -267,9 +748,19 @@
       "custo": 35,
       "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null,
+        "duracao": 0.6
+      },
       "execute_principal": "ataque_inflar",
-      "parametros": {"tipo": "normal", "atributo": "Vida", "mult_mag": 0.25, "mult_vida_max": 0.1}
+      "parametros": {
+        "tipo": "normal",
+        "atributo": "Vida",
+        "mult_mag": 0.25,
+        "mult_vida_max": 0.1
+      }
     }
   },
   "_comentario": "Ataques normais Code 1 a 25 adaptados ao sistema atual de batalha."

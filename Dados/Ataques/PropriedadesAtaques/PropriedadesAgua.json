@@ -9,11 +9,50 @@
       "custo_ap": 70,
       "poder": 70,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": null},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "velocidade": 8.5,
+        "tamanho": 20,
+        "cor": [
+          80,
+          130,
+          219
+        ],
+        "efeito_impacto_secundario": "TornadoAgua",
+        "raio_explosao": 1.55,
+        "duracao_onda": 0.42,
+        "largura_onda": 1.1,
+        "cor_onda": [
+          80,
+          130,
+          219
+        ]
+      },
       "execute_principal": "ataque_bola_de_agua",
       "modo_execucao": "uma_vez",
-      "parametros": {"tipo": "agua", "categoria": "especial", "escala_spa": 0.8, "splash_frac": 0.5, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "escala_spa": 0.8,
+        "splash_frac": 0.5,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "27": {
       "ID": 27,
@@ -22,10 +61,37 @@
       "custo_ap": 35,
       "poder": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "projetil": "Generico",
+        "velocidade": 8.0,
+        "tamanho": 18,
+        "cor": [
+          80,
+          130,
+          219
+        ]
+      },
       "execute_principal": "ataque_gota_pesada",
-      "parametros": {"tipo": "agua", "efeito": "Encharcado", "negativo": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "efeito": "Encharcado",
+        "negativo": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "28": {
       "ID": 28,
@@ -34,10 +100,38 @@
       "custo_ap": 25,
       "poder": 25,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "projetil": "Generico",
+        "velocidade": 6.0,
+        "tamanho": 12,
+        "cor": [
+          120,
+          170,
+          235
+        ]
+      },
       "execute_principal": "ataque_splash",
-      "parametros": {"tipo": "agua", "categoria": "especial", "chance_falha": 0.5, "mult_spa": 0.7},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "chance_falha": 0.5,
+        "mult_spa": 0.7
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "29": {
       "ID": 29,
@@ -46,10 +140,39 @@
       "custo_ap": 35,
       "poder": 35,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "BolhasVerdes",
+        "projetil": "Generico",
+        "velocidade": 6.5,
+        "tamanho": 11,
+        "cor": [
+          120,
+          190,
+          230
+        ]
+      },
       "execute_principal": "ataque_bolhas",
-      "parametros": {"tipo": "agua", "categoria": "especial", "base_spa": 0.35, "bonus_spa_por_uso": 0.10, "max_acumulos": 6},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "base_spa": 0.35,
+        "bonus_spa_por_uso": 0.1,
+        "max_acumulos": 6
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "30": {
       "ID": 30,
@@ -58,10 +181,39 @@
       "custo_ap": 40,
       "poder": 40,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "duracao": 0.55,
+        "largura": 1.15,
+        "cor": [
+          80,
+          130,
+          219
+        ]
+      },
       "execute_principal": "ataque_esguicho_suave",
-      "parametros": {"tipo": "agua", "categoria": "especial", "dano_spa": 0.45, "dano_mag": 0.2, "cura_mag": 0.45, "cura_spa": 0.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["qualquer"], "exige_area_ocupada": true}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "dano_spa": 0.45,
+        "dano_mag": 0.2,
+        "cura_mag": 0.45,
+        "cura_spa": 0.15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "qualquer"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
+      }
     },
     "31": {
       "ID": 31,
@@ -70,10 +222,36 @@
       "custo_ap": 40,
       "poder": 40,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "duracao": 0.5,
+        "largura": 1.2,
+        "cor": [
+          80,
+          130,
+          219
+        ]
+      },
       "execute_principal": "ataque_jato_de_agua",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.65},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.65
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "32": {
       "ID": 32,
@@ -82,10 +260,37 @@
       "custo_ap": 60,
       "poder": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "duracao": 0.46,
+        "largura": 1.05,
+        "cor": [
+          80,
+          130,
+          219
+        ],
+        "intervalo": 0.08
+      },
       "execute_principal": "ataque_jato_duplo",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.5},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.5
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 2,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "33": {
       "ID": 33,
@@ -94,10 +299,37 @@
       "custo_ap": 75,
       "poder": 75,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "duracao": 0.42,
+        "largura": 1.0,
+        "cor": [
+          80,
+          130,
+          219
+        ],
+        "intervalo": 0.07
+      },
       "execute_principal": "ataque_jato_triplo",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.45},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 3, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.45
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 3,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "34": {
       "ID": 34,
@@ -106,10 +338,32 @@
       "custo_ap": 50,
       "poder": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "velocidade": 8.5,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_golpe_de_concha",
-      "parametros": {"tipo": "agua", "categoria": "normal", "mult_atk": 0.45, "mult_def": 0.35},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "normal",
+        "mult_atk": 0.45,
+        "mult_def": 0.35
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "35": {
       "ID": 35,
@@ -118,9 +372,18 @@
       "custo_ap": 70,
       "poder": 70,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null,
+        "duracao": 0.9
+      },
       "execute_principal": "ataque_chuva_curativa",
-      "parametros": {"tipo": "agua", "cura_base": 0.45, "cura_chuva": 0.6}
+      "parametros": {
+        "tipo": "agua",
+        "cura_base": 0.45,
+        "cura_chuva": 0.6
+      }
     },
     "36": {
       "ID": 36,
@@ -130,10 +393,39 @@
       "poder": 75,
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
-      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "duracao": 0.68,
+        "largura": 14,
+        "cor": [
+          80,
+          130,
+          219
+        ]
+      },
       "execute_principal": "ataque_lanca_de_agua",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.75, "mult_per": 0.2, "reducao": 0.3, "aumento_encharcado": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.75,
+        "mult_per": 0.2,
+        "reducao": 0.3,
+        "aumento_encharcado": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "37": {
       "ID": 37,
@@ -143,10 +435,48 @@
       "poder": 70,
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "Agua",
+        "projetil": "Generico",
+        "velocidade": 8.5,
+        "tamanho": 16,
+        "cor": [
+          80,
+          130,
+          219
+        ],
+        "efeito_alvo2": "ChuvaBrilhante",
+        "intervalo": 0.12
+      },
       "execute_principal": "ataque_torrente_vital",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.8, "cura_dano": 0.4},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true}, {"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.8,
+        "cura_dano": 0.4
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true
+          },
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
+      }
     },
     "38": {
       "ID": 38,
@@ -155,11 +485,51 @@
       "custo_ap": 80,
       "poder": 80,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": null},
+      "animacao": {
+        "modelo": "Explosao",
+        "efeito_executor": null,
+        "efeito_alvo": "RedemoinhoAzul",
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "velocidade": 7.5,
+        "tamanho": 22,
+        "cor": [
+          60,
+          110,
+          210
+        ],
+        "efeito_impacto_secundario": "TornadoAgua",
+        "raio_explosao": 1.7,
+        "duracao_onda": 0.46,
+        "largura_onda": 1.2,
+        "cor_onda": [
+          80,
+          130,
+          219
+        ]
+      },
       "execute_principal": "ataque_esfera_hidrocaotica",
       "modo_execucao": "uma_vez",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.9, "adj_base": 0.25, "adj_encharcado": 0.35, "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.9,
+        "adj_base": 0.25,
+        "adj_encharcado": 0.35,
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "39": {
       "ID": 39,
@@ -168,10 +538,33 @@
       "custo_ap": 50,
       "poder": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "TornadoAgua",
+        "velocidade": 8.0,
+        "altura": 1.35,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_cachoeira",
-      "parametros": {"tipo": "agua", "categoria": "normal", "mult_atk": 0.8, "chance_recuo": 0.25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "normal",
+        "mult_atk": 0.8,
+        "chance_recuo": 0.25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "40": {
       "ID": 40,
@@ -180,10 +573,37 @@
       "custo_ap": 50,
       "poder": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": "MagiaAzul",
+        "projetil": "Generico",
+        "velocidade": 8.0,
+        "tamanho": 16,
+        "cor": [
+          110,
+          170,
+          235
+        ]
+      },
       "execute_principal": "ataque_aguas_magicas",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_mag": 0.85},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_mag": 0.85
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "41": {
       "ID": 41,
@@ -192,10 +612,29 @@
       "custo_ap": 50,
       "poder": 50,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "ChuvaBrilhante",
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_fonte_termal",
-      "parametros": {"tipo": "agua", "cura_mag": 0.3},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true}]}
+      "parametros": {
+        "tipo": "agua",
+        "cura_mag": 0.3
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
+      }
     },
     "42": {
       "ID": 42,
@@ -204,9 +643,18 @@
       "custo_ap": 65,
       "poder": 65,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EspiralAzul",
+        "efeito_alvo": null,
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_absorcao_total",
-      "parametros": {"tipo": "agua", "cura_mag": 0.03, "amp_mag": 0.03}
+      "parametros": {
+        "tipo": "agua",
+        "cura_mag": 0.03,
+        "amp_mag": 0.03
+      }
     },
     "43": {
       "ID": 43,
@@ -215,10 +663,32 @@
       "custo_ap": 60,
       "poder": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "RedemoinhoAzul",
+        "duracao": 0.75
+      },
       "execute_principal": "ataque_redemoinho",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.70, "mult_chuva": 1.20, "mult_encharcado": 1.20},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.7,
+        "mult_chuva": 1.2,
+        "mult_encharcado": 1.2
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "44": {
       "ID": 44,
@@ -227,10 +697,31 @@
       "custo_ap": 65,
       "poder": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "TornadoAgua",
+        "duracao": 0.8
+      },
       "execute_principal": "ataque_geiser",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.85, "percentual_spd_critico": 0.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.85,
+        "percentual_spd_critico": 0.15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "45": {
       "ID": 45,
@@ -239,9 +730,17 @@
       "custo_ap": 0,
       "poder": 0,
       "estilo_logico": "passivo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "Agua",
+        "efeito_alvo": null,
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_pele_aquatica",
-      "parametros": {"tipo": "agua", "percentual_vida_perdida": 0.05}
+      "parametros": {
+        "tipo": "agua",
+        "percentual_vida_perdida": 0.05
+      }
     },
     "46": {
       "ID": 46,
@@ -250,9 +749,19 @@
       "custo_ap": 40,
       "poder": 40,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "Agua",
+        "efeito_alvo": null,
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_mergulho",
-      "parametros": {"tipo": "agua", "chance_base": 0.50, "chance_critico": 0.70, "duracao": 3}
+      "parametros": {
+        "tipo": "agua",
+        "chance_base": 0.5,
+        "chance_critico": 0.7,
+        "duracao": 3
+      }
     },
     "47": {
       "ID": 47,
@@ -261,9 +770,19 @@
       "custo_ap": 95,
       "poder": 95,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null,
+        "duracao": 1.0
+      },
       "execute_principal": "ataque_diluvio",
-      "parametros": {"tipo": "agua", "amp": 3, "energia": 10, "mult_se_ja_chuva": 2}
+      "parametros": {
+        "tipo": "agua",
+        "amp": 3,
+        "energia": 10,
+        "mult_se_ja_chuva": 2
+      }
     },
     "48": {
       "ID": 48,
@@ -272,9 +791,20 @@
       "custo_ap": 105,
       "poder": 105,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "TornadoAgua",
+        "efeito_alvo": null,
+        "duracao": 1.0
+      },
       "execute_principal": "ataque_tsunami",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.85, "bonus_esquerda_max": 0.35, "chance_encharcar": 0.35}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.85,
+        "bonus_esquerda_max": 0.35,
+        "chance_encharcar": 0.35
+      }
     },
     "49": {
       "ID": 49,
@@ -283,10 +813,31 @@
       "custo_ap": 60,
       "poder": 60,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "velocidade": 8.5,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_martelo_caranguejo",
-      "parametros": {"tipo": "agua", "categoria": "normal", "mult_atk": 1.00},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "normal",
+        "mult_atk": 1.0
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "50": {
       "ID": 50,
@@ -295,10 +846,33 @@
       "custo_ap": 65,
       "poder": 65,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "FluxoAzul",
+        "velocidade": 8.5,
+        "distancia_parada": "contato"
+      },
       "execute_principal": "ataque_golpe_abissal",
-      "parametros": {"tipo": "agua", "categoria": "normal", "mult_atk": 0.75, "limite_vida": 0.40, "mult_alvo_baixo": 1.35},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "normal",
+        "mult_atk": 0.75,
+        "limite_vida": 0.4,
+        "mult_alvo_baixo": 1.35
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "51": {
       "ID": 51,
@@ -307,9 +881,17 @@
       "custo_ap": 0,
       "poder": 0,
       "estilo_logico": "passivo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "FluxoAzul",
+        "efeito_alvo": null,
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_nadador",
-      "parametros": {"tipo": "agua", "percentual_vel": 0.50}
+      "parametros": {
+        "tipo": "agua",
+        "percentual_vel": 0.5
+      }
     },
     "52": {
       "ID": 52,
@@ -318,9 +900,18 @@
       "custo_ap": 0,
       "poder": 0,
       "estilo_logico": "passivo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "FluxoAzul",
+        "efeito_alvo": null,
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_drenagem_hidrica",
-      "parametros": {"tipo": "agua", "percentual_cura": 0.30, "percentual_energia": 0.20}
+      "parametros": {
+        "tipo": "agua",
+        "percentual_cura": 0.3,
+        "percentual_energia": 0.2
+      }
     },
     "53": {
       "ID": 53,
@@ -331,10 +922,30 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "FluxoAzul",
+        "duracao": 0.65,
+        "usar_alvos_selecionados": true
+      },
       "execute_principal": "ataque_controle_do_oceano",
-      "parametros": {"tipo": "agua", "permite_area_vazia": true},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["qualquer"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "permite_area_vazia": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "qualquer"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "54": {
       "ID": 54,
@@ -343,10 +954,36 @@
       "custo_ap": 70,
       "poder": 70,
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "animacao": {
+        "modelo": "Jato",
+        "efeito_executor": null,
+        "efeito_alvo": "TornadoAgua",
+        "duracao": 0.58,
+        "largura": 1.45,
+        "cor": [
+          80,
+          130,
+          219
+        ]
+      },
       "execute_principal": "ataque_surfar",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.85},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "mult_spa": 0.85
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
+      }
     },
     "55": {
       "ID": 55,
@@ -355,9 +992,17 @@
       "custo_ap": 0,
       "poder": 0,
       "estilo_logico": "passivo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "Agua",
+        "efeito_alvo": null,
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_reservatorio",
-      "parametros": {"tipo": "agua", "amp_por_turno": 1}
+      "parametros": {
+        "tipo": "agua",
+        "amp_por_turno": 1
+      }
     },
     "56": {
       "ID": 56,
@@ -365,9 +1010,21 @@
       "custo": 25,
       "custo_ap": 30,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "FluxoAzul",
+        "efeito_alvo": null,
+        "duracao": 0.55
+      },
       "execute_principal": "ataque_correnteza",
-      "parametros": {"tipo": "agua", "atributo": "Vel", "mult_mag": 0.2, "mult_vel": 0.1, "percentual_mag": 0.2, "percentual_usuario_atributo": 0.1}
+      "parametros": {
+        "tipo": "agua",
+        "atributo": "Vel",
+        "mult_mag": 0.2,
+        "mult_vel": 0.1,
+        "percentual_mag": 0.2,
+        "percentual_usuario_atributo": 0.1
+      }
     },
     "57": {
       "ID": 57,
@@ -375,9 +1032,17 @@
       "custo": 40,
       "custo_ap": 35,
       "estilo_logico": "ativo",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "ChuvaBrilhante",
+        "efeito_alvo": null,
+        "duracao": 0.9
+      },
       "execute_principal": "ataque_danca_da_chuva",
-      "parametros": {"tipo": "agua", "clima": "Chuva"}
+      "parametros": {
+        "tipo": "agua",
+        "clima": "Chuva"
+      }
     }
   }
 }

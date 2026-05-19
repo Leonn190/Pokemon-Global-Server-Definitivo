@@ -4,6 +4,7 @@ import copy
 import math
 
 from Codigo.ModulosBatalha.AnimadorAtaquesBatalha import AnimadorAtaquesBatalha
+from Codigo.Visual.AuxiliaresVisuais import normalizar_tipo_ataque, obter_cor_tipo
 from Codigo.Visual.PokemonBatalhaAnimator import PokemonAnimator
 
 EVENTOS_IMPACTO = {
@@ -19,6 +20,42 @@ EVENTOS_IMPACTO = {
     "pokemon_variou_atributo",
     "atributo_variou",
     "pokemon_alterou_atributo",
+}
+
+MODELOS_ATAQUE_SHADER = {
+    "Projetil": 1,
+    "Laser": 2,
+    "Raio": 3,
+    "Jato": 4,
+    "Explosao": 5,
+    "Avanco": 6,
+    "Salto": 6,
+    "EfeitoAlvo": 7,
+    "EfeitoProprio": 7,
+}
+
+TIPOS_ATAQUE_SHADER = {
+    "normal": 1,
+    "fogo": 2,
+    "agua": 3,
+    "planta": 4,
+    "eletrico": 5,
+    "gelo": 6,
+    "lutador": 7,
+    "venenoso": 8,
+    "terra": 9,
+    "terrestre": 9,
+    "voador": 10,
+    "psiquico": 11,
+    "inseto": 12,
+    "pedra": 13,
+    "fantasma": 14,
+    "dragao": 15,
+    "sombrio": 16,
+    "metal": 17,
+    "fada": 18,
+    "cosmico": 19,
+    "sonoro": 20,
 }
 
 
@@ -217,8 +254,183 @@ class ControladorAnimacoes:
     def desenhar(self, surface):
         self.animator.desenhar(surface)
 
+    def coletar_ataques_shader_batalha(self, tamanho_tela):
+        try:
+            largura_tela = max(1.0, float(tamanho_tela[0]))
+            altura_tela = max(1.0, float(tamanho_tela[1]))
+        except Exception:
+            largura_tela, altura_tela = 1.0, 1.0
+
+        saida = []
+        for ctx in list(self._ataques_ativos or []):
+            if len(saida) >= 8:
+                break
+            if not isinstance(ctx, dict):
+                continue
+            try:
+                inicio = float(ctx.get("inicio", ctx.get("fim", self._tempo)) or self._tempo)
+                fim = float(ctx.get("fim", inicio) or inicio)
+            except (TypeError, ValueError):
+                continue
+            if fim <= inicio or self._tempo > fim:
+                continue
+
+            modelo = str(ctx.get("modelo") or "")
+            modelo_codigo = MODELOS_ATAQUE_SHADER.get(modelo, 0)
+            if modelo_codigo <= 0:
+                continue
+
+            usuario = self.controlador.pokemons_por_id.get(str(ctx.get("usuario_id") or ""))
+            principal = ctx.get("principal")
+            principal_id = str(ctx.get("principal_id") or "")
+            if principal is None and principal_id:
+                principal = self.controlador.pokemons_por_id.get(principal_id)
+            if modelo == "EfeitoProprio" and usuario is not None:
+                principal = usuario
+
+            origem_uv = self._ataque_pos_uv(usuario, largura_tela, altura_tela)
+            alvo_uv = self._ataque_pos_uv(principal, largura_tela, altura_tela)
+            if origem_uv is None:
+                origem_uv = alvo_uv
+            if alvo_uv is None:
+                alvo_uv = origem_uv
+            if origem_uv is None or alvo_uv is None:
+                continue
+            if not self._uv_em_margem(origem_uv) and not self._uv_em_margem(alvo_uv):
+                continue
+
+            duracao = max(0.001, fim - inicio)
+            fase = max(0.0, min(1.0, (self._tempo - inicio) / duracao))
+            fade_in = max(0.0, min(1.0, (self._tempo - inicio) / 0.10))
+            fade_out = max(0.0, min(1.0, (fim - self._tempo) / 0.16))
+            power = max(0.0, min(1.0, fade_in, fade_out))
+            impacto_power = self._impacto_power_shader(ctx)
+            if impacto_power > power:
+                power = min(1.0, max(power, impacto_power * 0.85))
+            if power <= 0.001:
+                continue
+
+            animacao = ctx.get("animacao") if isinstance(ctx.get("animacao"), dict) else {}
+            tipo_valor = ctx.get("tipo_ataque") or animacao.get("tipo_ataque") or animacao.get("tipo") or "normal"
+            tipo = normalizar_tipo_ataque(tipo_valor)
+            if tipo == "normal" and str(tipo_valor or "").strip().casefold() == "terrestre":
+                tipo = "terra"
+            cor = self._cor_ataque_shader(ctx, animacao, tipo)
+            saida.append({
+                "modelo": modelo,
+                "modelo_codigo": modelo_codigo,
+                "tipo": tipo,
+                "tipo_codigo": TIPOS_ATAQUE_SHADER.get(tipo, 1),
+                "origem_uv": origem_uv,
+                "alvo_uv": alvo_uv,
+                "fase": fase,
+                "power": power,
+                "raio": self._raio_ataque_shader(ctx, animacao, modelo, altura_tela),
+                "largura": self._largura_ataque_shader(animacao, modelo),
+                "seed": self._seed_ataque_shader(ctx),
+                "impacto_power": impacto_power,
+                "cor": cor,
+            })
+        return saida
+
     def esta_ocupado(self):
         return bool(self._agendados) or self.animator.esta_ocupado()
+
+    def _ataque_pos_uv(self, alvo, largura_tela, altura_tela):
+        pos_mundo = self.animator._posicao_mundo(alvo)
+        pos_tela = self.animator._posicao_tela(pos_mundo)
+        if not (isinstance(pos_tela, (list, tuple)) and len(pos_tela) >= 2):
+            return None
+        try:
+            return (float(pos_tela[0]) / largura_tela, float(pos_tela[1]) / altura_tela)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return None
+
+    @staticmethod
+    def _uv_em_margem(uv):
+        try:
+            return -0.20 <= float(uv[0]) <= 1.20 and -0.20 <= float(uv[1]) <= 1.20
+        except Exception:
+            return False
+
+    def _impacto_power_shader(self, contexto):
+        impactos = contexto.get("impactos") if isinstance(contexto.get("impactos"), dict) else {}
+        impacto_power = 0.0
+        for impacto in impactos.values():
+            try:
+                delta = abs(self._tempo - float(impacto))
+            except (TypeError, ValueError):
+                continue
+            if delta <= 0.20:
+                impacto_power = max(impacto_power, 1.0 - (delta / 0.20))
+        if contexto.get("modelo") == "Explosao":
+            try:
+                delta = abs(self._tempo - float(contexto.get("impacto_principal")))
+                if delta <= 0.28:
+                    impacto_power = max(impacto_power, 1.0 - (delta / 0.28))
+            except (TypeError, ValueError):
+                pass
+        return max(0.0, min(1.0, impacto_power))
+
+    def _raio_ataque_shader(self, contexto, animacao, modelo, altura_tela):
+        padroes = {
+            "Projetil": 0.050,
+            "Laser": 0.040,
+            "Raio": 0.045,
+            "Jato": 0.060,
+            "Explosao": 0.090,
+            "Avanco": 0.070,
+            "Salto": 0.075,
+            "EfeitoAlvo": 0.070,
+            "EfeitoProprio": 0.070,
+        }
+        raio = padroes.get(str(modelo or ""), 0.055)
+        try:
+            if modelo == "Explosao":
+                camera = getattr(self.controlador, "camera", None)
+                tile_px = max(1.0, float(getattr(camera, "TilePx", 40) or 40)) if camera is not None else 40.0
+                raio = max(raio, float(contexto.get("raio_explosao") or animacao.get("raio_explosao") or 0.0) * tile_px / altura_tela)
+            elif modelo == "Projetil" and animacao.get("tamanho") is not None:
+                raio = max(raio, float(animacao.get("tamanho") or 0.0) / altura_tela * 1.15)
+        except (TypeError, ValueError, ZeroDivisionError):
+            pass
+        return max(0.018, min(0.18, raio))
+
+    @staticmethod
+    def _largura_ataque_shader(animacao, modelo):
+        try:
+            largura = float(animacao.get("largura", 1.0) or 1.0)
+        except (TypeError, ValueError):
+            largura = 1.0
+        if modelo == "Laser" and largura > 4.0:
+            largura = largura / 12.0
+        return max(0.35, min(3.0, largura))
+
+    @staticmethod
+    def _seed_ataque_shader(contexto):
+        texto = f"{contexto.get('ataque_id') or ''}:{contexto.get('ataque_nome') or ''}:{contexto.get('usuario_id') or ''}:{contexto.get('inicio') or 0.0}"
+        acumulado = 0
+        for ch in texto:
+            acumulado = (acumulado * 33 + ord(ch)) % 9973
+        return float(acumulado % 1000) / 1000.0
+
+    @staticmethod
+    def _cor_ataque_shader(contexto, animacao, tipo):
+        cor = contexto.get("cor")
+        if not cor and contexto.get("modelo") == "Explosao":
+            cor = animacao.get("cor_onda")
+        if not cor:
+            cor = animacao.get("cor")
+        if isinstance(cor, (list, tuple)) and len(cor) >= 3:
+            try:
+                return (
+                    max(0, min(255, int(cor[0]))),
+                    max(0, min(255, int(cor[1]))),
+                    max(0, min(255, int(cor[2]))),
+                )
+            except (TypeError, ValueError):
+                pass
+        return tuple(obter_cor_tipo(tipo))
 
     def _tempo_onda(self, principal, alvo, raio, duracao):
         p0 = self.animator._posicao_mundo(principal)

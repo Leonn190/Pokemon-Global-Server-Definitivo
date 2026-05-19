@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -43,6 +44,58 @@ class CompositorModernGL:
         "painel": 5.0,
         "hud": 5.0,
         "texto_cinematico": 5.0,
+    }
+    _MODELOS_ATAQUE = {
+        "projetil": 1,
+        "laser": 2,
+        "raio": 3,
+        "jato": 4,
+        "explosao": 5,
+        "avanco": 6,
+        "salto": 6,
+        "efeitoproprio": 7,
+        "efeitoalvo": 7,
+    }
+    _TIPOS_ATAQUE = {
+        "normal": 1,
+        "fogo": 2,
+        "agua": 3,
+        "planta": 4,
+        "eletrico": 5,
+        "gelo": 6,
+        "lutador": 7,
+        "venenoso": 8,
+        "veneno": 8,
+        "terra": 9,
+        "terrestre": 9,
+        "voador": 10,
+        "psiquico": 11,
+        "inseto": 12,
+        "pedra": 13,
+        "fantasma": 14,
+        "dragao": 15,
+        "sombrio": 16,
+        "metal": 17,
+        "fada": 18,
+        "cosmico": 19,
+        "sonoro": 20,
+        "fire": 2,
+        "water": 3,
+        "grass": 4,
+        "electric": 5,
+        "ice": 6,
+        "fighting": 7,
+        "poison": 8,
+        "ground": 9,
+        "flying": 10,
+        "psychic": 11,
+        "bug": 12,
+        "rock": 13,
+        "ghost": 14,
+        "dragon": 15,
+        "dark": 16,
+        "steel": 17,
+        "fairy": 18,
     }
 
     def __init__(self) -> None:
@@ -191,6 +244,17 @@ class CompositorModernGL:
     def _modo_efeito(self, tipo_efeito: str) -> float:
         return float(self._MODOS_EFEITO.get(str(tipo_efeito or "").strip().lower(), 0.0))
 
+    @staticmethod
+    def _chave_texto(valor) -> str:
+        bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+        texto = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+        return "".join(ch for ch in texto if ch.isalnum())
+
+    def _codigo_ataque(self, valor, mapa: dict[str, int]) -> int:
+        try:
+            return int(float(valor or 0))
+        except (TypeError, ValueError):
+            return int(mapa.get(self._chave_texto(valor), 0))
 
     def _aplicar_uniformes_estados_batalha(self, estados_batalha) -> None:
         # 12 alvos mantem custo baixo e cobre ate 6 Pokemon com 2 estados visuais fortes.
@@ -214,6 +278,61 @@ class CompositorModernGL:
             codigo_power = float(codigo) + power * 0.1
             self._uniform(f"u_estado_batalha_{i}", (float(pos[0]), float(pos[1]), float(raio), float(codigo_power)))
 
+    def _cor_rgb_normalizada(self, valor, padrao=(1.0, 1.0, 1.0)) -> tuple[float, float, float, float]:
+        try:
+            if isinstance(valor, (list, tuple)) and len(valor) >= 3:
+                r = float(valor[0])
+                g = float(valor[1])
+                b = float(valor[2])
+                if max(r, g, b) > 1.0:
+                    r, g, b = r / 255.0, g / 255.0, b / 255.0
+                return (
+                    float(self._clamp(r, 0.0, 1.0)),
+                    float(self._clamp(g, 0.0, 1.0)),
+                    float(self._clamp(b, 0.0, 1.0)),
+                    1.0,
+                )
+        except Exception:
+            pass
+        return (float(padrao[0]), float(padrao[1]), float(padrao[2]), 0.0)
+
+    def _aplicar_uniformes_ataques_batalha(self, ataques_batalha) -> None:
+        max_ataques = 8
+        for i in range(max_ataques):
+            self._uniform(f"u_attack_fx_{i}_pos", (0.0, 0.0, 0.0, 0.0))
+            self._uniform(f"u_attack_fx_{i}_data", (0.0, 0.0, 0.0, 0.0))
+            self._uniform(f"u_attack_fx_{i}_extra", (0.0, 0.0, 0.0, 0.0))
+            self._uniform(f"u_attack_fx_{i}_color", (0.0, 0.0, 0.0, 0.0))
+        if not isinstance(ataques_batalha, list):
+            return
+        slot = 0
+        for item in ataques_batalha:
+            if slot >= max_ataques:
+                break
+            if not isinstance(item, dict):
+                continue
+            origem = self._vec2(item.get("origem_uv", item.get("origem", (0.5, 0.5))))
+            alvo = self._vec2(item.get("alvo_uv", item.get("alvo", (0.5, 0.5))))
+            try:
+                modelo = self._codigo_ataque(item.get("modelo_codigo", item.get("modelo", 0)), self._MODELOS_ATAQUE)
+                tipo = self._codigo_ataque(item.get("tipo_codigo", item.get("tipo", 0)), self._TIPOS_ATAQUE)
+                fase = self._clamp(float(item.get("fase", 0.0) or 0.0), 0.0, 1.0)
+                power = self._clamp(float(item.get("power", item.get("intensidade", 0.0)) or 0.0), 0.0, 1.5)
+                raio = self._clamp(float(item.get("raio", item.get("radius", 0.055)) or 0.055), 0.004, 0.35)
+                largura = self._clamp(float(item.get("largura", item.get("width", 1.0)) or 1.0), 0.20, 4.0)
+                seed = float(item.get("seed", 0.0) or 0.0) % 1.0
+                impacto_power = self._clamp(float(item.get("impacto_power", item.get("impacto", 0.0)) or 0.0), 0.0, 1.0)
+            except (TypeError, ValueError):
+                continue
+            if modelo <= 0 or power <= 0.001:
+                continue
+            cor = self._cor_rgb_normalizada(item.get("cor", item.get("color")))
+            self._uniform(f"u_attack_fx_{slot}_pos", (float(origem[0]), float(origem[1]), float(alvo[0]), float(alvo[1])))
+            self._uniform(f"u_attack_fx_{slot}_data", (float(modelo), float(max(0, tipo)), float(fase), float(self._clamp(power, 0.0, 1.0))))
+            self._uniform(f"u_attack_fx_{slot}_extra", (float(raio), float(largura), float(seed), float(impacto_power)))
+            self._uniform(f"u_attack_fx_{slot}_color", cor)
+            slot += 1
+
     def renderizar(self, scene_surface: pygame.Surface, hud_surface: pygame.Surface, efeito: Dict[str, object] | None, shader_ativo: bool) -> None:
         largura, altura = scene_surface.get_size()
         self._garantir_texturas((largura, altura))
@@ -227,6 +346,7 @@ class CompositorModernGL:
         texto_cinematico_power = self._clamp(float(dados.get("texto_cinematico_power", 0.0) or 0.0), 0.0, 1.0)
         dungeon_power = self._clamp(float(dados.get("dungeon_power", 0.0) or 0.0), 0.0, 1.0)
         estados_batalha = list(dados.get("battle_status_targets", dados.get("estados_batalha_shader", [])) or [])
+        ataques_batalha = list(dados.get("battle_attack_fx", dados.get("ataques_batalha_shader", [])) or [])
         estados_batalha_ativos = False
         for item in estados_batalha:
             if not isinstance(item, dict):
@@ -234,6 +354,16 @@ class CompositorModernGL:
             try:
                 if float(item.get("power", item.get("intensidade", 0.0)) or 0.0) > 0.001:
                     estados_batalha_ativos = True
+                    break
+            except (TypeError, ValueError):
+                continue
+        ataques_batalha_ativos = False
+        for item in ataques_batalha:
+            if not isinstance(item, dict):
+                continue
+            try:
+                if float(item.get("power", item.get("intensidade", 0.0)) or 0.0) > 0.001:
+                    ataques_batalha_ativos = True
                     break
             except (TypeError, ValueError):
                 continue
@@ -246,6 +376,7 @@ class CompositorModernGL:
                 or texto_cinematico_power > 0.001
                 or dungeon_power > 0.001
                 or estados_batalha_ativos
+                or ataques_batalha_ativos
             )
         )
         scene_upload_surface = scene_surface
@@ -279,6 +410,7 @@ class CompositorModernGL:
         self._uniform("u_battle_fog_power", float(self._clamp(float(dados.get("battle_fog_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_acid_power", float(self._clamp(float(dados.get("battle_acid_power", 0.0) or 0.0), 0.0, 1.0)))
         self._aplicar_uniformes_estados_batalha(estados_batalha)
+        self._aplicar_uniformes_ataques_batalha(ataques_batalha)
 
         menu_logo_rect = dados.get("menu_logo_rect", (0.0, 0.0, 0.0, 0.0))
         try:

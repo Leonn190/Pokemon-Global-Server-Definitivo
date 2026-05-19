@@ -248,11 +248,17 @@ class AnimadorAtaquesBatalha:
         return impactos, fim
 
     def _registrar_ataque_ativo(self, dados, animacao, modelo, impactos_rel, fim_abs, principal):
+        tipo_ataque = dados.get("tipo_ataque") or (animacao or {}).get("tipo_ataque") or (animacao or {}).get("tipo")
+        cor = _cor((animacao or {}).get("cor_onda")) if modelo == "Explosao" else None
+        cor = cor or _cor((animacao or {}).get("cor"))
         contexto = {
             "ataque_id": str(dados.get("ataque_id") or ""),
             "ataque_nome": str(dados.get("ataque_nome") or ""),
             "usuario_id": str(dados.get("usuario_id") or dados.get("pokemon_id") or ""),
+            "inicio": self._tempo,
             "modelo": modelo,
+            "tipo_ataque": tipo_ataque,
+            "cor": cor,
             "animacao": dict(animacao or {}),
             "principal": principal,
             "principal_id": str(dados.get("alvo_principal_id") or getattr(principal, "id_batalha", "") or ""),

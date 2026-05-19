@@ -274,6 +274,14 @@ class CenaCombate:
             efeito["tipo"] = "batalha"
             efeito["battle_status_targets"] = estados
             efeito["ativo"] = True
+        ataques = []
+        controlador_animacoes = getattr(getattr(self, "ControladorBatalha", None), "controlador_animacoes", None)
+        if controlador_animacoes is not None and hasattr(controlador_animacoes, "coletar_ataques_shader_batalha"):
+            ataques = controlador_animacoes.coletar_ataques_shader_batalha(tamanho_tela)
+        if ataques:
+            efeito["tipo"] = "batalha"
+            efeito["battle_attack_fx"] = ataques
+            efeito["ativo"] = True
         return efeito or None
 
     @staticmethod

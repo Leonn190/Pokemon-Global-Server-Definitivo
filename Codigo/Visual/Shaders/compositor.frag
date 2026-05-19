@@ -3,6 +3,7 @@
 #include "uniformes/globais.glsl"
 #include "uniformes/mundo.glsl"
 #include "uniformes/batalha.glsl"
+#include "uniformes/ataques.glsl"
 #include "uniformes/hud.glsl"
 #include "comum/constantes.glsl"
 #include "comum/ruido.glsl"
@@ -16,6 +17,7 @@
 #include "efeitos/mundo/captura.glsl"
 #include "efeitos/batalha/clima_batalha.glsl"
 #include "efeitos/batalha/estados_batalha.glsl"
+#include "efeitos/batalha/ataques_batalha.glsl"
 #include "efeitos/hud/menu_logo.glsl"
 #include "efeitos/hud/texto_cinematico.glsl"
 
@@ -55,6 +57,7 @@ void main() {
     color = aplicar_biomas_mundo(color, screen_uv, biome);
     color = aplicar_clima_batalha(color, screen_uv, aspect, battle_sun, battle_sand, battle_fog);
     color = aplicar_estados_batalha(color, v_uv, aspect);
+    color = aplicar_ataques_batalha(color, v_uv, aspect);
     color = aplicar_estrelas_luz_player(color, screen_uv, aspect, dark, rain);
     color = aplicar_raios_mundo(color, screen_uv);
     color = aplicar_dungeon_ambiente(color, screen_uv, centered);

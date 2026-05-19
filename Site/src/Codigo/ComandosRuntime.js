@@ -1,4 +1,4 @@
-import { abrirModalDetalhe, criarWikiCatalogo, fecharModalDetalhe, html, infoHtml, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { abrirModalDetalhe, criarWikiCatalogo, fecharModalDetalhe, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
 function criarCardComando(comando) {
   const card = document.createElement("button");
@@ -46,7 +46,6 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const aliases = detalhe.querySelector("[data-comando-aliases]");
     const argumentos = detalhe.querySelector("[data-comando-args]");
     const exemplos = detalhe.querySelector("[data-comando-examples]");
-    const info = detalhe.querySelector("[data-comando-info]");
 
     if (nome) nome.textContent = `/${comando.nome}`;
     if (uso) uso.textContent = comando.uso;
@@ -71,15 +70,6 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       exemplos.innerHTML = (comando.exemplos || []).length
         ? comando.exemplos.map((exemplo) => `<code>${html(exemplo)}</code>`).join("")
         : `<p>Sem exemplos catalogados.</p>`;
-    }
-    if (info) {
-      info.innerHTML = infoHtml([
-        ["ID", `#${comando.codigo || comando.id}`],
-        ["Tipo de uso", comando.localRotulo],
-        ["Permissão", comando.nivelRotulo],
-        ["Uso", comando.uso],
-        ["Aliases", (comando.aliases || []).map((alias) => `/${alias}`).join(", ") || "Nenhum"],
-      ]);
     }
     abrirModalDetalhe(detalhe);
   }

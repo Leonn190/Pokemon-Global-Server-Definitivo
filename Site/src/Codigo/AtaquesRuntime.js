@@ -27,7 +27,7 @@ function focoBarrasHtml(item) {
     `;
   }).join("")}</div>`;
 }
-function criarCardAtaque(ataque, dados) {
+export function criarCardAtaque(ataque, dados) {
   const asset = assetAtaque(ataque, dados);
   const card = document.createElement("button");
   card.type = "button";
@@ -44,8 +44,8 @@ function criarCardAtaque(ataque, dados) {
   `;
   return card;
 }
-function criarControladorDetalhe(dados, obterListaAtual) {
-  const detalhe = document.querySelector("[data-ataque-detail]");
+export function criarControladorDetalheAtaques(dados, obterListaAtual, seletor = "[data-ataque-detail]") {
+  const detalhe = document.querySelector(seletor);
   let ataqueAberto = null;
   function listaNavegacao() {
     const listaAtual = typeof obterListaAtual === "function" ? obterListaAtual() : null;
@@ -118,7 +118,7 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
   const sentinela = app.querySelector("[data-ataques-sentinel]");
   let tipoSelecionado = "";
   let listagem;
-  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
+  const detalheController = criarControladorDetalheAtaques(dados, () => listagem?.obterResultadoAtual() ?? []);
   function atualizarChipsTipo() {
     tipoChips.forEach((chip) => {
       const ativo = chip.dataset.ataquesTypeChip === tipoSelecionado;

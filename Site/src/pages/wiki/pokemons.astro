@@ -6,7 +6,16 @@ import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
 import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
 import FiltroTipoIcones from "../../Componentes/FiltroTipoIcones.astro";
 import PokemonDetalheModal from "../../Componentes/PokemonDetalheModal.astro";
+import ModalDetalhe from "../../Componentes/ModalDetalhe.astro";
+import ModalControles from "../../Componentes/ModalControles.astro";
+import DetalheTopo from "../../Componentes/DetalheTopo.astro";
+import PainelDetalhe from "../../Componentes/PainelDetalhe.astro";
 import JsonPayload from "../../Componentes/JsonPayload.astro";
+import {
+  carregarAtaques,
+  criarAssetsAtaques,
+  indexarIconesAtaques,
+} from "../../Codigo/AtaquesWikiDados.js";
 import {
   ATRIBUTOS_BASE,
   ATRIBUTOS_REGULARES,
@@ -15,18 +24,23 @@ import {
   normalizarChave,
   resumoPokemons,
 } from "../../Codigo/PokemonWikiDados.js";
-import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
+import { indexarPublicoPorNome, listarImagensPublicas } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const pokemons = carregarPokemons();
+const ataques = carregarAtaques();
 const resumo = resumoPokemons(pokemons);
 const imagensPorNome = indexarPublicoPorNome("Imagens");
 const iconesTipos = indexarPublicoPorNome("Tipos");
 const iconesAtributos = indexarPublicoPorNome("Atributos");
+const iconesAtaques = indexarIconesAtaques(listarImagensPublicas("Ataques"));
 const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome);
+const assetsAtaques = criarAssetsAtaques(ataques, iconesAtaques);
 const tiposVisiveis = resumo.tipos;
 const payloadPokedex = {
   pokemons,
+  ataques,
   assetsPokemons,
+  assetsAtaques,
   iconesTipos,
   iconesAtributos,
   atributosBase: ATRIBUTOS_BASE,
@@ -91,6 +105,42 @@ const opcoesRaridade = [{ value: "", label: "Todas" }, ...resumo.raridades.map((
     />
   </WikiCatalogoShell>
   <PokemonDetalheModal labelledby="pokemon-detalhe-nome" detailAttrs={{ "data-pokemon-detail": true }} />
+  <ModalDetalhe
+    class="item-detalhe pokemon-detalhe"
+    cardClass="pokemon-detalhe-card item-detalhe-card ataque-detalhe-card"
+    labelledby="pokemon-ataque-detalhe-nome"
+    backdropAttrs={{ "data-ataque-close": true }}
+    data-ataque-detail
+  >
+    <ModalControles
+      rotulo="Navegação do ataque aberto"
+      prevLabel="Ataque anterior"
+      nextLabel="Próximo ataque"
+      prevAttrs={{ "data-ataque-prev": true }}
+      nextAttrs={{ "data-ataque-next": true }}
+      closeAttrs={{ "data-ataque-close": true }}
+    />
+    <DetalheTopo
+      class="item-detalhe-topo ataque-detalhe-topo"
+      palcoClass="item-palco-detalhe ataque-palco-detalhe"
+      cabecalhoClass="ataque-cabecalho-detalhe"
+      imageAttrs={{ "data-ataque-image": true }}
+      codeAttrs={{ "data-ataque-code": true }}
+      nameAttrs={{ id: "pokemon-ataque-detalhe-nome", "data-ataque-name": true }}
+      nomeFallback="Ataque"
+    >
+      <div class="pokemon-tags" data-ataque-tags></div>
+    </DetalheTopo>
+    <PainelDetalhe titulo="Descrição" class="item-info-painel ataque-texto-painel">
+      <p class="item-descricao-melhor" data-ataque-description></p>
+    </PainelDetalhe>
+    <PainelDetalhe titulo="Aprimoramento" class="item-info-painel ataque-texto-painel ataque-aprimoramento-painel">
+      <div class="item-descricao-melhor" data-ataque-upgrade></div>
+    </PainelDetalhe>
+    <section class="painel-detalhe ataque-foco-painel">
+      <div data-ataque-focus-bars></div>
+    </section>
+  </ModalDetalhe>
   <JsonPayload id="pokedex-data" dados={payloadPokedex} />
   <script>
     import { inicializarPokedex } from "../../Codigo/PokedexRuntime.js";

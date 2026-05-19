@@ -1,3 +1,4 @@
+import { criarCardAtaque, criarControladorDetalheAtaques } from "./AtaquesRuntime.js";
 import { fecharModalDetalhe, abrirModalDetalhe, infoHtml, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 const MAXIMOS_BARRAS = {
   Vida: 200,
@@ -61,6 +62,36 @@ function focoPrincipal(pokemon) {
   });
   return melhor;
 }
+function renderizarMovelistGrupo(titulo, entradas, dados, ataquesPorNome, ataqueController) {
+  const ataques = (entradas || []).map((entrada) => ataquesPorNome.get(normalizar(entrada.nome))).filter(Boolean);
+  if (!ataques.length) return null;
+  const grupo = document.createElement("section");
+  grupo.className = "pokemon-movelist-grupo";
+  const heading = document.createElement("h4");
+  heading.textContent = titulo;
+  const lista = document.createElement("div");
+  lista.className = "pokemon-movelist-lista";
+  ataques.forEach((ataque) => {
+    const card = criarCardAtaque(ataque, dados);
+    card.addEventListener("click", () => ataqueController?.abrirDetalhe(ataque.uid || ataque.id));
+    lista.appendChild(card);
+  });
+  grupo.append(heading, lista);
+  return grupo;
+}
+function preencherMovelist(node, movelist, dados, ataquesPorNome, ataqueController) {
+  if (!node) return false;
+  node.replaceChildren();
+  if (!movelist || !Array.isArray(dados.ataques) || !dados.ataques.length) return false;
+  [
+    ["Ataques aprendidos naturalmente", movelist.regulares],
+    ["Ataques aprendidos artificialmente", movelist.artificiais],
+  ].forEach(([titulo, entradas]) => {
+    const grupo = renderizarMovelistGrupo(titulo, entradas, dados, ataquesPorNome, ataqueController);
+    if (grupo) node.appendChild(grupo);
+  });
+  return node.children.length > 0;
+}
 export function criarCardPokemon(pokemon, dados, origem = "wiki") {
   const asset = assetPokemon(pokemon, dados.assetsPokemons);
   const nomeVisivel = nomeExibicao(pokemon);
@@ -86,6 +117,8 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
   const detalhe = document.querySelector(opcoes.seletorDetalhe || "[data-pokemon-detail]");
   let pokemonAberto = null;
   const atributosBase = dados.atributosBase || [];
+  const ataquesPorNome = new Map((dados.ataques || []).map((ataque) => [normalizar(ataque.nome), ataque]));
+  const ataqueController = criarControladorDetalheAtaques(dados, () => dados.ataques || [], opcoes.seletorAtaqueDetalhe);
   function familiaPokemon(pokemon) {
     return (dados.pokemons || [])
       .filter((item) => String(item.linhagem) === String(pokemon.linhagem))
@@ -124,6 +157,8 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
     const resumo = detalhe.querySelector("[data-detail-summary]");
     const stats = detalhe.querySelector("[data-detail-stats]");
     const info = detalhe.querySelector("[data-detail-info]");
+    const painelMovelist = detalhe.querySelector("[data-detail-movelist-panel]");
+    const movelist = detalhe.querySelector("[data-detail-movelist]");
     const linha = detalhe.querySelector("[data-detail-line]");
     const linhaCount = detalhe.querySelector("[data-detail-line-count]");
     const painelLinhagem = detalhe.querySelector("[data-detail-line-panel]");
@@ -178,6 +213,7 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
       ];
       info.innerHTML = infoHtml(dadosInfo);
     }
+    if (painelMovelist) painelMovelist.hidden = !preencherMovelist(movelist, pokemon.movelist, dados, ataquesPorNome, ataqueController);
     if (painelLinhagem) painelLinhagem.hidden = opcoes.mostrarLinhagem === false;
     if (linha && opcoes.mostrarLinhagem !== false) {
       const familia = familiaPokemon(pokemon);

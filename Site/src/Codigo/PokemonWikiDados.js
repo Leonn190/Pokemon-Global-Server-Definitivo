@@ -1,5 +1,9 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { carregarCsvWiki, limparTexto, numero } from "./WikiCsv.js";
 const NOME_CSV = "Pokemon Global Server - Pokemons.csv";
+const ARQUIVO_MOVELIST = "MoveList.json";
 const CAMPOS_NUMERICOS = [
   "Vida",
   "Atk",
@@ -121,7 +125,77 @@ function variantesTextoPokemon(nome) {
   ];
 }
 export function carregarPokemons() {
-  return carregarCsvWiki([NOME_CSV], "Wiki Pokémons").map((linha, indice) => normalizarPokemon(linha, indice));
+  return anexarMoveList(carregarCsvWiki([NOME_CSV], "Wiki Pokémons").map((linha, indice) => normalizarPokemon(linha, indice)));
+}
+
+function caminhosMoveList() {
+  const atual = path.dirname(fileURLToPath(import.meta.url));
+  return [
+    path.resolve(atual, "../../../Dados/Catalogos", ARQUIVO_MOVELIST),
+    path.resolve(atual, "../../../Dados/Catalogo", ARQUIVO_MOVELIST),
+    path.resolve(process.cwd(), "../Dados/Catalogos", ARQUIVO_MOVELIST),
+    path.resolve(process.cwd(), "../Dados/Catalogo", ARQUIVO_MOVELIST),
+    path.resolve(process.cwd(), "Dados/Catalogos", ARQUIVO_MOVELIST),
+    path.resolve(process.cwd(), "Dados/Catalogo", ARQUIVO_MOVELIST),
+  ];
+}
+
+function lerMoveList() {
+  const caminho = caminhosMoveList().find((item) => existsSync(item));
+  if (!caminho) return {};
+  try {
+    const dados = JSON.parse(readFileSync(caminho, "utf8").replace(/^\uFEFF/, ""));
+    return dados && typeof dados === "object" ? dados : {};
+  } catch (erro) {
+    console.warn(`[Wiki Pokémons] Falha ao ler ${caminho}: ${erro}`);
+    return {};
+  }
+}
+
+function entradasMoveList(entradas) {
+  if (!entradas || typeof entradas !== "object" || Array.isArray(entradas)) return [];
+  return Object.entries(entradas)
+    .map(([nome, intensidade]) => ({ nome: limparTexto(nome), intensidade: numero(intensidade) ?? null }))
+    .filter((entrada) => entrada.nome);
+}
+
+function normalizarMoveList(entrada) {
+  if (!entrada || typeof entrada !== "object") return null;
+  const regulares = entradasMoveList(entrada.regulares);
+  const artificiais = entradasMoveList(entrada.artificiais);
+  return regulares.length || artificiais.length ? { regulares, artificiais } : null;
+}
+
+function ehFormaPokemon(pokemon) {
+  const nome = normalizarChave(pokemon?.nome);
+  const raridade = normalizarChave(pokemon?.raridadeTexto);
+  const estagio = normalizarChave(pokemon?.estagio);
+  return (
+    raridade === "forma" ||
+    raridade === "formafinal" ||
+    estagio === "f" ||
+    estagio === "ff" ||
+    nome.includes("radiante") ||
+    nome.startsWith("mega") ||
+    nome.startsWith("ultra") ||
+    nome.startsWith("gigantamax") ||
+    nome.startsWith("gmax")
+  );
+}
+
+function anexarMoveList(pokemons) {
+  const indice = new Map(Object.entries(lerMoveList()).map(([nome, entrada]) => [normalizarChave(nome), normalizarMoveList(entrada)]));
+  const regularesPorLinhagem = new Map();
+  pokemons.forEach((pokemon) => {
+    if (!ehFormaPokemon(pokemon)) regularesPorLinhagem.set(String(pokemon.linhagem), pokemon);
+  });
+  return pokemons.map((pokemon) => {
+    const movelist =
+      indice.get(normalizarChave(pokemon.nome)) ||
+      indice.get(normalizarChave(nomeBaseForma(pokemon.nome))) ||
+      (ehFormaPokemon(pokemon) ? indice.get(normalizarChave(regularesPorLinhagem.get(String(pokemon.linhagem))?.nome)) : null);
+    return movelist ? { ...pokemon, movelist } : pokemon;
+  });
 }
 function normalizarPokemon(linha, indice) {
   const normalizado = { ...linha };

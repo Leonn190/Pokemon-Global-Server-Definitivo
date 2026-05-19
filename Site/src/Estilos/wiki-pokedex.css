@@ -567,6 +567,35 @@ body.detalhe-aberto {
 .painel-linhagem {
   margin-top: 16px;
 }
+.pokemon-movelist-painel {
+  margin-top: 16px;
+}
+.pokemon-movelist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.pokemon-movelist-grupo {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+.pokemon-movelist-grupo h4 {
+  margin: 0;
+  color: var(--texto-fraco);
+  font-size: 0.84rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pokemon-movelist-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.pokemon-movelist-lista .ataque-card {
+  min-height: 196px;
+}
 .painel-titulo-linha {
   display: flex;
   align-items: center;
@@ -650,6 +679,7 @@ body.detalhe-aberto {
 @media (max-width: 620px) {
   .pokedex-toolbar,
   .pokedex-resumo,
+  .pokemon-movelist,
   .pokemon-info-lista {
     grid-template-columns: 1fr;
   }

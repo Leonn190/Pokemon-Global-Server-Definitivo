@@ -1,1 +1,337 @@
-{}
+{
+  "Ferrugem": {
+    "codigo": 286,
+    "nome": "Ferrugem",
+    "papeis": [
+      "controle",
+      "debuff",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "def",
+      "debuff"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_def_alta",
+      "melhor_antes_de_ataques_fisicos"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Afiar": {
+    "codigo": 287,
+    "nome": "Afiar",
+    "papeis": [
+      "buff",
+      "dano",
+      "precisao"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "per",
+      "buff"
+    ],
+    "condicoes": [
+      "melhor_antes_de_atacar",
+      "melhor_em_usuario_com_mag_alta"
+    ],
+    "prioridade_simulacao": 0.54
+  },
+  "Metalurgia": {
+    "codigo": 288,
+    "nome": "Metalurgia",
+    "papeis": [
+      "buff",
+      "suporte",
+      "risco_aliado"
+    ],
+    "alvos_preferidos": [
+      "aliado_importante",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "per",
+      "vida_aliado",
+      "buff"
+    ],
+    "condicoes": [
+      "melhor_com_aliados_adjacentes",
+      "pior_com_aliados_feridos"
+    ],
+    "prioridade_simulacao": 0.64
+  },
+  "Corte e Recorte": {
+    "codigo": 289,
+    "nome": "Corte e Recorte",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "atk",
+      "per",
+      "vamp"
+    ],
+    "condicoes": [
+      "melhor_em_usuario_com_per_alta",
+      "melhor_contra_alvo_com_def_baixa"
+    ],
+    "prioridade_simulacao": 0.66
+  },
+  "Barreira Ofensiva": {
+    "codigo": 290,
+    "nome": "Barreira Ofensiva",
+    "papeis": [
+      "dano",
+      "protecao",
+      "barreira",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "barreira",
+      "dano_fisico"
+    ],
+    "condicoes": [
+      "melhor_com_usuario_sem_barreira",
+      "melhor_se_usuario_vai_ser_focado"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Ímã": {
+    "codigo": 291,
+    "nome": "Ímã",
+    "papeis": [
+      "dano",
+      "controle",
+      "area",
+      "linha",
+      "posicionamento"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_na_ultima_area"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "puxao",
+      "linha"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_para_reposicionar_inimigo",
+      "melhor_contra_alvo_na_ultima_area"
+    ],
+    "prioridade_simulacao": 0.84
+  },
+  "Impacto de Aço": {
+    "codigo": 292,
+    "nome": "Impacto de Aço",
+    "papeis": [
+      "dano",
+      "anti_burst"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "def",
+      "spd"
+    ],
+    "condicoes": [
+      "melhor_em_usuario_com_defesas_altas"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Cabeçada de Ferro": {
+    "codigo": 293,
+    "nome": "Cabeçada de Ferro",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "atk"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_def_baixa",
+      "bom_para_dano_direto"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Cauda de Ferro": {
+    "codigo": 294,
+    "nome": "Cauda de Ferro",
+    "papeis": [
+      "dano",
+      "debuff",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "def",
+      "debuff_permanente"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_def_alta",
+      "melhor_antes_de_ataques_fisicos"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Britadeira": {
+    "codigo": 295,
+    "nome": "Britadeira",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "per"
+    ],
+    "condicoes": [
+      "melhor_em_usuario_com_per_alta"
+    ],
+    "prioridade_simulacao": 0.65
+  },
+  "Super Fincada": {
+    "codigo": 296,
+    "nome": "Super Fincada",
+    "papeis": [
+      "dano",
+      "debuff",
+      "anti_tanque"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_importante"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "def",
+      "spd",
+      "debuff_permanente"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_resistente",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Liga Metálica": {
+    "codigo": 297,
+    "nome": "Liga Metálica",
+    "papeis": [
+      "dano",
+      "area",
+      "multi_alvo",
+      "anti_tanque"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_com_def_baixa"
+    ],
+    "riscos": {
+      "usuario": "alto",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "def",
+      "multi_alvo"
+    ],
+    "condicoes": [
+      "melhor_com_dois_alvos_viaveis",
+      "melhor_se_usuario_tem_def_alta"
+    ],
+    "prioridade_simulacao": 0.86
+  },
+  "Treinamento de Metal": {
+    "codigo": 298,
+    "nome": "Treinamento de Metal",
+    "papeis": [
+      "buff",
+      "critico",
+      "dano"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "crc",
+      "crd",
+      "buff"
+    ],
+    "condicoes": [
+      "melhor_antes_de_atacar",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.52
+  }
+}

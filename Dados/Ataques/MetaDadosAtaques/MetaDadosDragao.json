@@ -1,1 +1,345 @@
-{}
+{
+  "Escama Mística": {
+    "codigo": 256,
+    "nome": "Escama Mística",
+    "papeis": [
+      "buff",
+      "protecao",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "spd",
+      "buff"
+    ],
+    "condicoes": [
+      "melhor_antes_de_receber_dano_especial",
+      "melhor_em_usuario_com_mag_alta"
+    ],
+    "prioridade_simulacao": 0.56
+  },
+  "Barragem Draconica": {
+    "codigo": 257,
+    "nome": "Barragem Draconica",
+    "papeis": [
+      "protecao",
+      "barreira",
+      "suporte",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "aliado_ferido",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "barreira",
+      "mag",
+      "spd"
+    ],
+    "condicoes": [
+      "melhor_se_alvo_vai_ser_focado",
+      "melhor_com_aliado_ferido"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Rugido": {
+    "codigo": 258,
+    "nome": "Rugido",
+    "papeis": [
+      "controle",
+      "debuff",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_fisico"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "atk",
+      "debuff"
+    ],
+    "condicoes": [
+      "melhor_contra_atacante_fisico",
+      "melhor_no_inicio_da_luta"
+    ],
+    "prioridade_simulacao": 0.6
+  },
+  "Garra do Dragão": {
+    "codigo": 259,
+    "nome": "Garra do Dragão",
+    "papeis": [
+      "dano",
+      "debuff",
+      "anti_tanque",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_ferido",
+      "inimigo_importante"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "dano_especial",
+      "def",
+      "spd"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_resistente",
+      "melhor_por_escolher_melhor_defesa_do_alvo"
+    ],
+    "prioridade_simulacao": 0.88
+  },
+  "Ultraje": {
+    "codigo": 260,
+    "nome": "Ultraje",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "dano_fixo"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fixo",
+      "ignorar_modificadores"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_muita_defesa",
+      "melhor_para_finalizar_hp_baixo"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Sopro do Dragão": {
+    "codigo": 261,
+    "nome": "Sopro do Dragão",
+    "papeis": [
+      "dano",
+      "controle",
+      "debuff",
+      "remocao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_buffado",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "remove_efeito_positivo",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_buffado",
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Tiro de Escamas": {
+    "codigo": 262,
+    "nome": "Tiro de Escamas",
+    "papeis": [
+      "dano",
+      "escala",
+      "pressao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_importante",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "alvo": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "stack",
+      "buff_def_alvo"
+    ],
+    "condicoes": [
+      "melhor_contra_mesmo_alvo_repetido",
+      "pior_se_nao_puder_finalizar_depois"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Sem Fraquezas": {
+    "codigo": 263,
+    "nome": "Sem Fraquezas",
+    "papeis": [
+      "buff",
+      "sobrevivencia",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "pior_atributo",
+      "buff"
+    ],
+    "condicoes": [
+      "melhor_no_inicio_da_luta",
+      "melhor_em_usuario_com_atributo_muito_baixo"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Juramento do Dracomante": {
+    "codigo": 264,
+    "nome": "Juramento do Dracomante",
+    "papeis": [
+      "protecao",
+      "barreira",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "imortal",
+      "barreira",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_vai_ser_focado",
+      "melhor_com_usuario_ferido",
+      "melhor_para_segurar_turno_decisivo"
+    ],
+    "prioridade_simulacao": 0.86
+  },
+  "Golpe Destrutivo": {
+    "codigo": 265,
+    "nome": "Golpe Destrutivo",
+    "papeis": [
+      "dano",
+      "controle",
+      "terreno",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_importante"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "area_destruida",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_com_chance_critica_alta",
+      "melhor_para_negar_posicao_inimiga"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Investida Dracônica": {
+    "codigo": 266,
+    "nome": "Investida Dracônica",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "recoil"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_importante"
+    ],
+    "riscos": {
+      "usuario": "alto"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "recoil",
+      "recuo",
+      "dano_ao_usuario"
+    ],
+    "condicoes": [
+      "melhor_para_finalizar",
+      "pior_se_usuario_ferido",
+      "pior_se_chance_de_erro_alta"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Território Sagrado": {
+    "codigo": 267,
+    "nome": "Território Sagrado",
+    "papeis": [
+      "controle",
+      "suporte",
+      "protecao",
+      "terreno"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "self",
+      "area_aliada_importante"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "sagrada",
+      "terreno",
+      "area"
+    ],
+    "condicoes": [
+      "melhor_se_aliado_vai_permanecer_na_area",
+      "melhor_para_defender_posicao"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Lança Etérea": {
+    "codigo": 268,
+    "nome": "Lança Etérea",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "anti_especial"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_com_spd_baixo"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "spd"
+    ],
+    "condicoes": [
+      "melhor_em_usuario_com_spd_alta",
+      "melhor_contra_alvo_com_spd_baixo"
+    ],
+    "prioridade_simulacao": 0.72
+  }
+}

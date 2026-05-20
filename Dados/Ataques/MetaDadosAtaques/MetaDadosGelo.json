@@ -1,1 +1,398 @@
-{}
+{
+  "Névoa Fria": {
+    "codigo": 109,
+    "nome": "Névoa Fria",
+    "papeis": [
+      "controle",
+      "debuff",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_especial"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "spa",
+      "debuff"
+    ],
+    "condicoes": [
+      "melhor_contra_atacante_especial",
+      "melhor_no_inicio_da_luta"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Cristalizar": {
+    "codigo": 110,
+    "nome": "Cristalizar",
+    "papeis": [
+      "controle",
+      "debuff",
+      "dano"
+    ],
+    "alvos_preferidos": [
+      "inimigo_encharcado",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "congelado",
+      "encharcado",
+      "dano_especial"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_encharcado",
+      "melhor_para_travar_alvo_perigoso"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Gelinho": {
+    "codigo": 111,
+    "nome": "Gelinho",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_congelado"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "acuracia",
+      "congelado",
+      "nevasca"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_congelado",
+      "melhor_se_clima_nevasca_ativo",
+      "pior_se_precisar_garantir_acerto"
+    ],
+    "prioridade_simulacao": 0.48
+  },
+  "Olhar Frio": {
+    "codigo": 112,
+    "nome": "Olhar Frio",
+    "papeis": [
+      "controle",
+      "debuff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_com_atributo_alto"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "debuff",
+      "maior_atributo"
+    ],
+    "condicoes": [
+      "melhor_contra_carry_inimigo",
+      "melhor_contra_alvo_buffado"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Congelamento Tático": {
+    "codigo": 113,
+    "nome": "Congelamento Tático",
+    "papeis": [
+      "protecao",
+      "cura",
+      "suporte",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "aliado_ferido",
+      "aliado_focado",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "congelado",
+      "regeneracao",
+      "barreira"
+    ],
+    "condicoes": [
+      "melhor_se_alvo_vai_ser_focado",
+      "melhor_com_aliado_ferido",
+      "pior_se_aliado_precisa_agir_agora"
+    ],
+    "prioridade_simulacao": 0.66
+  },
+  "Gelo Verdadeiro": {
+    "codigo": 114,
+    "nome": "Gelo Verdadeiro",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "anti_tanque"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "ignorar_defesa"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_defesas_altas"
+    ],
+    "prioridade_simulacao": 0.86
+  },
+  "Raio Aurora": {
+    "codigo": 115,
+    "nome": "Raio Aurora",
+    "papeis": [
+      "dano",
+      "area",
+      "linha",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "linha",
+      "congelado",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.84
+  },
+  "Nevasca": {
+    "codigo": 116,
+    "nome": "Nevasca",
+    "papeis": [
+      "clima",
+      "suporte",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_gelo"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "nevasca",
+      "gelo"
+    ],
+    "condicoes": [
+      "melhor_com_time_de_gelo",
+      "melhor_para_combos_de_nevasca"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Tumba de Gelo": {
+    "codigo": 117,
+    "nome": "Tumba de Gelo",
+    "papeis": [
+      "controle",
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_congelado",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "congelado",
+      "nevasca",
+      "dano_especial"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_congelado",
+      "melhor_se_clima_nevasca_ativo",
+      "pior_sem_congelado_ou_nevasca"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Quebra-Gelo": {
+    "codigo": 118,
+    "nome": "Quebra-Gelo",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "execucao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_congelado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "congelado",
+      "remove_congelado"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_congelado",
+      "pior_se_precisa_manter_controle"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Ataque Polar": {
+    "codigo": 119,
+    "nome": "Ataque Polar",
+    "papeis": [
+      "dano",
+      "posicionamento",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_na_ponta"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "area_ponta"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_na_ponta",
+      "melhor_contra_alvo_na_ponta"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Avalanche": {
+    "codigo": 120,
+    "nome": "Avalanche",
+    "papeis": [
+      "dano",
+      "area",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_encharcado"
+    ],
+    "riscos": {
+      "usuario": "alto",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "area",
+      "nevasca",
+      "encharcado"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_se_clima_nevasca_ativo",
+      "melhor_contra_alvo_encharcado"
+    ],
+    "prioridade_simulacao": 0.92
+  },
+  "Bola de Neve": {
+    "codigo": 121,
+    "nome": "Bola de Neve",
+    "papeis": [
+      "dano",
+      "controle",
+      "escala"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_nao_congelado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "stack",
+      "congelado"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa",
+      "melhor_contra_mesmo_alvo_repetido"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Reinado de Gelo": {
+    "codigo": 122,
+    "nome": "Reinado de Gelo",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "escala"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_congelado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "congelado",
+      "escala_global"
+    ],
+    "condicoes": [
+      "melhor_com_varios_pokemons_congelados",
+      "melhor_para_finalizar"
+    ],
+    "prioridade_simulacao": 0.88
+  },
+  "Raio de Gelo": {
+    "codigo": 123,
+    "nome": "Raio de Gelo",
+    "papeis": [
+      "dano",
+      "area",
+      "linha",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "alto",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "linha"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "pior_se_alvo_unico_fraco"
+    ],
+    "prioridade_simulacao": 0.9
+  }
+}

@@ -1,1 +1,803 @@
-{}
+{
+  "Bola de Agua": {
+    "codigo": 26,
+    "nome": "Bola de Agua",
+    "papeis": [
+      "dano",
+      "area",
+      "explosao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "splash",
+      "area"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "bom_para_area_vazia"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Gota Pesada": {
+    "codigo": 27,
+    "nome": "Gota Pesada",
+    "papeis": [
+      "controle",
+      "debuff",
+      "dano_indireto"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "encharcado",
+      "agua"
+    ],
+    "condicoes": [
+      "melhor_para_preparar_combo_de_agua",
+      "melhor_contra_alvo_sem_encharcado"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Splash": {
+    "codigo": 28,
+    "nome": "Splash",
+    "papeis": [
+      "dano"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "chance_falha"
+    ],
+    "condicoes": [
+      "pior_se_precisar_garantir_acerto",
+      "bom_para_economizar_energia"
+    ],
+    "prioridade_simulacao": 0.38
+  },
+  "Bolhas": {
+    "codigo": 29,
+    "nome": "Bolhas",
+    "papeis": [
+      "dano",
+      "escala",
+      "pressao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_importante"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "acumulo",
+      "escala_por_uso"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa",
+      "melhor_contra_mesmo_alvo_repetido"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Esguicho Suave": {
+    "codigo": 30,
+    "nome": "Esguicho Suave",
+    "papeis": [
+      "dano",
+      "cura",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "aliado_ferido",
+      "inimigo_ferido",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "cura"
+    ],
+    "condicoes": [
+      "melhor_se_existe_aliado_ferido",
+      "flexivel_para_alvo_aliado_ou_inimigo"
+    ],
+    "prioridade_simulacao": 0.66
+  },
+  "Jato de Água": {
+    "codigo": 31,
+    "nome": "Jato de Água",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_spd_baixo"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Jato Duplo": {
+    "codigo": 32,
+    "nome": "Jato Duplo",
+    "papeis": [
+      "dano",
+      "area",
+      "multi_alvo"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "multi_alvo"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_com_dois_alvos_viaveis"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Jato Triplo": {
+    "codigo": 33,
+    "nome": "Jato Triplo",
+    "papeis": [
+      "dano",
+      "area",
+      "multi_alvo"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "multi_alvo"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_com_tres_alvos_viaveis"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Golpe de Concha": {
+    "codigo": 34,
+    "nome": "Golpe de Concha",
+    "papeis": [
+      "dano",
+      "contato"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "def"
+    ],
+    "condicoes": [
+      "melhor_em_usuario_com_def_alta",
+      "melhor_contra_alvo_com_def_baixa"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Chuva Curativa": {
+    "codigo": 35,
+    "nome": "Chuva Curativa",
+    "papeis": [
+      "cura",
+      "suporte",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "aliado_ferido",
+      "aliado_focado",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "cura",
+      "chuva"
+    ],
+    "condicoes": [
+      "melhor_com_aliado_ferido",
+      "melhor_se_clima_chuva_ativo",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Lança de Água": {
+    "codigo": 36,
+    "nome": "Lança de Água",
+    "papeis": [
+      "dano",
+      "area",
+      "linha",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "linha",
+      "encharcado"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_contra_alvo_encharcado"
+    ],
+    "prioridade_simulacao": 0.86
+  },
+  "Torrente Vital": {
+    "codigo": 37,
+    "nome": "Torrente Vital",
+    "papeis": [
+      "dano",
+      "cura",
+      "suporte",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "aliado_ferido",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "cura",
+      "drenagem"
+    ],
+    "condicoes": [
+      "melhor_se_existe_aliado_ferido",
+      "melhor_contra_inimigo_com_hp_alto"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Esfera Hidrocaótica": {
+    "codigo": 38,
+    "nome": "Esfera Hidrocaótica",
+    "papeis": [
+      "dano",
+      "area",
+      "explosao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "area",
+      "encharcado"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_contra_alvo_encharcado"
+    ],
+    "prioridade_simulacao": 0.84
+  },
+  "Cachoeira": {
+    "codigo": 39,
+    "nome": "Cachoeira",
+    "papeis": [
+      "dano",
+      "controle",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "recuo"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_perigoso",
+      "bom_para_interromper_inimigo"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Águas Mágicas": {
+    "codigo": 40,
+    "nome": "Águas Mágicas",
+    "papeis": [
+      "dano",
+      "magia",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_com_spd_baixo"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_em_usuario_com_mag_alta"
+    ],
+    "prioridade_simulacao": 0.6
+  },
+  "Fonte Termal": {
+    "codigo": 41,
+    "nome": "Fonte Termal",
+    "papeis": [
+      "cura",
+      "suporte",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "aliado_ferido",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "cura"
+    ],
+    "condicoes": [
+      "melhor_com_aliado_ferido",
+      "melhor_se_alvo_vai_ser_focado"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Absorção Total": {
+    "codigo": 42,
+    "nome": "Absorção Total",
+    "papeis": [
+      "cura",
+      "buff",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "cura",
+      "amp",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa",
+      "melhor_com_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Redemoinho": {
+    "codigo": 43,
+    "nome": "Redemoinho",
+    "papeis": [
+      "dano",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_encharcado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "chuva",
+      "encharcado"
+    ],
+    "condicoes": [
+      "melhor_se_clima_chuva_ativo",
+      "melhor_contra_alvo_encharcado"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Gêiser": {
+    "codigo": 44,
+    "nome": "Gêiser",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "critico",
+      "spd"
+    ],
+    "condicoes": [
+      "melhor_com_chance_critica_alta",
+      "melhor_contra_alvo_resistente"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Pele Aquática": {
+    "codigo": 45,
+    "nome": "Pele Aquática",
+    "papeis": [
+      "passivo",
+      "sobrevivencia",
+      "cura"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vida_perdida",
+      "agua"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa",
+      "melhor_com_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.35
+  },
+  "Mergulho": {
+    "codigo": 46,
+    "nome": "Mergulho",
+    "papeis": [
+      "protecao",
+      "sobrevivencia",
+      "movimento"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "evasao",
+      "mergulho"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_vai_ser_focado",
+      "melhor_para_evitar_dano"
+    ],
+    "prioridade_simulacao": 0.64
+  },
+  "Dilúvio": {
+    "codigo": 47,
+    "nome": "Dilúvio",
+    "papeis": [
+      "buff",
+      "energia",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_sem_energia"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "amplificado",
+      "energia",
+      "chuva"
+    ],
+    "condicoes": [
+      "melhor_se_clima_chuva_ativo",
+      "melhor_se_usuario_sem_energia"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Tsunami": {
+    "codigo": 48,
+    "nome": "Tsunami",
+    "papeis": [
+      "dano",
+      "area",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "alto",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "area",
+      "encharcado"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "bom_para_virar_pressao_de_campo"
+    ],
+    "prioridade_simulacao": 0.92
+  },
+  "Martelo Caranguejo": {
+    "codigo": 49,
+    "nome": "Martelo Caranguejo",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_def_baixa"
+    ],
+    "prioridade_simulacao": 0.65
+  },
+  "Golpe Abissal": {
+    "codigo": 50,
+    "nome": "Golpe Abissal",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "execucao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_importante"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "limite_vida"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_hp_baixo"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Nadador": {
+    "codigo": 51,
+    "nome": "Nadador",
+    "papeis": [
+      "passivo",
+      "movimento",
+      "velocidade"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vel",
+      "chuva"
+    ],
+    "condicoes": [
+      "melhor_se_clima_chuva_ativo"
+    ],
+    "prioridade_simulacao": 0.32
+  },
+  "Drenagem Hidrica": {
+    "codigo": 52,
+    "nome": "Drenagem Hidrica",
+    "papeis": [
+      "passivo",
+      "cura",
+      "energia",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "cura",
+      "energia"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa",
+      "melhor_se_usuario_sem_energia"
+    ],
+    "prioridade_simulacao": 0.34
+  },
+  "Controle do Oceano": {
+    "codigo": 53,
+    "nome": "Controle do Oceano",
+    "papeis": [
+      "controle",
+      "area",
+      "linha",
+      "posicionamento"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "linha",
+      "controle_area"
+    ],
+    "condicoes": [
+      "melhor_para_reposicionar_campo",
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Surfar": {
+    "codigo": 54,
+    "nome": "Surfar",
+    "papeis": [
+      "dano",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "agua"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Reservatório": {
+    "codigo": 55,
+    "nome": "Reservatório",
+    "papeis": [
+      "passivo",
+      "buff",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "amp",
+      "agua"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.33
+  },
+  "Correnteza": {
+    "codigo": 56,
+    "nome": "Correnteza",
+    "papeis": [
+      "buff",
+      "movimento",
+      "velocidade"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vel",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_para_agir_antes",
+      "melhor_em_usuario_com_mag_alta"
+    ],
+    "prioridade_simulacao": 0.52
+  },
+  "Dança da Chuva": {
+    "codigo": 57,
+    "nome": "Dança da Chuva",
+    "papeis": [
+      "clima",
+      "suporte",
+      "buff"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_agua"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "chuva",
+      "agua"
+    ],
+    "condicoes": [
+      "melhor_com_time_de_agua",
+      "melhor_para_combos_de_chuva"
+    ],
+    "prioridade_simulacao": 0.76
+  }
+}

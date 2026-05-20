@@ -1,1 +1,370 @@
-{}
+{
+  "Benção": {
+    "codigo": 299,
+    "nome": "Benção",
+    "papeis": [
+      "buff",
+      "suporte",
+      "protecao"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "aliado_ferido",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "abencoado"
+    ],
+    "condicoes": [
+      "melhor_antes_de_receber_dano",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Barragem Arcana": {
+    "codigo": 300,
+    "nome": "Barragem Arcana",
+    "papeis": [
+      "protecao",
+      "barreira",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "aliado_ferido",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "barreira",
+      "mag",
+      "spa"
+    ],
+    "condicoes": [
+      "melhor_se_alvo_vai_ser_focado"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Canalizar": {
+    "codigo": 301,
+    "nome": "Canalizar",
+    "papeis": [
+      "buff",
+      "preparacao"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_antes_de_usar_magia",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Amolecer": {
+    "codigo": 302,
+    "nome": "Amolecer",
+    "papeis": [
+      "debuff",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_com_critico_alto"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "crd"
+    ],
+    "condicoes": [
+      "melhor_contra_inimigo_critico"
+    ],
+    "prioridade_simulacao": 0.64
+  },
+  "Brilho": {
+    "codigo": 303,
+    "nome": "Brilho",
+    "papeis": [
+      "dano",
+      "condicional",
+      "anti_furtivo"
+    ],
+    "alvos_preferidos": [
+      "inimigo_furtivo",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "furtivo",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_furtivo",
+      "melhor_contra_alvo_revelavel"
+    ],
+    "prioridade_simulacao": 0.66
+  },
+  "Salvamento": {
+    "codigo": 304,
+    "nome": "Salvamento",
+    "papeis": [
+      "protecao",
+      "cura",
+      "sobrevivencia",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "regeneracao",
+      "imune"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_ferido",
+      "melhor_em_risco_de_morte"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Toque Fabuloso": {
+    "codigo": 305,
+    "nome": "Toque Fabuloso",
+    "papeis": [
+      "dano",
+      "critico",
+      "condicional"
+    ],
+    "alvos_preferidos": [
+      "inimigo_buffado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "encantado",
+      "abencoado",
+      "amplificado",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_efeito_positivo",
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Corte das Fadas": {
+    "codigo": 306,
+    "nome": "Corte das Fadas",
+    "papeis": [
+      "dano",
+      "escala_aliados"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "mag",
+      "aliados_fada"
+    ],
+    "condicoes": [
+      "melhor_com_aliados_fada_vivos"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Chuva Cintilante": {
+    "codigo": 307,
+    "nome": "Chuva Cintilante",
+    "papeis": [
+      "cura",
+      "sobrevivencia",
+      "furtividade"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "furtivo",
+      "cura",
+      "vida_perdida"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_ferido",
+      "melhor_antes_de_ser_focado"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Vento Fada": {
+    "codigo": 308,
+    "nome": "Vento Fada",
+    "papeis": [
+      "dano",
+      "linha"
+    ],
+    "alvos_preferidos": [
+      "linha_inimiga",
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "linha",
+      "dano_especial",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_em_linha_com_multiplos_alvos"
+    ],
+    "prioridade_simulacao": 0.84
+  },
+  "Bondade": {
+    "codigo": 309,
+    "nome": "Bondade",
+    "papeis": [
+      "buff",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "aliado_sem_buff",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "efeito_positivo_aleatorio",
+      "abencoado",
+      "amplificado",
+      "fortificado",
+      "focado",
+      "energizado",
+      "preparado",
+      "regeneracao",
+      "imune",
+      "furtivo"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa",
+      "melhor_em_aliado_sem_efeitos_positivos"
+    ],
+    "prioridade_simulacao": 0.66
+  },
+  "Luz Purificadora": {
+    "codigo": 310,
+    "nome": "Luz Purificadora",
+    "papeis": [
+      "purificacao",
+      "suporte",
+      "remocao",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliados_com_efeito_negativo"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "remover_debuff",
+      "queimado",
+      "envenenado",
+      "intoxicado",
+      "congelado",
+      "dormindo",
+      "paralisado",
+      "enraizado",
+      "cauterizado",
+      "descarregado",
+      "encharcado",
+      "atordoado",
+      "quebrado",
+      "enfraquecido",
+      "confuso",
+      "bloqueado",
+      "amaldicoado"
+    ],
+    "condicoes": [
+      "melhor_com_muitos_efeitos_negativos",
+      "melhor_antes_de_agir"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Ataque de Positividade": {
+    "codigo": 311,
+    "nome": "Ataque de Positividade",
+    "papeis": [
+      "dano",
+      "condicional",
+      "escala_buff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "efeitos_positivos",
+      "passos_positivos"
+    ],
+    "condicoes": [
+      "melhor_com_muitos_efeitos_positivos_no_time"
+    ],
+    "prioridade_simulacao": 0.77
+  },
+  "Encanto": {
+    "codigo": 312,
+    "nome": "Encanto",
+    "papeis": [
+      "buff",
+      "suporte",
+      "preparacao"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "encantado"
+    ],
+    "condicoes": [
+      "melhor_antes_de_combo_fada",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.62
+  }
+}

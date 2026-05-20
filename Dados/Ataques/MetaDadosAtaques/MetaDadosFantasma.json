@@ -1,1 +1,467 @@
-{}
+{
+  "Selar Arcano": {
+    "codigo": 237,
+    "nome": "Selar Arcano",
+    "papeis": [
+      "debuff",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_magico",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_contra_usuario_de_magia"
+    ],
+    "prioridade_simulacao": 0.64
+  },
+  "Desorientar": {
+    "codigo": 238,
+    "nome": "Desorientar",
+    "papeis": [
+      "debuff",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_inteligente",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "int"
+    ],
+    "condicoes": [
+      "melhor_contra_ia_forte",
+      "melhor_contra_inimigo_tatico"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Atravessar": {
+    "codigo": 239,
+    "nome": "Atravessar",
+    "papeis": [
+      "dano",
+      "roubo_efeito",
+      "anti_buff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_buffado",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "roubo_efeito",
+      "efeito_positivo"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_buffado"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Lambida": {
+    "codigo": 240,
+    "nome": "Lambida",
+    "papeis": [
+      "dano",
+      "cura",
+      "vamp"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "vamp"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_tem_vamp",
+      "melhor_se_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.69
+  },
+  "Toque do Medo": {
+    "codigo": 241,
+    "nome": "Toque do Medo",
+    "papeis": [
+      "dano",
+      "condicional"
+    ],
+    "alvos_preferidos": [
+      "inimigo_paralisado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "paralisado",
+      "dano_especial"
+    ],
+    "condicoes": [
+      "melhor_contra_paralisado"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Susto": {
+    "codigo": 242,
+    "nome": "Susto",
+    "papeis": [
+      "dano",
+      "critico",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_dormindo",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dormindo",
+      "nevoa",
+      "paralisado",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_contra_dormindo",
+      "melhor_em_nevoa"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Maldade": {
+    "codigo": 243,
+    "nome": "Maldade",
+    "papeis": [
+      "controle",
+      "debuff",
+      "efeito_negativo"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "efeito_negativo_aleatorio"
+    ],
+    "condicoes": [
+      "melhor_no_inicio_da_luta",
+      "melhor_contra_alvo_sem_debuff"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Golpe Espelhado": {
+    "codigo": 244,
+    "nome": "Golpe Espelhado",
+    "papeis": [
+      "dano",
+      "condicional"
+    ],
+    "alvos_preferidos": [
+      "inimigo_mesma_posicao",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "mesmo_numero_area"
+    ],
+    "condicoes": [
+      "melhor_em_mesmo_numero_area"
+    ],
+    "prioridade_simulacao": 0.71
+  },
+  "Mão Espectral": {
+    "codigo": 245,
+    "nome": "Mão Espectral",
+    "papeis": [
+      "dano",
+      "posicionamento",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_mal_posicionado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "movimento_forcado",
+      "fileira"
+    ],
+    "condicoes": [
+      "melhor_para_reposicionar_inimigo"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Pulso de Plasma": {
+    "codigo": 246,
+    "nome": "Pulso de Plasma",
+    "papeis": [
+      "dano",
+      "debuff",
+      "critico"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "enfraquecido",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Devorador de Pecados": {
+    "codigo": 247,
+    "nome": "Devorador de Pecados",
+    "papeis": [
+      "remocao",
+      "buff",
+      "sobrevivencia",
+      "vamp"
+    ],
+    "alvos_preferidos": [
+      "aliado_com_efeito_negativo",
+      "inimigo_com_efeito_negativo",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "remover_debuff",
+      "vamp",
+      "efeitos_negativos"
+    ],
+    "condicoes": [
+      "melhor_com_muitos_efeitos_negativos_no_alvo"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Maldição": {
+    "codigo": 248,
+    "nome": "Maldição",
+    "papeis": [
+      "controle",
+      "debuff",
+      "dano_indireto"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "amaldicoado"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_resistente",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Jogada de Sorte": {
+    "codigo": 249,
+    "nome": "Jogada de Sorte",
+    "papeis": [
+      "dano",
+      "alto_risco"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "falha": "alta"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "chance_falha"
+    ],
+    "condicoes": [
+      "melhor_quando_precisa_virar_luta",
+      "melhor_com_ousadia_alta"
+    ],
+    "prioridade_simulacao": 0.45
+  },
+  "Ataque Fantasmagórico": {
+    "codigo": 250,
+    "nome": "Ataque Fantasmagórico",
+    "papeis": [
+      "dano",
+      "clima",
+      "condicional"
+    ],
+    "alvos_preferidos": [
+      "inimigo_amaldicoado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "amaldicoado",
+      "nevoa"
+    ],
+    "condicoes": [
+      "melhor_contra_amaldicoado",
+      "melhor_em_nevoa"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Sede de Sangue": {
+    "codigo": 251,
+    "nome": "Sede de Sangue",
+    "papeis": [
+      "buff",
+      "sobrevivencia",
+      "vamp"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vamp",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_antes_de_causar_dano",
+      "melhor_se_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Explosão Fantasma": {
+    "codigo": 252,
+    "nome": "Explosão Fantasma",
+    "papeis": [
+      "dano",
+      "area",
+      "splash",
+      "vamp"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "splash",
+      "dano_real",
+      "vampirico"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.88
+  },
+  "Golpe Cruel": {
+    "codigo": 253,
+    "nome": "Golpe Cruel",
+    "papeis": [
+      "dano",
+      "condicional",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_com_efeitos_negativos",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "efeitos_negativos",
+      "passos_negativos"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_debuff"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Fantasma": {
+    "codigo": 254,
+    "nome": "Fantasma",
+    "papeis": [
+      "passivo",
+      "furtividade"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "furtivo",
+      "perda_acuracia",
+      "perda_amp"
+    ],
+    "condicoes": [
+      "passivo_sem_escolha_de_acao"
+    ],
+    "prioridade_simulacao": 0.2
+  },
+  "Azar": {
+    "codigo": 255,
+    "nome": "Azar",
+    "papeis": [
+      "debuff",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_critico",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "crc"
+    ],
+    "condicoes": [
+      "melhor_contra_inimigo_critico"
+    ],
+    "prioridade_simulacao": 0.62
+  }
+}

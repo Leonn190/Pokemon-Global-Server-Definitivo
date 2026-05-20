@@ -1,1 +1,355 @@
-{}
+{
+  "Regeneração": {
+    "codigo": 208,
+    "nome": "Regeneração",
+    "papeis": [
+      "cura",
+      "sobrevivencia",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "aliado_ferido",
+      "aliado_focado",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "regeneracao"
+    ],
+    "condicoes": [
+      "melhor_se_alvo_ferido",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Regenerador": {
+    "codigo": 209,
+    "nome": "Regenerador",
+    "papeis": [
+      "passivo",
+      "cura",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "cura_passiva",
+      "mag",
+      "vida_perdida"
+    ],
+    "condicoes": [
+      "passivo_sem_escolha_de_acao"
+    ],
+    "prioridade_simulacao": 0.2
+  },
+  "Seda": {
+    "codigo": 210,
+    "nome": "Seda",
+    "papeis": [
+      "dano",
+      "debuff",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_rapido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "vel",
+      "stack"
+    ],
+    "condicoes": [
+      "melhor_contra_inimigo_rapido"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Casulo Improvisado": {
+    "codigo": 211,
+    "nome": "Casulo Improvisado",
+    "papeis": [
+      "protecao",
+      "sobrevivencia",
+      "buff"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vida_perdida",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_ferido",
+      "melhor_antes_de_receber_dano"
+    ],
+    "prioridade_simulacao": 0.64
+  },
+  "Mordida de Inseto": {
+    "codigo": 212,
+    "nome": "Mordida de Inseto",
+    "papeis": [
+      "dano",
+      "cura",
+      "vamp",
+      "critico"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "vamp",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_com_chance_critica_alta",
+      "melhor_se_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Doação de Energia": {
+    "codigo": 213,
+    "nome": "Doação de Energia",
+    "papeis": [
+      "energia",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "aliado_sem_energia",
+      "aliado_focado",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "energia",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_se_aliado_sem_energia"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Corte Serrilhado": {
+    "codigo": 214,
+    "nome": "Corte Serrilhado",
+    "papeis": [
+      "dano",
+      "anti_tanque"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "dur"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_dur_alta"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Carcomer": {
+    "codigo": 215,
+    "nome": "Carcomer",
+    "papeis": [
+      "dano",
+      "cura",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "cura"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.73
+  },
+  "Evolução Incerta": {
+    "codigo": 216,
+    "nome": "Evolução Incerta",
+    "papeis": [
+      "buff",
+      "alto_risco",
+      "preparacao"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "atributos": "variavel"
+    },
+    "efeitos_relevantes": [
+      "atributos_aleatorios",
+      "buff",
+      "debuff"
+    ],
+    "condicoes": [
+      "melhor_quando_precisa_virar_luta",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.52
+  },
+  "Infestação": {
+    "codigo": 217,
+    "nome": "Infestação",
+    "papeis": [
+      "dano",
+      "cura",
+      "critico",
+      "stack"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "stack",
+      "cura",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_com_chance_critica_alta",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Tesoura X": {
+    "codigo": 218,
+    "nome": "Tesoura X",
+    "papeis": [
+      "dano",
+      "area",
+      "posicional"
+    ],
+    "alvos_preferidos": [
+      "inimigo_posicao_central",
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "posicoes_inimigas",
+      "posicao_5",
+      "dano_fisico"
+    ],
+    "condicoes": [
+      "melhor_com_inimigos_em_posicoes_impares",
+      "melhor_contra_posicao_5"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Canibalismo Filial": {
+    "codigo": 219,
+    "nome": "Canibalismo Filial",
+    "papeis": [
+      "cura",
+      "sacrificio",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "aliado_muito_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliado": "alto"
+    },
+    "efeitos_relevantes": [
+      "cura",
+      "vida_perdida_aliado"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_muito_ferido",
+      "usar_apenas_em_aliado_condenado"
+    ],
+    "prioridade_simulacao": 0.5
+  },
+  "Devorar": {
+    "codigo": 220,
+    "nome": "Devorar",
+    "papeis": [
+      "dano",
+      "cura",
+      "finalizacao",
+      "vamp"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "cura",
+      "vamp",
+      "nocaute"
+    ],
+    "condicoes": [
+      "melhor_para_finalizar",
+      "melhor_se_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Teia Pegajosa": {
+    "codigo": 221,
+    "nome": "Teia Pegajosa",
+    "papeis": [
+      "debuff",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_rapido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vel",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_contra_inimigo_rapido",
+      "melhor_antes_de_aliado_lento_atacar"
+    ],
+    "prioridade_simulacao": 0.68
+  }
+}

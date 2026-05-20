@@ -1,1 +1,425 @@
-{}
+{
+  "Bola Sombria": {
+    "codigo": 269,
+    "nome": "Bola Sombria",
+    "papeis": [
+      "dano",
+      "area",
+      "splash"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "splash",
+      "adjacentes"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.84
+  },
+  "Nas Sombras": {
+    "codigo": 270,
+    "nome": "Nas Sombras",
+    "papeis": [
+      "furtividade",
+      "protecao",
+      "preparacao"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "furtivo"
+    ],
+    "condicoes": [
+      "melhor_antes_de_ser_focado",
+      "melhor_para_preparar_combo_sombrio"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Confronto Trevoso": {
+    "codigo": 271,
+    "nome": "Confronto Trevoso",
+    "papeis": [
+      "dano",
+      "controle",
+      "provocacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_suporte"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "provocacao": "reciproca"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "provocando"
+    ],
+    "condicoes": [
+      "melhor_para_forcar_duelo",
+      "melhor_contra_inimigo_suporte"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Vingança": {
+    "codigo": 272,
+    "nome": "Vingança",
+    "papeis": [
+      "dano",
+      "condicional",
+      "resposta"
+    ],
+    "alvos_preferidos": [
+      "inimigo_que_atacou_usuario",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "historico_ataque"
+    ],
+    "condicoes": [
+      "melhor_se_alvo_ja_atacou_usuario"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Correntes Eternas": {
+    "codigo": 273,
+    "nome": "Correntes Eternas",
+    "papeis": [
+      "controle",
+      "debuff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_rapido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "enraizado",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_contra_inimigo_movel"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Névoa Sombria": {
+    "codigo": 274,
+    "nome": "Névoa Sombria",
+    "papeis": [
+      "clima",
+      "controle",
+      "preparacao"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "nevoa",
+      "clima"
+    ],
+    "condicoes": [
+      "melhor_para_combo_fantasma_sombrio",
+      "melhor_se_time_aproveita_nevoa"
+    ],
+    "prioridade_simulacao": 0.6
+  },
+  "Expurgo dos Fracos": {
+    "codigo": 275,
+    "nome": "Expurgo dos Fracos",
+    "papeis": [
+      "dano",
+      "execucao",
+      "alto_risco"
+    ],
+    "alvos_preferidos": [
+      "inimigo_menor_vida_base",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "alvo_automatico": "alto"
+    },
+    "efeitos_relevantes": [
+      "vida_atual",
+      "menor_vida_base",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_quando_inimigo_mais_fraco_esta_em_campo"
+    ],
+    "prioridade_simulacao": 0.64
+  },
+  "Olhar Cruel": {
+    "codigo": 276,
+    "nome": "Olhar Cruel",
+    "papeis": [
+      "controle",
+      "debuff",
+      "extensao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_com_efeitos_negativos",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "efeitos_negativos",
+      "duracao"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_debuff"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Execução Massiva": {
+    "codigo": 277,
+    "nome": "Execução Massiva",
+    "papeis": [
+      "dano",
+      "area",
+      "execucao",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigos_feridos",
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "multialvo",
+      "execucao",
+      "vida_baixa"
+    ],
+    "condicoes": [
+      "melhor_para_finalizar_multiplos",
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.9
+  },
+  "Corredor Escuro": {
+    "codigo": 278,
+    "nome": "Corredor Escuro",
+    "papeis": [
+      "controle",
+      "linha",
+      "debuff"
+    ],
+    "alvos_preferidos": [
+      "linha_inimiga",
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "linha",
+      "compartilhar_efeitos_negativos"
+    ],
+    "condicoes": [
+      "melhor_em_linha_com_multiplos_alvos",
+      "melhor_com_debuffs_na_linha"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Golpe Noturno": {
+    "codigo": 279,
+    "nome": "Golpe Noturno",
+    "papeis": [
+      "dano",
+      "clima",
+      "condicional"
+    ],
+    "alvos_preferidos": [
+      "inimigo_furtivo",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "noite_densa",
+      "furtivo"
+    ],
+    "condicoes": [
+      "melhor_em_noite_densa",
+      "melhor_contra_alvo_furtivo"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Dominação": {
+    "codigo": 280,
+    "nome": "Dominação",
+    "papeis": [
+      "dano",
+      "condicional",
+      "atributos"
+    ],
+    "alvos_preferidos": [
+      "inimigo_fraco",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "atributos_superiores"
+    ],
+    "condicoes": [
+      "melhor_quando_usuario_supera_atributos_do_alvo"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Inveja": {
+    "codigo": 281,
+    "nome": "Inveja",
+    "papeis": [
+      "dano",
+      "anti_buff",
+      "condicional"
+    ],
+    "alvos_preferidos": [
+      "inimigo_buffado",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "efeitos_positivos",
+      "acuracia_condicional"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_buffado"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Breu": {
+    "codigo": 282,
+    "nome": "Breu",
+    "papeis": [
+      "clima",
+      "furtividade",
+      "suporte",
+      "preparacao"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliados_adjacentes"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "noite_densa",
+      "furtivo",
+      "clima",
+      "adjacencia"
+    ],
+    "condicoes": [
+      "melhor_para_combo_sombrio",
+      "melhor_com_aliados_adjacentes"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Adaga das Trevas": {
+    "codigo": 283,
+    "nome": "Adaga das Trevas",
+    "papeis": [
+      "dano",
+      "debuff",
+      "critico"
+    ],
+    "alvos_preferidos": [
+      "inimigo_com_reducao_permanente",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "reducao_permanente",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_ja_enfraquecido",
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Sombra": {
+    "codigo": 284,
+    "nome": "Sombra",
+    "papeis": [
+      "buff",
+      "critico",
+      "preparacao"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "crd",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_antes_de_causar_dano",
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.56
+  },
+  "Silenciar": {
+    "codigo": 285,
+    "nome": "Silenciar",
+    "papeis": [
+      "debuff",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_magico",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "amp",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_contra_inimigo_com_amp_alto"
+    ],
+    "prioridade_simulacao": 0.64
+  }
+}

@@ -66,20 +66,20 @@ Os números abaixo são atualizados automaticamente pelo `Ferramentas/Atualizado
 | Categoria | Quantidade atual |
 |---|---:|
 | Pastas | **1.388** |
-| Arquivos | **74.304** |
-| Arquivos de texto | **676** |
-| Peso dos arquivos de texto | **6847.64 KB** |
-| Tamanho total | **1.921 GB (2.062.131.436 bytes)** |
-| Dias desde a criação do projeto | **351** |
-| Linhas totais gerais | **184.719** |
-| Commits (projeto) | **736** |
-| Arquivos .py | **270** |
-| Linhas totais .py | **86.387** |
-| Tamanho total .py | **3804.14 KB** |
-| Classes encontradas | **248** |
+| Arquivos | **74.308** |
+| Arquivos de texto | **680** |
+| Peso dos arquivos de texto | **7006.95 KB** |
+| Tamanho total | **1.921 GB (2.062.294.803 bytes)** |
+| Dias desde a criação do projeto | **352** |
+| Linhas totais gerais | **193.290** |
+| Commits (projeto) | **747** |
+| Arquivos .py | **271** |
+| Linhas totais .py | **87.691** |
+| Tamanho total .py | **3862.47 KB** |
+| Classes encontradas | **249** |
 | Funções encontradas | **1.763** |
-| Métodos encontrados | **3.355** |
-| Total funções + métodos | **5.118** |
+| Métodos encontrados | **3.427** |
+| Total funções + métodos | **5.190** |
 
 ## 4. Features principais e conceitos
 

@@ -1,1 +1,186 @@
-{}
+{
+  "Som Atordoante": {
+    "codigo": 313,
+    "nome": "Som Atordoante",
+    "papeis": [
+      "controle",
+      "debuff",
+      "interrupcao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_rapido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "atordoado"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_que_precisa_agir",
+      "melhor_para_interromper_combo"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Voz Desarmadora": {
+    "codigo": 314,
+    "nome": "Voz Desarmadora",
+    "papeis": [
+      "dano",
+      "controle",
+      "recuo"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "recuo",
+      "acuracia"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_perigoso",
+      "considerar_chance_de_erro"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Grito": {
+    "codigo": 315,
+    "nome": "Grito",
+    "papeis": [
+      "dano",
+      "linha",
+      "area",
+      "debuff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_amplificado"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "amp",
+      "critico",
+      "linha"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_contra_alvo_com_amp"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Ataque Hipersônico": {
+    "codigo": 316,
+    "nome": "Ataque Hipersônico",
+    "papeis": [
+      "dano",
+      "prioridade",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_rapido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "prioridade_absoluta",
+      "vel",
+      "spa"
+    ],
+    "condicoes": [
+      "melhor_para_finalizar_antes_do_alvo",
+      "melhor_em_turno_decisivo"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Canto Prolongador": {
+    "codigo": 317,
+    "nome": "Canto Prolongador",
+    "papeis": [
+      "suporte",
+      "controle",
+      "tempo",
+      "combo"
+    ],
+    "alvos_preferidos": [
+      "aliado_buffado",
+      "inimigo_debuffado",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "alvo_errado": "medio"
+    },
+    "efeitos_relevantes": [
+      "duracao",
+      "passos"
+    ],
+    "condicoes": [
+      "melhor_em_efeitos_positivos_aliados",
+      "melhor_em_efeitos_negativos_inimigos",
+      "evitar_prolongar_buff_inimigo"
+    ],
+    "prioridade_simulacao": 0.6
+  },
+  "Melodia Anticlimática": {
+    "codigo": 318,
+    "nome": "Melodia Anticlimática",
+    "papeis": [
+      "controle",
+      "suporte",
+      "anti_clima"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "clima",
+      "remove_clima"
+    ],
+    "condicoes": [
+      "melhor_se_clima_favorece_inimigo",
+      "evitar_se_clima_favorece_aliados"
+    ],
+    "prioridade_simulacao": 0.57
+  },
+  "Volume Máximo": {
+    "codigo": 319,
+    "nome": "Volume Máximo",
+    "papeis": [
+      "dano",
+      "area",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "alto"
+    },
+    "efeitos_relevantes": [
+      "dano_aliado",
+      "area",
+      "spa"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "evitar_com_aliados_adjacentes"
+    ],
+    "prioridade_simulacao": 0.79
+  }
+}

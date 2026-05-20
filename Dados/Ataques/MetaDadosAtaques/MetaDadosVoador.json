@@ -1,1 +1,482 @@
-{}
+{
+  "Voar": {
+    "codigo": 173,
+    "nome": "Voar",
+    "papeis": [
+      "buff",
+      "movimento",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "voando"
+    ],
+    "condicoes": [
+      "melhor_antes_de_receber_dano",
+      "ativa_combos_voadores"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Olho de Águia": {
+    "codigo": 174,
+    "nome": "Olho de Águia",
+    "papeis": [
+      "buff",
+      "precisao",
+      "setup"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "acuracia",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_antes_de_ataques_importantes",
+      "melhor_se_usuario_tem_baixa_acuracia"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Ventinho": {
+    "codigo": 175,
+    "nome": "Ventinho",
+    "papeis": [
+      "dano",
+      "linha",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "linha",
+      "vento"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.52
+  },
+  "Voo Alto": {
+    "codigo": 176,
+    "nome": "Voo Alto",
+    "papeis": [
+      "buff",
+      "sobrevivencia",
+      "evasao"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "voando",
+      "evasivo"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_ja_esta_voando",
+      "melhor_contra_foco_inimigo"
+    ],
+    "prioridade_simulacao": 0.6
+  },
+  "Asas Protetoras": {
+    "codigo": 177,
+    "nome": "Asas Protetoras",
+    "papeis": [
+      "protecao",
+      "barreira",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vel",
+      "barreira"
+    ],
+    "condicoes": [
+      "melhor_com_usuario_rapido",
+      "melhor_para_proteger_time"
+    ],
+    "prioridade_simulacao": 0.66
+  },
+  "Vendaval": {
+    "codigo": 178,
+    "nome": "Vendaval",
+    "papeis": [
+      "dano",
+      "linha",
+      "area",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "linha",
+      "ultima_area"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_se_alvo_forte_na_ultima_area"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Tornadinho Amigo": {
+    "codigo": 179,
+    "nome": "Tornadinho Amigo",
+    "papeis": [
+      "suporte",
+      "buff",
+      "movimento"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "aliado_fragil"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "voando"
+    ],
+    "condicoes": [
+      "melhor_para_salvar_aliado",
+      "ativa_combos_voadores_em_aliado"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Voo Estratégico": {
+    "codigo": 180,
+    "nome": "Voo Estratégico",
+    "papeis": [
+      "movimento",
+      "suporte",
+      "posicionamento"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "voando",
+      "posicionamento"
+    ],
+    "condicoes": [
+      "melhor_para_reposicionar",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.59
+  },
+  "Impulso Aéreo": {
+    "codigo": 181,
+    "nome": "Impulso Aéreo",
+    "papeis": [
+      "movimento",
+      "prioridade",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "prioridade_acao",
+      "posicionamento"
+    ],
+    "condicoes": [
+      "melhor_para_agir_antes",
+      "melhor_em_turnos_decisivos"
+    ],
+    "prioridade_simulacao": 0.61
+  },
+  "Bico Broca": {
+    "codigo": 182,
+    "nome": "Bico Broca",
+    "papeis": [
+      "dano",
+      "perfuracao",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "per",
+      "atk"
+    ],
+    "condicoes": [
+      "melhor_com_usuario_de_per_alta",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.65
+  },
+  "Golpe de Asa": {
+    "codigo": 183,
+    "nome": "Golpe de Asa",
+    "papeis": [
+      "dano",
+      "combo",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "voando",
+      "atk"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_esta_voando",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.63
+  },
+  "Ataque Aéreo": {
+    "codigo": 184,
+    "nome": "Ataque Aéreo",
+    "papeis": [
+      "dano",
+      "combo",
+      "anti_voador"
+    ],
+    "alvos_preferidos": [
+      "inimigo_voando",
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "voando",
+      "sempre_acerta"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_ou_alvo_esta_voando"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Rasante": {
+    "codigo": 185,
+    "nome": "Rasante",
+    "papeis": [
+      "dano",
+      "velocidade",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "vel",
+      "descarregado"
+    ],
+    "condicoes": [
+      "melhor_com_usuario_rapido",
+      "evitar_se_chance_de_erro_alta"
+    ],
+    "prioridade_simulacao": 0.67
+  },
+  "Ás dos Ares": {
+    "codigo": 186,
+    "nome": "Ás dos Ares",
+    "papeis": [
+      "dano",
+      "precisao",
+      "anti_voador"
+    ],
+    "alvos_preferidos": [
+      "inimigo_voando",
+      "inimigo_evasivo",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "voando",
+      "sempre_acerta",
+      "remove_voando"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_voando",
+      "melhor_contra_alvo_dificil_de_acertar"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Tornado": {
+    "codigo": 187,
+    "nome": "Tornado",
+    "papeis": [
+      "dano",
+      "area",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "vento",
+      "area"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Ciclone": {
+    "codigo": 188,
+    "nome": "Ciclone",
+    "papeis": [
+      "dano",
+      "area",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "alto"
+    },
+    "efeitos_relevantes": [
+      "vento",
+      "explosao"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "evitar_com_aliados_na_area"
+    ],
+    "prioridade_simulacao": 0.84
+  },
+  "Tiro de Penas": {
+    "codigo": 189,
+    "nome": "Tiro de Penas",
+    "papeis": [
+      "dano",
+      "area",
+      "multi_alvo"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "alto"
+    },
+    "efeitos_relevantes": [
+      "multiplas_areas",
+      "atk"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "evitar_atingir_aliados",
+      "ia_precisa_suporte_multi_alvo"
+    ],
+    "prioridade_simulacao": 0.69
+  },
+  "Voador": {
+    "codigo": 190,
+    "nome": "Voador",
+    "papeis": [
+      "passivo",
+      "buff",
+      "movimento",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "voando",
+      "permanente"
+    ],
+    "condicoes": [
+      "passivo_permanente",
+      "ativa_combos_voadores"
+    ],
+    "prioridade_simulacao": 0.44
+  },
+  "Barragem de Vento": {
+    "codigo": 191,
+    "nome": "Barragem de Vento",
+    "papeis": [
+      "protecao",
+      "barreira",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "aliado_fragil",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "mag",
+      "vel",
+      "barreira"
+    ],
+    "condicoes": [
+      "melhor_para_proteger_aliado_focado",
+      "melhor_com_usuario_rapido"
+    ],
+    "prioridade_simulacao": 0.67
+  }
+}

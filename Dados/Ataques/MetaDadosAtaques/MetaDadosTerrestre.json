@@ -1,1 +1,368 @@
-{}
+{
+  "Rachar Terra": {
+    "codigo": 159,
+    "nome": "Rachar Terra",
+    "papeis": [
+      "controle",
+      "debuff",
+      "quebra_defesa"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dur",
+      "defesa_reduzida"
+    ],
+    "condicoes": [
+      "bom_contra_alvo_resistente",
+      "melhor_antes_de_ataques_fisicos"
+    ],
+    "prioridade_simulacao": 0.56
+  },
+  "Areia": {
+    "codigo": 160,
+    "nome": "Areia",
+    "papeis": [
+      "dano",
+      "debuff",
+      "controle",
+      "setup_clima"
+    ],
+    "alvos_preferidos": [
+      "inimigo_fraco",
+      "inimigo_sem_defesa"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "tempestade_de_areia",
+      "def"
+    ],
+    "condicoes": [
+      "melhor_com_tempestade_de_areia",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.5
+  },
+  "Rachadura": {
+    "codigo": 161,
+    "nome": "Rachadura",
+    "papeis": [
+      "dano",
+      "pressao",
+      "terreno"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "terreno",
+      "bonus_posicional"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_ou_alvo_em_terreno",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.57
+  },
+  "Domínio do Solo": {
+    "codigo": 162,
+    "nome": "Domínio do Solo",
+    "papeis": [
+      "controle",
+      "area",
+      "posicionamento",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "solo",
+      "adjacentes",
+      "controle_de_area"
+    ],
+    "condicoes": [
+      "melhor_com_aliados_proximos",
+      "melhor_antes_de_disputa_de_posicao"
+    ],
+    "prioridade_simulacao": 0.6
+  },
+  "Dança da Areia": {
+    "codigo": 163,
+    "nome": "Dança da Areia",
+    "papeis": [
+      "clima",
+      "setup",
+      "suporte",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "tempestade_de_areia"
+    ],
+    "condicoes": [
+      "melhor_para_time_terrestre_pedra_metal",
+      "melhor_antes_de_ataques_terrestres"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Golpe de Ossos": {
+    "codigo": 164,
+    "nome": "Golpe de Ossos",
+    "papeis": [
+      "dano",
+      "anti_protecao",
+      "quebra_defesa",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_protegido",
+      "inimigo_resistente",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "protegido",
+      "evasivo",
+      "refletindo",
+      "ignorar_defensivos"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_defensivos"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Queda Sísmica": {
+    "codigo": 165,
+    "nome": "Queda Sísmica",
+    "papeis": [
+      "dano",
+      "pressao",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_com_vida_alta"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "recoil",
+      "vida_atual_usuario"
+    ],
+    "condicoes": [
+      "melhor_com_usuario_saudavel",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.63
+  },
+  "Tiro de Lama": {
+    "codigo": 166,
+    "nome": "Tiro de Lama",
+    "papeis": [
+      "dano",
+      "debuff",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_rapido",
+      "inimigo_magico",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "mag",
+      "vel",
+      "lentidao"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_rapido",
+      "melhor_para_reduzir_pressao"
+    ],
+    "prioridade_simulacao": 0.59
+  },
+  "Tremor Focalizado": {
+    "codigo": 167,
+    "nome": "Tremor Focalizado",
+    "papeis": [
+      "dano",
+      "debuff",
+      "quebra_defesa"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_com_vida_alta",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vida_atual_alvo",
+      "def"
+    ],
+    "condicoes": [
+      "melhor_contra_tanque",
+      "melhor_no_inicio_do_foco"
+    ],
+    "prioridade_simulacao": 0.69
+  },
+  "Tremor": {
+    "codigo": 168,
+    "nome": "Tremor",
+    "papeis": [
+      "dano",
+      "area",
+      "debuff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "def",
+      "area"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.73
+  },
+  "Quebra Chão": {
+    "codigo": 169,
+    "nome": "Quebra Chão",
+    "papeis": [
+      "dano",
+      "area",
+      "terreno",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "alto",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "recoil",
+      "terreno_destruida"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "evitar_com_usuario_fragil"
+    ],
+    "prioridade_simulacao": 0.68
+  },
+  "Fissura": {
+    "codigo": 170,
+    "nome": "Fissura",
+    "papeis": [
+      "dano",
+      "execucao",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "execucao",
+      "vida_baixa"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_abaixo_de_vida_limite"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Terremoto": {
+    "codigo": 171,
+    "nome": "Terremoto",
+    "papeis": [
+      "dano",
+      "area",
+      "anti_protecao",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_protegido",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "alto"
+    },
+    "efeitos_relevantes": [
+      "protegido",
+      "evasivo",
+      "refletindo",
+      "ignorar_defensivos"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_contra_defensivos",
+      "evitar_com_aliados_na_area"
+    ],
+    "prioridade_simulacao": 0.9
+  },
+  "Poeira nos Olhos": {
+    "codigo": 172,
+    "nome": "Poeira nos Olhos",
+    "papeis": [
+      "controle",
+      "debuff",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_preciso",
+      "inimigo_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "acuracia",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_contra_atacante_forte",
+      "melhor_para_proteger_aliado_focado"
+    ],
+    "prioridade_simulacao": 0.57
+  }
+}

@@ -1,1 +1,244 @@
-{}
+{
+  "Flutuante": {
+    "codigo": 320,
+    "nome": "Flutuante",
+    "papeis": [
+      "passivo",
+      "buff",
+      "sobrevivencia",
+      "movimento"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "flutuando",
+      "permanente"
+    ],
+    "condicoes": [
+      "passivo_permanente",
+      "ativa_combos_cosmicos"
+    ],
+    "prioridade_simulacao": 0.44
+  },
+  "Flutuar": {
+    "codigo": 321,
+    "nome": "Flutuar",
+    "papeis": [
+      "buff",
+      "sobrevivencia",
+      "movimento"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "flutuando"
+    ],
+    "condicoes": [
+      "melhor_antes_de_dano_terrestre",
+      "ativa_combos_cosmicos"
+    ],
+    "prioridade_simulacao": 0.61
+  },
+  "Raio Cósmico": {
+    "codigo": 322,
+    "nome": "Raio Cósmico",
+    "papeis": [
+      "dano",
+      "linha",
+      "area",
+      "pressao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "linha",
+      "reducao_por_alvo"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_com_alvo_principal_proximo"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Gravidade": {
+    "codigo": 323,
+    "nome": "Gravidade",
+    "papeis": [
+      "controle",
+      "area",
+      "anti_voador",
+      "anti_flutuante"
+    ],
+    "alvos_preferidos": [
+      "inimigo_voando",
+      "inimigo_flutuando",
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "flutuando",
+      "voando",
+      "remove_efeitos"
+    ],
+    "condicoes": [
+      "melhor_contra_voando_ou_flutuando",
+      "evitar_se_aliados_dependem_de_flutuar"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Estrela Cadente": {
+    "codigo": 324,
+    "nome": "Estrela Cadente",
+    "papeis": [
+      "buff",
+      "setup",
+      "critico",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "spd",
+      "spa",
+      "mag",
+      "crc"
+    ],
+    "condicoes": [
+      "melhor_antes_de_turnos_longos",
+      "melhor_com_usuario_especial"
+    ],
+    "prioridade_simulacao": 0.63
+  },
+  "Radiação": {
+    "codigo": 325,
+    "nome": "Radiação",
+    "papeis": [
+      "dano",
+      "combo",
+      "dano_percentual"
+    ],
+    "alvos_preferidos": [
+      "inimigo_envenenado",
+      "inimigo_com_vida_alta",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vida_atual",
+      "envenenado",
+      "flutuando",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_envenenado",
+      "melhor_se_usuario_flutuando",
+      "melhor_contra_tanque"
+    ],
+    "prioridade_simulacao": 0.73
+  },
+  "Dança Gravitacional": {
+    "codigo": 326,
+    "nome": "Dança Gravitacional",
+    "papeis": [
+      "clima",
+      "setup",
+      "controle",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "gravidade_anomala"
+    ],
+    "condicoes": [
+      "melhor_para_time_cosmico",
+      "melhor_contra_time_voador",
+      "melhor_antes_de_gravidade"
+    ],
+    "prioridade_simulacao": 0.66
+  },
+  "Supernova": {
+    "codigo": 327,
+    "nome": "Supernova",
+    "papeis": [
+      "dano",
+      "area",
+      "finalizacao",
+      "alto_impacto"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "alto",
+      "aliados": "alto"
+    },
+    "efeitos_relevantes": [
+      "descarregado",
+      "area",
+      "sem_critico"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_para_encerrar_luta",
+      "evitar_se_usuario_precisa_agir_depois"
+    ],
+    "prioridade_simulacao": 0.9
+  },
+  "Explosão Lunar": {
+    "codigo": 328,
+    "nome": "Explosão Lunar",
+    "papeis": [
+      "dano",
+      "area",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "adjacentes",
+      "area",
+      "spa"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "evitar_com_aliados_adjacentes"
+    ],
+    "prioridade_simulacao": 0.82
+  }
+}

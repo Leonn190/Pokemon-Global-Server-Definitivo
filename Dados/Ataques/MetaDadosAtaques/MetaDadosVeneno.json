@@ -1,1 +1,394 @@
-{}
+{
+  "Envenenar": {
+    "codigo": 144,
+    "nome": "Envenenar",
+    "papeis": [
+      "controle",
+      "dano_indireto",
+      "setup"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "envenenado"
+    ],
+    "condicoes": [
+      "melhor_no_inicio_do_foco",
+      "melhor_contra_alvo_com_muita_vida"
+    ],
+    "prioridade_simulacao": 0.61
+  },
+  "Farpa": {
+    "codigo": 145,
+    "nome": "Farpa",
+    "papeis": [
+      "dano",
+      "controle",
+      "critico"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "envenenado",
+      "critico"
+    ],
+    "condicoes": [
+      "bom_para_aplicar_veneno_com_dano"
+    ],
+    "prioridade_simulacao": 0.56
+  },
+  "Poluição": {
+    "codigo": 146,
+    "nome": "Poluição",
+    "papeis": [
+      "clima",
+      "setup",
+      "controle",
+      "dano_indireto"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "chuva",
+      "chuva_acida"
+    ],
+    "condicoes": [
+      "melhor_se_clima_atual_for_chuva",
+      "melhor_para_time_venenoso"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Ácido": {
+    "codigo": 147,
+    "nome": "Ácido",
+    "papeis": [
+      "controle",
+      "debuff",
+      "quebra_defesa"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "def",
+      "spd",
+      "defesa_permanente"
+    ],
+    "condicoes": [
+      "melhor_contra_tanque",
+      "melhor_antes_de_foco_de_dano"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Esporos Conectados": {
+    "codigo": 148,
+    "nome": "Esporos Conectados",
+    "papeis": [
+      "dano",
+      "area",
+      "combo",
+      "dano_indireto"
+    ],
+    "alvos_preferidos": [
+      "inimigo_envenenado",
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "envenenado",
+      "intoxicado"
+    ],
+    "condicoes": [
+      "melhor_com_inimigos_envenenados",
+      "melhor_em_inimigos_agrupados",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Fumaça Tóxica": {
+    "codigo": 149,
+    "nome": "Fumaça Tóxica",
+    "papeis": [
+      "controle",
+      "dano_indireto",
+      "debuff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "envenenado",
+      "intoxicado"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_sem_veneno",
+      "melhor_para_escalar_dano_indireto"
+    ],
+    "prioridade_simulacao": 0.66
+  },
+  "Contaminar": {
+    "codigo": 150,
+    "nome": "Contaminar",
+    "papeis": [
+      "terreno",
+      "controle",
+      "dano_indireto",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "area_inimiga_importante"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "terreno_contaminada",
+      "envenenado"
+    ],
+    "condicoes": [
+      "melhor_em_area_disputada",
+      "aceita_area_vazia"
+    ],
+    "prioridade_simulacao": 0.64
+  },
+  "Gás Venenoso": {
+    "codigo": 151,
+    "nome": "Gás Venenoso",
+    "papeis": [
+      "dano",
+      "linha",
+      "area",
+      "controle",
+      "dano_indireto"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_envenenado"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "envenenado",
+      "intoxicado",
+      "duracao_veneno"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_com_alvos_envenenados"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Gás Corrosivo": {
+    "codigo": 152,
+    "nome": "Gás Corrosivo",
+    "papeis": [
+      "dano",
+      "linha",
+      "area",
+      "debuff",
+      "quebra_defesa"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "def",
+      "spd",
+      "reducao_permanente"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "melhor_apos_acido"
+    ],
+    "prioridade_simulacao": 0.75
+  },
+  "Bomba de Lodo": {
+    "codigo": 153,
+    "nome": "Bomba de Lodo",
+    "papeis": [
+      "dano",
+      "area",
+      "controle",
+      "dano_indireto"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "envenenado",
+      "adjacentes"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Vórtex Venenoso": {
+    "codigo": 154,
+    "nome": "Vórtex Venenoso",
+    "papeis": [
+      "dano",
+      "combo",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_envenenado",
+      "inimigo_ferido",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "passos_veneno",
+      "envenenado",
+      "intoxicado"
+    ],
+    "condicoes": [
+      "melhor_com_veneno_acumulado",
+      "melhor_para_finalizar_alvo_envenenado"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Poço": {
+    "codigo": 155,
+    "nome": "Poço",
+    "papeis": [
+      "dano",
+      "controle",
+      "energia",
+      "combo"
+    ],
+    "alvos_preferidos": [
+      "inimigo_envenenado",
+      "inimigo_com_muita_energia",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "energia",
+      "envenenado",
+      "intoxicado"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_envenenado",
+      "melhor_contra_alvo_com_energia_alta"
+    ],
+    "prioridade_simulacao": 0.71
+  },
+  "Extração": {
+    "codigo": 156,
+    "nome": "Extração",
+    "papeis": [
+      "dano",
+      "sustentacao",
+      "combo",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_envenenado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "vamp",
+      "envenenado",
+      "intoxicado",
+      "cura"
+    ],
+    "condicoes": [
+      "melhor_com_veneno_acumulado",
+      "melhor_com_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.73
+  },
+  "Armadura Mole": {
+    "codigo": 157,
+    "nome": "Armadura Mole",
+    "papeis": [
+      "controle",
+      "debuff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perceptivo",
+      "inimigo_perigoso",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "per",
+      "mag"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_dependente_de_percepcao",
+      "melhor_para_enfraquecer_longo_prazo"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Imunizado": {
+    "codigo": 158,
+    "nome": "Imunizado",
+    "papeis": [
+      "passivo",
+      "protecao",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "imune"
+    ],
+    "condicoes": [
+      "passivo_permanente",
+      "melhor_contra_veneno"
+    ],
+    "prioridade_simulacao": 0.42
+  }
+}

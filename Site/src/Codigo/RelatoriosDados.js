@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { urlPublica } from "./AssetsPublicos.js";
 
 const NOMES_PASTAS_RELATORIOS = [
   "Documentação/Relatorios/Registros",
@@ -64,8 +65,10 @@ function inlineMarkdown(valor) {
 
 function caminhoImagemRelatorio(valor) {
   const normalizado = String(valor || "").replace(/\\/g, "/");
+  if (/^(?:https?:|data:|blob:)/i.test(normalizado)) return normalizado;
   const prefixoPublic = "Site/public/";
-  if (normalizado.startsWith(prefixoPublic)) return `/${normalizado.slice(prefixoPublic.length)}`;
+  if (normalizado.startsWith(prefixoPublic)) return urlPublica(normalizado.slice(prefixoPublic.length));
+  if (normalizado.startsWith("/")) return urlPublica(normalizado);
   return normalizado;
 }
 

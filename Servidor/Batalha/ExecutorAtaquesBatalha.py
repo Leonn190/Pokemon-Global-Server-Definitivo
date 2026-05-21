@@ -161,10 +161,29 @@ class ExecutorAtaquesBatalha:
     def calcular_acerto(self, usuario, alvo, props=None):
         props = props if isinstance(props, dict) else {}
         parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+
+        def f(valor, default=0.0):
+            try:
+                return float(valor)
+            except (TypeError, ValueError):
+                return float(default)
+
+        def fmt(valor):
+            numero = f(valor, 0.0)
+            if abs(numero - round(numero)) <= 0.001:
+                return str(int(round(numero)))
+            return f"{numero:.4f}".rstrip("0").rstrip(".")
+
+        def atributo(pokemon, nome, default):
+            if pokemon is not None and hasattr(pokemon, "obter_atributo"):
+                return f(pokemon.obter_atributo(nome, default), default)
+            return f(default, 0.0)
+
         condicional = parametros.get("sempre_acerta_se_alvo_efeito", props.get("sempre_acerta_se_alvo_efeito"))
         if condicional and alvo is not None and hasattr(alvo, "possui_efeito"):
             efeitos = condicional if isinstance(condicional, (list, tuple, set)) else [condicional]
             if any(alvo.possui_efeito(efeito) for efeito in efeitos):
+                nomes_efeitos = [str(efeito) for efeito in efeitos]
                 return {
                     "acertou": True,
                     "chance_final": 100.0,
@@ -172,7 +191,13 @@ class ExecutorAtaquesBatalha:
                     "bonus_critico_acerto": 0.0,
                     "rolagem": None,
                     "sempre_acerta_condicional": True,
-                    "efeito_condicional": [str(efeito) for efeito in efeitos],
+                    "efeito_condicional": nomes_efeitos,
+                    "calculo": [
+                        f"Acerto automático: alvo com efeito condicional ({', '.join(nomes_efeitos)}).",
+                        "Chance final = 100%",
+                        "Chance real = 100%",
+                        "Resultado: acertou",
+                    ],
                 }
         if bool(parametros.get("sempre_acerta", props.get("sempre_acerta", False))):
             return {
@@ -182,51 +207,93 @@ class ExecutorAtaquesBatalha:
                 "bonus_critico_acerto": 0.0,
                 "rolagem": None,
                 "sempre_acerta": True,
+                "calculo": [
+                    "Acerto automático: ataque configurado como sempre acerta.",
+                    "Chance final = 100%",
+                    "Chance real = 100%",
+                    "Resultado: acertou",
+                ],
             }
-        acuracia_ataque = float(parametros.get("acuracia", props.get("acuracia", 100.0)) or 100.0) / 100.0
-        acuracia_usuario = usuario.obter_atributo("Acu", 100.0)
+
+        acuracia_ataque_pct = f(parametros.get("acuracia", props.get("acuracia", 100.0)) or 100.0, 100.0)
+        acuracia_ataque = acuracia_ataque_pct / 100.0
+        acuracia_usuario_base = atributo(usuario, "Acu", 100.0)
+        acuracia_usuario = acuracia_usuario_base
+        calculo = [
+            f"Acurácia do ataque = {fmt(acuracia_ataque_pct)}%",
+            f"Acurácia do usuário = {fmt(acuracia_usuario_base)}",
+        ]
         if "acuracia_base_usuario_pct" in parametros:
-            base_pct = float(parametros.get("acuracia_base_usuario_pct") or 0.0)
-            bonus_pct = float(parametros.get("bonus_acuracia_por_efeito_positivo_alvo_pct") or 0.0)
+            base_pct = f(parametros.get("acuracia_base_usuario_pct"), 0.0)
+            bonus_pct = f(parametros.get("bonus_acuracia_por_efeito_positivo_alvo_pct"), 0.0)
             efeitos_positivos = sum(
                 1
                 for efeito in list(getattr(alvo, "efeitos_formais", []) or [])
                 if str((efeito or {}).get("tipo") or "").strip().lower() == "positivo"
             )
             acuracia_usuario *= (base_pct + bonus_pct * efeitos_positivos) / 100.0
+            calculo.append(
+                f"Modificador condicional de acurácia = {fmt(base_pct)}% + {fmt(bonus_pct)}% x {efeitos_positivos} efeitos positivos"
+            )
+            calculo.append(f"Acurácia do usuário ajustada = {fmt(acuracia_usuario)}")
         acuracia = (acuracia_usuario / 100.0) * acuracia_ataque
-        assertividade = alvo.obter_atributo("Ass", 100.0) / 100.0
+        assertividade_valor = atributo(alvo, "Ass", 100.0)
+        assertividade = assertividade_valor / 100.0
         chance = acuracia * assertividade
-        vel_usuario = usuario.obter_atributo("Vel", 0.0)
-        vel_alvo = alvo.obter_atributo("Vel", 0.0)
+        calculo.append(f"Assertividade do alvo = {fmt(assertividade_valor)}")
+        calculo.append(f"Chance base = ({fmt(acuracia_usuario)} / 100) * {fmt(acuracia_ataque)} * Assertividade({fmt(assertividade)}) = {fmt(chance * 100.0)}%")
+
+        vel_usuario = atributo(usuario, "Vel", 0.0)
+        vel_alvo = atributo(alvo, "Vel", 0.0)
         media = (vel_usuario + vel_alvo) / 2.0
         escudo = 10.0
         if vel_usuario > media + escudo:
-            chance += (vel_usuario - media - escudo) / 100.0
+            ajuste = (vel_usuario - media - escudo) / 100.0
+            chance += ajuste
+            calculo.append(f"Velocidade do usuário acima da margem: +{fmt(ajuste * 100.0)}%")
         elif vel_usuario < media - escudo:
-            chance -= (media - escudo - vel_usuario) / 100.0
+            ajuste = (media - escudo - vel_usuario) / 100.0
+            chance -= ajuste
+            calculo.append(f"Velocidade do usuário abaixo da margem: -{fmt(ajuste * 100.0)}%")
         if vel_alvo > media + escudo:
-            chance -= (vel_alvo - media - escudo) / 100.0
+            ajuste = (vel_alvo - media - escudo) / 100.0
+            chance -= ajuste
+            calculo.append(f"Velocidade do alvo acima da margem: -{fmt(ajuste * 100.0)}%")
         elif vel_alvo < media - escudo:
-            chance += (media - escudo - vel_alvo) / 100.0
+            ajuste = (media - escudo - vel_alvo) / 100.0
+            chance += ajuste
+            calculo.append(f"Velocidade do alvo abaixo da margem: +{fmt(ajuste * 100.0)}%")
         tipo_ataque = parametros.get("tipo") or props.get("tipo") or "normal"
-        if alvo.possui_efeito("Flutuando") and str(tipo_ataque or "").strip().lower() == "normal":
+        if alvo is not None and hasattr(alvo, "possui_efeito") and alvo.possui_efeito("Flutuando") and str(tipo_ataque or "").strip().lower() == "normal":
             chance -= 0.40
+            calculo.append("Alvo com Flutuando contra tipo normal: -40%")
         bonus_condicional = self.bonus_acerto_condicional(alvo, parametros)
         if bonus_condicional.get("bonus", 0.0) > 0:
             chance += bonus_condicional.get("bonus", 0.0) / 100.0
-        chance_percentual = max(0.0, chance * 100.0)
+            calculo.append(f"Bônus condicional de acerto: +{fmt(bonus_condicional.get('bonus', 0.0))}%")
+        chance_sem_clamp = chance * 100.0
+        chance_percentual = max(0.0, chance_sem_clamp)
         chance_real = min(100.0, chance_percentual)
         bonus_critico = max(0.0, chance_percentual - 100.0) / 2.0
         sorte = self.partida.rng.random() * 100.0
+        acertou = sorte <= chance_real
+        calculo.extend(
+            [
+                f"Chance final = {fmt(chance_sem_clamp)}%",
+                f"Chance real = {fmt(chance_real)}%",
+                f"Rolagem = {fmt(sorte)}",
+                "Resultado: acertou" if acertou else "Resultado: desvio",
+            ]
+        )
         return {
-            "acertou": sorte <= chance_real,
+            "acertou": acertou,
             "chance_final": round(chance_percentual, 4),
             "chance_real": round(chance_real, 4),
             "bonus_critico_acerto": round(bonus_critico, 4),
             "rolagem": round(sorte, 4),
             "bonus_acerto_condicional": round(bonus_condicional.get("bonus", 0.0), 4),
             "condicoes_bonus_acerto_ativas": list(bonus_condicional.get("condicoes_ativas") or []),
+            "calculo": calculo,
         }
 
     def registrar_historico_ataque(self, pokemon, acao, props, alvos):

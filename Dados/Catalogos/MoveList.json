@@ -12,13 +12,16 @@
       "Farpa": 1
     },
     "artificiais": {
-      "Casco Vivo": 2,
+      "Casco Vivo": 1,
       "Trevo da Sorte": 1,
-      "Dreno": 2,
+      "Dreno": 1,
       "Seiva Misteriosa": 1,
       "Contaminar": 1,
       "Ácido": 1,
-      "Bomba de Sementes": 1
+      "Bomba de Sementes": 1,
+      "Proteger": 1,
+      "Recarga": 1,
+      "Biscoito": 1
     }
   },
   "Ivysaur": {
@@ -37,7 +40,7 @@
       "Bomba de Sementes": 1
     },
     "artificiais": {
-      "Casco Vivo": 2,
+      "Casco Vivo": 1,
       "Trevo da Sorte": 1,
       "Seiva Misteriosa": 1,
       "Fumaça Tóxica": 1,
@@ -45,7 +48,10 @@
       "Contaminar": 1,
       "Dança das Pétalas": 1,
       "Flor Mágica": 1,
-      "Murchar": 1
+      "Murchar": 1,
+      "Proteger": 1,
+      "Recarga": 1,
+      "Bola Climática": 1
     }
   },
   "Venusaur": {
@@ -67,7 +73,7 @@
       "Bomba de Lodo": 1
     },
     "artificiais": {
-      "Casco Vivo": 2,
+      "Casco Vivo": 1,
       "Trevo da Sorte": 1,
       "Flor Mágica": 1,
       "Murchar": 1,
@@ -79,7 +85,11 @@
       "Poço": 1,
       "Extração": 1,
       "Dança do Sol": 1,
-      "Poder Ancião": 1
+      "Poder Ancião": 1,
+      "Proteger": 1,
+      "Hiper Raio": 1,
+      "Terremoto": 1,
+      "Bola Climática": 1
     }
   },
   "Charmander": {
@@ -101,7 +111,10 @@
       "Superaquecer": 1,
       "Estocada": 1,
       "Enraivecer": 1,
-      "Garra do Dragão": 1
+      "Garra do Dragão": 1,
+      "Proteger": 1,
+      "Recarga": 1,
+      "Chute Duplo": 1
     }
   },
   "Charmeleon": {
@@ -127,7 +140,10 @@
       "Sopro do Dragão": 1,
       "Investida Dracônica": 1,
       "Dança do Sol": 1,
-      "Erupção": 1
+      "Erupção": 1,
+      "Proteger": 1,
+      "Estocada": 1,
+      "Chute Duplo": 1
     }
   },
   "Charizard": {
@@ -146,7 +162,8 @@
       "Garra do Dragão": 2,
       "Sopro do Dragão": 1,
       "Voar": 2,
-      "Golpe de Asa": 2
+      "Golpe de Asa": 2,
+      "Rugido": 1
     },
     "artificiais": {
       "Dança do Sol": 1,
@@ -164,7 +181,9 @@
       "Investida Dracônica": 1,
       "Sem Fraquezas": 1,
       "Hiper Raio": 1,
-      "Bola Climática": 1
+      "Bola Climática": 1,
+      "Proteger": 1,
+      "Chute Pirueta Aéreo": 1
     }
   },
   "Squirtle": {
@@ -180,13 +199,16 @@
       "Correnteza": 1
     },
     "artificiais": {
-      "Esguicho Suave": 2,
+      "Esguicho Suave": 1,
       "Mergulho": 1,
       "Cachoeira": 1,
       "Pele Aquática": 1,
       "Martelo Caranguejo": 1,
       "Dança da Chuva": 1,
-      "Águas Mágicas": 1
+      "Águas Mágicas": 1,
+      "Tankar": 1,
+      "Hiper Presa": 1,
+      "Esmagar": 1
     }
   },
   "Wartortle": {
@@ -205,7 +227,7 @@
       "Torrente Vital": 1
     },
     "artificiais": {
-      "Esguicho Suave": 2,
+      "Esguicho Suave": 1,
       "Jato Triplo": 1,
       "Surfar": 1,
       "Lança de Água": 1,
@@ -213,7 +235,10 @@
       "Fonte Termal": 1,
       "Dança da Chuva": 1,
       "Reservatório": 1,
-      "Controle do Oceano": 1
+      "Controle do Oceano": 1,
+      "Tankar": 1,
+      "Hiper Presa": 1,
+      "Impacto Rochoso": 1
     }
   },
   "Blastoise": {
@@ -247,7 +272,10 @@
       "Controle do Oceano": 1,
       "Bola Climática": 1,
       "Hiper Raio": 1,
-      "Impacto Rochoso": 1
+      "Impacto Rochoso": 1,
+      "Cabeçada de Ferro": 1,
+      "Tankar": 1,
+      "Esmagar": 1
     }
   },
   "Caterpie": {
@@ -265,7 +293,8 @@
       "Doação de Energia": 1,
       "Infestação": 1,
       "Tiro de Semente": 1,
-      "Proteger": 1
+      "Proteger": 1,
+      "Biscoito": 1
     }
   },
   "Metapod": {
@@ -283,7 +312,8 @@
       "Casca de Pedra": 1,
       "Barragem Rochosa": 1,
       "Inflar": 1,
-      "Mordida de Inseto": 1
+      "Mordida de Inseto": 1,
+      "Recarga": 1
     }
   },
   "Butterfree": {
@@ -313,7 +343,9 @@
       "Raio Psíquico": 1,
       "Ultrapsíquico": 1,
       "Transferência Mental": 1,
-      "Dreno": 1
+      "Dreno": 1,
+      "Bola Climática": 1,
+      "Proteger": 1
     }
   },
   "Weedle": {
@@ -331,7 +363,8 @@
       "Fumaça Tóxica": 1,
       "Regeneração": 1,
       "Infestação": 1,
-      "Armadura Mole": 1
+      "Armadura Mole": 1,
+      "Proteger": 1
     }
   },
   "Kakuna": {
@@ -351,7 +384,8 @@
       "Armadura Mole": 1,
       "Casca de Pedra": 1,
       "Doação de Energia": 1,
-      "Mordida de Inseto": 1
+      "Mordida de Inseto": 1,
+      "Recarga": 1
     }
   },
   "Beedrill": {
@@ -369,7 +403,8 @@
       "Devorar": 1,
       "Voar": 1,
       "Golpe de Asa": 1,
-      "Ataque Aéreo": 1
+      "Ataque Aéreo": 1,
+      "Britadeira": 1
     },
     "artificiais": {
       "Vórtex Venenoso": 1,
@@ -382,7 +417,574 @@
       "Rasante": 1,
       "Tiro de Penas": 1,
       "Ás dos Ares": 1,
-      "Voador": 1
+      "Voador": 1,
+      "Ataque Rápido": 1,
+      "Estocada": 1,
+      "Afiar": 1,
+      "Cauda de Ferro": 1
+    }
+  },
+  "Pidgey": {
+    "regulares": {
+      "Investida": 2,
+      "Ataque Rápido": 2,
+      "Ventinho": 3,
+      "Voar": 2,
+      "Voo Alto": 2,
+      "Golpe de Asa": 2,
+      "Olho de Águia": 1,
+      "Impulso Aéreo": 1,
+      "Barragem de Vento": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Recarga": 1,
+      "Disparo": 1,
+      "Ataque Aéreo": 1,
+      "Rasante": 1,
+      "Tornadinho Amigo": 1,
+      "Voo Estratégico": 1,
+      "Tiro de Penas": 1,
+      "Bola Climática": 1
+    }
+  },
+  "Pidgeotto": {
+    "regulares": {
+      "Investida": 1,
+      "Ataque Rápido": 2,
+      "Ventinho": 2,
+      "Voar": 2,
+      "Voo Alto": 2,
+      "Golpe de Asa": 2,
+      "Olho de Águia": 2,
+      "Impulso Aéreo": 1,
+      "Ataque Aéreo": 1,
+      "Rasante": 1,
+      "Vendaval": 1,
+      "Barragem de Vento": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Recarga": 1,
+      "Disparo": 1,
+      "Tornadinho Amigo": 1,
+      "Voo Estratégico": 1,
+      "Tiro de Penas": 1,
+      "Ás dos Ares": 1,
+      "Bico Broca": 1,
+      "Bola Climática": 1
+    }
+  },
+  "Pidgeot": {
+    "regulares": {
+      "Ataque Rápido": 2,
+      "Ventinho": 1,
+      "Voar": 2,
+      "Voo Alto": 2,
+      "Golpe de Asa": 2,
+      "Olho de Águia": 2,
+      "Impulso Aéreo": 1,
+      "Ataque Aéreo": 2,
+      "Rasante": 2,
+      "Vendaval": 2,
+      "Ás dos Ares": 1,
+      "Tornado": 1,
+      "Barragem de Vento": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Recarga": 1,
+      "Hiper Raio": 1,
+      "Bico Broca": 1,
+      "Tiro de Penas": 1,
+      "Voo Estratégico": 1,
+      "Ciclone": 1,
+      "Bola Climática": 1,
+      "Chute Pirueta Aéreo": 1
+    }
+  },
+  "Rattata": {
+    "regulares": {
+      "Investida": 3,
+      "Arranhar": 2,
+      "Ataque Rápido": 3,
+      "Hiper Presa": 2,
+      "Pancada Seca": 1,
+      "Esmagar": 1,
+      "Enraivecer": 1,
+      "Provocar": 1,
+      "Recarga": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Disparo": 1,
+      "Estocada": 1,
+      "Golpe Precavido": 1,
+      "Jogada de Sorte": 1,
+      "Lambida": 1,
+      "Susto": 1,
+      "Vingança": 1,
+      "Golpe Noturno": 1
+    }
+  },
+  "Raticate": {
+    "regulares": {
+      "Investida": 1,
+      "Arranhar": 1,
+      "Ataque Rápido": 2,
+      "Hiper Presa": 3,
+      "Pancada Seca": 2,
+      "Esmagar": 2,
+      "Enraivecer": 1,
+      "Provocar": 1,
+      "Guilhotina": 1,
+      "Recarga": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Disparo": 1,
+      "Estocada": 1,
+      "Golpe Precavido": 1,
+      "Jogada de Sorte": 1,
+      "Lambida": 1,
+      "Susto": 1,
+      "Vingança": 1,
+      "Golpe Noturno": 1,
+      "Dominação": 1
+    }
+  },
+  "Spearow": {
+    "regulares": {
+      "Investida": 1,
+      "Ataque Rápido": 2,
+      "Chifrada": 1,
+      "Ventinho": 2,
+      "Voar": 2,
+      "Voo Alto": 1,
+      "Golpe de Asa": 2,
+      "Bico Broca": 2,
+      "Ataque Aéreo": 1,
+      "Olho de Águia": 1,
+      "Rasante": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Estocada": 1,
+      "Ás dos Ares": 1,
+      "Tiro de Penas": 1,
+      "Voo Estratégico": 1,
+      "Impulso Aéreo": 1,
+      "Disparo": 1,
+      "Provocar": 1
+    }
+  },
+  "Fearow": {
+    "regulares": {
+      "Ataque Rápido": 1,
+      "Chifrada": 2,
+      "Ventinho": 1,
+      "Voar": 2,
+      "Voo Alto": 2,
+      "Golpe de Asa": 2,
+      "Bico Broca": 3,
+      "Ataque Aéreo": 2,
+      "Rasante": 2,
+      "Olho de Águia": 1,
+      "Ás dos Ares": 1,
+      "Vendaval": 1,
+      "Golpe Noturno": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Estocada": 1,
+      "Tiro de Penas": 1,
+      "Voo Estratégico": 1,
+      "Impulso Aéreo": 1,
+      "Tornado": 1,
+      "Hiper Raio": 1,
+      "Vingança": 1,
+      "Bola Climática": 1
+    }
+  },
+  "Ekans": {
+    "regulares": {
+      "Investida": 1,
+      "Envenenar": 3,
+      "Farpa": 2,
+      "Ácido": 2,
+      "Armadura Mole": 1,
+      "Poluição": 1,
+      "Fumaça Tóxica": 1,
+      "Esmagar": 2,
+      "Hiper Presa": 1,
+      "Provocar": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Gás Venenoso": 1,
+      "Gás Corrosivo": 1,
+      "Contaminar": 1,
+      "Vórtex Venenoso": 1,
+      "Poço": 1,
+      "Extração": 1,
+      "Susto": 1,
+      "Maldade": 1,
+      "Sombra": 1,
+      "Tiro de Lama": 1
+    }
+  },
+  "Arbok": {
+    "regulares": {
+      "Investida": 1,
+      "Envenenar": 2,
+      "Farpa": 2,
+      "Ácido": 2,
+      "Fumaça Tóxica": 2,
+      "Bomba de Lodo": 1,
+      "Esmagar": 2,
+      "Hiper Presa": 2,
+      "Provocar": 1,
+      "Vórtex Venenoso": 1,
+      "Armadura Mole": 1,
+      "Olhar Cruel": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Poluição": 1,
+      "Gás Venenoso": 1,
+      "Gás Corrosivo": 1,
+      "Contaminar": 1,
+      "Poço": 1,
+      "Extração": 1,
+      "Susto": 1,
+      "Maldade": 1,
+      "Sombra": 1,
+      "Tiro de Lama": 1,
+      "Golpe Noturno": 1
+    }
+  },
+  "Pichu": {
+    "regulares": {
+      "Investida": 2,
+      "Recarga": 2,
+      "Energia": 1,
+      "Energizar": 3,
+      "Bola Eletrica": 2,
+      "Curto": 1,
+      "Ataque Rápido": 1,
+      "Barragem Energetica": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Biscoito": 1,
+      "Doação de Energia": 1,
+      "Eletrochoque": 1,
+      "Choque Duplo": 1,
+      "Dança Elétrica": 1,
+      "Amplificar": 1,
+      "Bola Climática": 1
+    }
+  },
+  "Pikachu": {
+    "regulares": {
+      "Investida": 1,
+      "Ataque Rápido": 2,
+      "Recarga": 1,
+      "Energizar": 2,
+      "Bola Eletrica": 3,
+      "Choque Duplo": 2,
+      "Eletrochoque": 2,
+      "Curto": 1,
+      "Choque do Trovão": 1,
+      "Amplificar": 1,
+      "Barragem Energetica": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Dança Elétrica": 1,
+      "Descarga Total": 1,
+      "Vampirismo Energético": 1,
+      "Ultra Raio Aleatório": 1,
+      "Hiper Raio": 1,
+      "Cauda de Ferro": 1,
+      "Bola Climática": 1
+    }
+  },
+  "Raichu": {
+    "regulares": {
+      "Ataque Rápido": 2,
+      "Recarga": 1,
+      "Energizar": 2,
+      "Bola Eletrica": 2,
+      "Choque Duplo": 2,
+      "Eletrochoque": 2,
+      "Curto": 1,
+      "Choque do Trovão": 2,
+      "Amplificar": 1,
+      "Barragem Energetica": 1,
+      "Descarga Total": 1,
+      "Cauda de Ferro": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Dança Elétrica": 1,
+      "Vampirismo Energético": 1,
+      "Ultra Raio Aleatório": 1,
+      "Hiper Raio": 1,
+      "Bola Climática": 1,
+      "Míssil de Punho": 1
+    }
+  },
+  "Sandshrew": {
+    "regulares": {
+      "Investida": 2,
+      "Arranhar": 3,
+      "Rachar Terra": 2,
+      "Areia": 2,
+      "Rachadura": 2,
+      "Domínio do Solo": 1,
+      "Dança da Areia": 1,
+      "Golpe de Ossos": 1,
+      "Tiro de Lama": 1,
+      "Poeira nos Olhos": 1,
+      "Casca de Pedra": 1,
+      "Pedregulho": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Tankar": 1,
+      "Esmagar": 1,
+      "Chifrada": 1,
+      "Fissura": 1,
+      "Tremor": 1,
+      "Terremoto": 1,
+      "Cabeçada de Ferro": 1,
+      "Britadeira": 1,
+      "Afiar": 1,
+      "Poder Ancião": 1
+    }
+  },
+  "Sandslash": {
+    "regulares": {
+      "Investida": 1,
+      "Arranhar": 3,
+      "Ataque Rápido": 1,
+      "Rachar Terra": 2,
+      "Areia": 1,
+      "Rachadura": 2,
+      "Golpe de Ossos": 2,
+      "Queda Sísmica": 1,
+      "Tiro de Lama": 1,
+      "Tremor": 1,
+      "Quebra Chão": 1,
+      "Poeira nos Olhos": 1,
+      "Casca de Pedra": 1,
+      "Fragmento Incisivo": 1,
+      "Corte Serrilhado": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Tankar": 1,
+      "Esmagar": 1,
+      "Chifrada": 1,
+      "Fissura": 1,
+      "Terremoto": 1,
+      "Britadeira": 1,
+      "Afiar": 1,
+      "Cabeçada de Ferro": 1,
+      "Super Fincada": 1,
+      "Lâmina de Cristal": 1,
+      "Poder Ancião": 1,
+      "Chute Duplo": 1
+    }
+  },
+  "Nidoran♀": {
+    "regulares": {
+      "Investida": 2,
+      "Arranhar": 2,
+      "Chifrada": 2,
+      "Envenenar": 3,
+      "Farpa": 2,
+      "Ácido": 1,
+      "Armadura Mole": 1,
+      "Rachar Terra": 1,
+      "Tiro de Lama": 1,
+      "Proteger": 1,
+      "Recarga": 1
+    },
+    "artificiais": {
+      "Fumaça Tóxica": 1,
+      "Contaminar": 1,
+      "Bomba de Lodo": 1,
+      "Hiper Presa": 1,
+      "Ataque Rápido": 1,
+      "Chute Duplo": 1,
+      "Poeira nos Olhos": 1,
+      "Casca de Pedra": 1
+    }
+  },
+  "Nidorina": {
+    "regulares": {
+      "Investida": 1,
+      "Arranhar": 2,
+      "Chifrada": 2,
+      "Envenenar": 2,
+      "Farpa": 2,
+      "Ácido": 2,
+      "Fumaça Tóxica": 1,
+      "Bomba de Lodo": 1,
+      "Rachar Terra": 1,
+      "Tiro de Lama": 2,
+      "Proteger": 1,
+      "Esmagar": 1,
+      "Hiper Presa": 1
+    },
+    "artificiais": {
+      "Contaminar": 1,
+      "Gás Venenoso": 1,
+      "Gás Corrosivo": 1,
+      "Vórtex Venenoso": 1,
+      "Rachadura": 1,
+      "Tremor": 1,
+      "Terremoto": 1,
+      "Poeira nos Olhos": 1,
+      "Cabeçada de Ferro": 1,
+      "Super Fincada": 1
+    }
+  },
+  "Nidoqueen": {
+    "regulares": {
+      "Investida": 1,
+      "Chifrada": 2,
+      "Envenenar": 2,
+      "Farpa": 1,
+      "Ácido": 2,
+      "Fumaça Tóxica": 1,
+      "Bomba de Lodo": 2,
+      "Gás Venenoso": 1,
+      "Vórtex Venenoso": 1,
+      "Rachar Terra": 2,
+      "Rachadura": 1,
+      "Tiro de Lama": 2,
+      "Tremor": 1,
+      "Queda Sísmica": 1,
+      "Proteger": 2,
+      "Tankar": 1,
+      "Esmagar": 1
+    },
+    "artificiais": {
+      "Gás Corrosivo": 1,
+      "Contaminar": 1,
+      "Poço": 1,
+      "Extração": 1,
+      "Quebra Chão": 1,
+      "Fissura": 1,
+      "Terremoto": 1,
+      "Hiper Raio": 1,
+      "Impacto Rochoso": 1,
+      "Cabeçada de Ferro": 1,
+      "Cauda de Ferro": 1,
+      "Poder Ancião": 1,
+      "Soco Carregado": 1,
+      "Submissão": 1,
+      "Dança da Areia": 1,
+      "Bola Climática": 1
+    }
+  },
+  "Nidoran♂": {
+    "regulares": {
+      "Investida": 2,
+      "Arranhar": 2,
+      "Chifrada": 3,
+      "Ataque Rápido": 1,
+      "Envenenar": 3,
+      "Farpa": 2,
+      "Ácido": 1,
+      "Rachar Terra": 1,
+      "Tiro de Lama": 1,
+      "Recarga": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Fumaça Tóxica": 1,
+      "Contaminar": 1,
+      "Bomba de Lodo": 1,
+      "Hiper Presa": 1,
+      "Chute Duplo": 1,
+      "Poeira nos Olhos": 1,
+      "Estocada": 1,
+      "Britadeira": 1
+    }
+  },
+  "Nidorino": {
+    "regulares": {
+      "Investida": 1,
+      "Arranhar": 1,
+      "Chifrada": 3,
+      "Ataque Rápido": 1,
+      "Envenenar": 2,
+      "Farpa": 2,
+      "Ácido": 2,
+      "Fumaça Tóxica": 1,
+      "Bomba de Lodo": 1,
+      "Rachar Terra": 1,
+      "Rachadura": 1,
+      "Tiro de Lama": 2,
+      "Estocada": 1,
+      "Britadeira": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Contaminar": 1,
+      "Gás Venenoso": 1,
+      "Gás Corrosivo": 1,
+      "Vórtex Venenoso": 1,
+      "Tremor": 1,
+      "Terremoto": 1,
+      "Hiper Presa": 1,
+      "Cabeçada de Ferro": 1,
+      "Super Fincada": 1,
+      "Chute Duplo": 1
+    }
+  },
+  "Nidoking": {
+    "regulares": {
+      "Investida": 1,
+      "Chifrada": 3,
+      "Envenenar": 2,
+      "Farpa": 1,
+      "Ácido": 2,
+      "Fumaça Tóxica": 1,
+      "Bomba de Lodo": 2,
+      "Gás Venenoso": 1,
+      "Vórtex Venenoso": 1,
+      "Rachar Terra": 2,
+      "Rachadura": 1,
+      "Tiro de Lama": 2,
+      "Tremor": 1,
+      "Queda Sísmica": 1,
+      "Britadeira": 1,
+      "Cabeçada de Ferro": 1,
+      "Esmagar": 1
+    },
+    "artificiais": {
+      "Proteger": 1,
+      "Gás Corrosivo": 1,
+      "Contaminar": 1,
+      "Poço": 1,
+      "Extração": 1,
+      "Quebra Chão": 1,
+      "Fissura": 1,
+      "Terremoto": 1,
+      "Hiper Raio": 1,
+      "Impacto Rochoso": 1,
+      "Cauda de Ferro": 1,
+      "Super Fincada": 1,
+      "Poder Ancião": 1,
+      "Soco Carregado": 1,
+      "Submissão": 1,
+      "Dança da Areia": 1,
+      "Bola Climática": 1
     }
   }
 }

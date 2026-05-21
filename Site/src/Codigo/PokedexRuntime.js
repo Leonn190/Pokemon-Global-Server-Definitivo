@@ -83,9 +83,11 @@ function preencherMovelist(node, movelist, dados, ataquesPorNome, ataqueControll
   if (!node) return false;
   node.replaceChildren();
   if (!movelist || !Array.isArray(dados.ataques) || !dados.ataques.length) return false;
+  const naturais = movelist.regulares || movelist.naturais || movelist.natural || [];
+  const artificiais = movelist.artificiais || movelist.artificial || [];
   [
-    ["Ataques aprendidos naturalmente", movelist.regulares],
-    ["Ataques aprendidos artificialmente", movelist.artificiais],
+    ["Ataques aprendidos naturalmente", naturais],
+    ["Ataques aprendidos artificialmente", artificiais],
   ].forEach(([titulo, entradas]) => {
     const grupo = renderizarMovelistGrupo(titulo, entradas, dados, ataquesPorNome, ataqueController);
     if (grupo) node.appendChild(grupo);
@@ -245,7 +247,7 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
   });
-  return { abrirDetalhe, fecharDetalhe };
+  return { abrirDetalhe, fecharDetalhe, abrirAtaqueDetalhe: ataqueController?.abrirDetalhe };
 }
 export function inicializarPokedex(idDados = "pokedex-data") {
   const dados = lerJson(idDados);

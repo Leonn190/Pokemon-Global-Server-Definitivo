@@ -1,0 +1,349 @@
+---
+import ModalDetalhe from "./ModalDetalhe.astro";
+import ModalControles from "./ModalControles.astro";
+import DetalheTopo from "./DetalheTopo.astro";
+import PainelDetalhe from "./PainelDetalhe.astro";
+import PokemonDetalheModal from "./PokemonDetalheModal.astro";
+import NpcDetalheModal from "./NpcDetalheModal.astro";
+---
+
+<PokemonDetalheModal labelledby="busca-global-pokemon-detalhe-nome" detailAttrs={{ "data-pokemon-detail": true }} />
+
+<ModalDetalhe
+  class="item-detalhe pokemon-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card ataque-detalhe-card"
+  labelledby="busca-global-ataque-detalhe-nome"
+  backdropAttrs={{ "data-ataque-close": true }}
+  data-ataque-detail
+>
+  <ModalControles
+    rotulo="Navegação do ataque aberto"
+    prevLabel="Ataque anterior"
+    nextLabel="Próximo ataque"
+    prevAttrs={{ "data-ataque-prev": true }}
+    nextAttrs={{ "data-ataque-next": true }}
+    closeAttrs={{ "data-ataque-close": true }}
+  />
+  <DetalheTopo
+    class="item-detalhe-topo ataque-detalhe-topo"
+    palcoClass="item-palco-detalhe ataque-palco-detalhe"
+    cabecalhoClass="ataque-cabecalho-detalhe"
+    imageAttrs={{ "data-ataque-image": true }}
+    codeAttrs={{ "data-ataque-code": true }}
+    nameAttrs={{ id: "busca-global-ataque-detalhe-nome", "data-ataque-name": true }}
+    nomeFallback="Ataque"
+  >
+    <div class="pokemon-tags" data-ataque-tags></div>
+  </DetalheTopo>
+  <PainelDetalhe titulo="Descrição" class="item-info-painel ataque-texto-painel">
+    <p class="item-descricao-melhor" data-ataque-description></p>
+  </PainelDetalhe>
+  <PainelDetalhe titulo="Aprimoramento" class="item-info-painel ataque-texto-painel ataque-aprimoramento-painel">
+    <div class="item-descricao-melhor" data-ataque-upgrade></div>
+  </PainelDetalhe>
+  <section class="painel-detalhe ataque-foco-painel">
+    <div data-ataque-focus-bars></div>
+  </section>
+</ModalDetalhe>
+
+<ModalDetalhe
+  class="item-detalhe pokemon-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card efeito-detalhe-card"
+  labelledby="busca-global-efeito-detalhe-nome"
+  backdropAttrs={{ "data-efeito-close": true }}
+  data-efeito-detail
+>
+  <ModalControles
+    rotulo="Navegação do efeito aberto"
+    prevLabel="Efeito anterior"
+    nextLabel="Próximo efeito"
+    prevAttrs={{ "data-efeito-prev": true }}
+    nextAttrs={{ "data-efeito-next": true }}
+    closeAttrs={{ "data-efeito-close": true }}
+  />
+  <DetalheTopo
+    class="item-detalhe-topo efeito-detalhe-topo"
+    palcoClass="item-palco-detalhe efeito-palco-detalhe"
+    cabecalhoClass="efeito-cabecalho-detalhe"
+    imageAttrs={{ "data-efeito-image": true }}
+    codeAttrs={{ "data-efeito-code": true }}
+    nameAttrs={{ id: "busca-global-efeito-detalhe-nome", "data-efeito-name": true }}
+    nomeFallback="Efeito"
+  >
+    <div class="pokemon-tags" data-efeito-tags></div>
+    <p class="item-descricao-melhor" data-efeito-description></p>
+  </DetalheTopo>
+  <PainelDetalhe titulo="Informações" class="item-info-painel">
+    <dl class="pokemon-info-lista" data-efeito-info></dl>
+  </PainelDetalhe>
+</ModalDetalhe>
+
+<ModalDetalhe
+  class="item-detalhe pokemon-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card"
+  labelledby="busca-global-item-detalhe-nome"
+  backdropAttrs={{ "data-item-close": true }}
+  data-item-detail
+>
+  <ModalControles
+    rotulo="Navegação do item aberto"
+    prevLabel="Item anterior"
+    nextLabel="Próximo item"
+    prevAttrs={{ "data-item-prev": true }}
+    nextAttrs={{ "data-item-next": true }}
+    closeAttrs={{ "data-item-close": true }}
+  />
+  <DetalheTopo
+    class="item-detalhe-topo"
+    palcoClass="item-palco-detalhe"
+    imageAttrs={{ "data-item-image": true }}
+    codeAttrs={{ "data-item-code": true }}
+    nameAttrs={{ id: "busca-global-item-detalhe-nome", "data-item-name": true }}
+    nomeFallback="Item"
+  >
+    <span class="raridade-pill" data-item-rarity>Comum</span>
+    <p class="item-descricao-melhor" data-item-description></p>
+  </DetalheTopo>
+  <PainelDetalhe titulo="Informações" class="item-info-painel">
+    <dl class="pokemon-info-lista" data-item-info></dl>
+  </PainelDetalhe>
+  <PainelDetalhe titulo="Receita" class="item-info-painel item-receita-painel" hidden data-item-recipe-panel>
+    <div class="item-receita-topo" data-item-recipe-summary></div>
+    <div class="item-receita-grade" data-item-recipe-grid></div>
+  </PainelDetalhe>
+</ModalDetalhe>
+
+<ModalDetalhe
+  class="item-detalhe pokemon-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card equipavel-detalhe-card"
+  labelledby="busca-global-equipavel-detalhe-nome"
+  backdropAttrs={{ "data-equipavel-close": true }}
+  data-equipavel-detail
+>
+  <ModalControles
+    rotulo="Navegação do equipável aberto"
+    prevLabel="Equipável anterior"
+    nextLabel="Próximo equipável"
+    prevAttrs={{ "data-equipavel-prev": true }}
+    nextAttrs={{ "data-equipavel-next": true }}
+    closeAttrs={{ "data-equipavel-close": true }}
+  />
+  <DetalheTopo
+    class="item-detalhe-topo equipavel-detalhe-topo"
+    palcoClass="item-palco-detalhe equipavel-palco-detalhe"
+    cabecalhoClass="equipavel-cabecalho-detalhe"
+    imageAttrs={{ "data-equipavel-image": true }}
+    codeAttrs={{ "data-equipavel-code": true }}
+    nameAttrs={{ id: "busca-global-equipavel-detalhe-nome", "data-equipavel-name": true }}
+    nomeFallback="Equipável"
+  >
+    <div class="pokemon-tags" data-equipavel-tags></div>
+    <p class="item-descricao-melhor" data-equipavel-description></p>
+  </DetalheTopo>
+  <div class="pokemon-detalhe-grid equipavel-detalhe-grid">
+    <PainelDetalhe titulo="Atributos aumentados">
+      <div class="equipavel-atributos" data-equipavel-attributes></div>
+    </PainelDetalhe>
+    <PainelDetalhe titulo="Foco">
+      <div data-equipavel-focus-bars></div>
+    </PainelDetalhe>
+  </div>
+</ModalDetalhe>
+
+<NpcDetalheModal labelledby="busca-global-npc-detalhe-nome" detailAttrs={{ "data-npc-detail": true }} />
+<PokemonDetalheModal
+  labelledby="busca-global-npc-pokemon-detalhe-nome"
+  class="pokemon-detalhe dungeon-pokemon-detalhe"
+  detailAttrs={{ "data-npc-pokemon-detail": true }}
+/>
+
+<ModalDetalhe
+  class="item-detalhe pokemon-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card mundo-detalhe-card"
+  labelledby="busca-global-mundo-detalhe-nome"
+  backdropAttrs={{ "data-mundo-close": true }}
+  data-mundo-detail
+>
+  <ModalControles
+    rotulo="Navegação da estrutura aberta"
+    prevLabel="Estrutura anterior"
+    nextLabel="Próxima estrutura"
+    prevAttrs={{ "data-mundo-prev": true }}
+    nextAttrs={{ "data-mundo-next": true }}
+    closeAttrs={{ "data-mundo-close": true }}
+  />
+  <DetalheTopo
+    class="item-detalhe-topo mundo-detalhe-topo"
+    palcoClass="item-palco-detalhe mundo-palco-detalhe"
+    cabecalhoClass="mundo-cabecalho-detalhe"
+    imageAttrs={{ "data-mundo-image": true }}
+    codeAttrs={{ "data-mundo-code": true }}
+    nameAttrs={{ id: "busca-global-mundo-detalhe-nome", "data-mundo-name": true }}
+    nomeFallback="Estrutura"
+  >
+    <p class="item-descricao-melhor" data-mundo-description></p>
+    <div class="mundo-detalhe-biomas" data-mundo-biomes aria-label="Locais de aparição"></div>
+  </DetalheTopo>
+  <PainelDetalhe titulo="Informações" class="item-info-painel">
+    <dl class="pokemon-info-lista" data-mundo-info></dl>
+  </PainelDetalhe>
+</ModalDetalhe>
+
+<ModalDetalhe
+  class="item-detalhe pokemon-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card dungeon-detalhe-card"
+  labelledby="busca-global-dungeon-detalhe-nome"
+  backdropAttrs={{ "data-dungeon-close": true }}
+  data-dungeon-detail
+>
+  <ModalControles
+    rotulo="Navegação da dungeon aberta"
+    prevLabel="Dungeon anterior"
+    nextLabel="Próxima dungeon"
+    prevAttrs={{ "data-dungeon-prev": true }}
+    nextAttrs={{ "data-dungeon-next": true }}
+    closeAttrs={{ "data-dungeon-close": true }}
+  />
+  <DetalheTopo
+    class="item-detalhe-topo dungeon-detalhe-topo"
+    palcoClass="item-palco-detalhe dungeon-palco-detalhe"
+    cabecalhoClass="dungeon-cabecalho-detalhe"
+    imageAttrs={{ "data-dungeon-image": true }}
+    codeAttrs={{ "data-dungeon-code": true }}
+    nameAttrs={{ id: "busca-global-dungeon-detalhe-nome", "data-dungeon-name": true }}
+    nomeFallback="Dungeon"
+  />
+  <PainelDetalhe titulo="Informações" class="item-info-painel">
+    <dl class="pokemon-info-lista" data-dungeon-info></dl>
+  </PainelDetalhe>
+  <PainelDetalhe titulo="Pokémons envolvidos" class="item-info-painel dungeon-pokemon-painel">
+    <div class="dungeon-pokemon-grid" data-dungeon-pokemons></div>
+  </PainelDetalhe>
+  <PainelDetalhe titulo="Pokémons servos" class="item-info-painel dungeon-pokemon-painel">
+    <div class="dungeon-pokemon-grid" data-dungeon-servos></div>
+  </PainelDetalhe>
+</ModalDetalhe>
+<PokemonDetalheModal
+  labelledby="busca-global-dungeon-pokemon-detalhe-nome"
+  class="pokemon-detalhe dungeon-pokemon-detalhe"
+  detailAttrs={{ "data-dungeon-pokemon-detail": true }}
+/>
+
+<ModalDetalhe
+  class="item-detalhe pokemon-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card estadio-detalhe-card"
+  labelledby="busca-global-estadio-detalhe-nome"
+  backdropAttrs={{ "data-estadio-close": true }}
+  data-estadio-detail
+>
+  <ModalControles
+    rotulo="Navegação do estádio aberto"
+    prevLabel="Estádio anterior"
+    nextLabel="Próximo estádio"
+    prevAttrs={{ "data-estadio-prev": true }}
+    nextAttrs={{ "data-estadio-next": true }}
+    closeAttrs={{ "data-estadio-close": true }}
+  />
+  <DetalheTopo
+    class="item-detalhe-topo estadio-detalhe-topo"
+    palcoClass="item-palco-detalhe estadio-palco-detalhe"
+    cabecalhoClass="estadio-cabecalho-detalhe"
+    imageAttrs={{ "data-estadio-image": true }}
+    codeAttrs={{ "data-estadio-code": true }}
+    nameAttrs={{ id: "busca-global-estadio-detalhe-nome", "data-estadio-name": true }}
+    nomeFallback="Estádio"
+  >
+    <div class="pokemon-tags" data-estadio-tags></div>
+  </DetalheTopo>
+  <PainelDetalhe titulo="Membros do estádio" class="item-info-painel estadio-membros-painel">
+    <div data-estadio-members></div>
+  </PainelDetalhe>
+</ModalDetalhe>
+<NpcDetalheModal
+  labelledby="busca-global-estadio-npc-detalhe-nome"
+  class="item-detalhe pokemon-detalhe estadio-npc-detalhe"
+  detailAttrs={{ "data-estadio-npc-detail": true }}
+/>
+<PokemonDetalheModal
+  labelledby="busca-global-estadio-pokemon-detalhe-nome"
+  class="pokemon-detalhe dungeon-pokemon-detalhe estadio-pokemon-detalhe"
+  detailAttrs={{ "data-estadio-pokemon-detail": true }}
+/>
+
+<ModalDetalhe
+  class="pokemon-detalhe catalogo-detalhe habilidade-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card catalogo-detalhe-card habilidade-detalhe-card"
+  labelledby="busca-global-skill-detalhe-nome"
+  backdropAttrs={{ "data-skill-close": true }}
+  data-skill-detail
+>
+  <ModalControles
+    rotulo="Navegação da habilidade aberta"
+    prevLabel="Habilidade anterior"
+    nextLabel="Próxima habilidade"
+    prevAttrs={{ "data-skill-prev": true }}
+    nextAttrs={{ "data-skill-next": true }}
+    closeAttrs={{ "data-skill-close": true }}
+  />
+  <header class="catalogo-detalhe-topo">
+    <span class="catalogo-detalhe-icone habilidade-detalhe-icone" aria-hidden="true" data-skill-icon>✦</span>
+    <div>
+      <p class="selo">Skill</p>
+      <h2 id="busca-global-skill-detalhe-nome" data-skill-name>Habilidade</h2>
+      <div class="catalogo-detalhe-tags" data-skill-tags></div>
+    </div>
+  </header>
+  <PainelDetalhe titulo="Descrição" class="item-info-painel catalogo-texto-painel">
+    <p class="item-descricao-melhor" data-skill-description></p>
+  </PainelDetalhe>
+  <div class="catalogo-detalhe-duplo">
+    <PainelDetalhe titulo="Efeitos" class="item-info-painel catalogo-texto-painel">
+      <div class="habilidade-efeitos" data-skill-effects></div>
+    </PainelDetalhe>
+    <PainelDetalhe titulo="Dependências" class="item-info-painel catalogo-texto-painel">
+      <div class="catalogo-codigos" data-skill-parents></div>
+    </PainelDetalhe>
+  </div>
+  <PainelDetalhe titulo="Grupo" class="item-info-painel catalogo-texto-painel habilidade-grupo-painel">
+    <p class="habilidade-grupo-ajuda">Habilidades do mesmo grupo, para comparar a progressão como Velocista I, II, III...</p>
+    <div class="habilidade-grupo-lista" data-skill-group></div>
+  </PainelDetalhe>
+</ModalDetalhe>
+
+<ModalDetalhe
+  class="pokemon-detalhe catalogo-detalhe comando-detalhe"
+  cardClass="pokemon-detalhe-card item-detalhe-card catalogo-detalhe-card comando-detalhe-card"
+  labelledby="busca-global-comando-detalhe-nome"
+  backdropAttrs={{ "data-comando-close": true }}
+  data-comando-detail
+>
+  <ModalControles
+    rotulo="Navegação do comando aberto"
+    prevLabel="Comando anterior"
+    nextLabel="Próximo comando"
+    prevAttrs={{ "data-comando-prev": true }}
+    nextAttrs={{ "data-comando-next": true }}
+    closeAttrs={{ "data-comando-close": true }}
+  />
+  <header class="catalogo-detalhe-topo">
+    <span class="catalogo-detalhe-icone" aria-hidden="true">💻</span>
+    <div>
+      <p class="selo">Comando</p>
+      <h2 id="busca-global-comando-detalhe-nome" data-comando-name>/comando</h2>
+      <code data-comando-use>/comando</code>
+      <div class="catalogo-detalhe-tags" data-comando-tags></div>
+    </div>
+  </header>
+  <PainelDetalhe titulo="Descrição" class="item-info-painel catalogo-texto-painel">
+    <p class="item-descricao-melhor" data-comando-description></p>
+  </PainelDetalhe>
+  <PainelDetalhe titulo="Exemplos" class="item-info-painel catalogo-texto-painel">
+    <div class="catalogo-codigos" data-comando-examples></div>
+  </PainelDetalhe>
+  <PainelDetalhe titulo="Argumentos" class="item-info-painel catalogo-texto-painel">
+    <div class="catalogo-lista" data-comando-args></div>
+  </PainelDetalhe>
+  <PainelDetalhe titulo="Aliases" class="item-info-painel catalogo-texto-painel">
+    <div class="catalogo-chips" data-comando-aliases></div>
+  </PainelDetalhe>
+</ModalDetalhe>

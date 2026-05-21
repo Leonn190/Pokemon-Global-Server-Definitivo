@@ -2,7 +2,7 @@ import { fecharModalDetalhe, abrirModalDetalhe, aplicarImagemDetalhe, criarGridP
 function assetEstrutura(estrutura, dados) {
   return dados.assetsEstruturas?.[estrutura.id] ?? { imagem: null };
 }
-function criarCardEstrutura(estrutura, dados) {
+export function criarCardEstrutura(estrutura, dados) {
   const asset = assetEstrutura(estrutura, dados);
   const card = document.createElement("button");
   card.type = "button";
@@ -28,7 +28,7 @@ function montarLinhasInfo(estrutura) {
     ["Coletável", estrutura.dropAtivo ? "Sim" : "Não"],
   ];
 }
-function criarControladorDetalhe(dados) {
+export function criarControladorDetalheMundo(dados) {
   const detalhe = document.querySelector("[data-mundo-detail]");
   let estruturaAberta = null;
   function listaNavegacao() {
@@ -90,7 +90,7 @@ export function inicializarWikiMundo(idDados = "mundo-data") {
   const app = document.querySelector("[data-mundo-app]");
   if (!dados || !app) return;
   const grid = app.querySelector("[data-mundo-estruturas-grid]");
-  const detalheController = criarControladorDetalhe(dados);
+  const detalheController = criarControladorDetalheMundo(dados);
   criarGridProgressiva({
     grid,
     itens: dados.estruturas || [],

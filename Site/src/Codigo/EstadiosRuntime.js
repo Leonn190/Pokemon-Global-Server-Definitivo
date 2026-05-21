@@ -4,7 +4,7 @@ import { fecharModalDetalhe, abrirModalDetalhe, aplicarImagemDetalhe, criarGridP
 function assetEstadio(estadio, dados) {
   return dados.assetsEstadios?.[estadio.id] ?? { imagem: null };
 }
-function criarCardEstadio(estadio, dados) {
+export function criarCardEstadio(estadio, dados) {
   const asset = assetEstadio(estadio, dados);
   const card = document.createElement("button");
   card.type = "button";
@@ -30,7 +30,7 @@ function agruparMembros(estadio, dados) {
   ];
   return grupos.filter(([, lista]) => lista.length);
 }
-function criarControladorEstadio(dados, obterListaAtual, npcController) {
+export function criarControladorEstadio(dados, obterListaAtual, npcController) {
   const detalhe = document.querySelector("[data-estadio-detail]");
   let estadioAberto = null;
   function listaNavegacao() {

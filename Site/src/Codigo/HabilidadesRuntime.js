@@ -1,6 +1,6 @@
 import { abrirModalDetalhe, criarWikiCatalogo, fecharModalDetalhe, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
-function criarCardHabilidade(skill) {
+export function criarCardHabilidade(skill) {
   const card = document.createElement("button");
   card.type = "button";
   card.className = `item-card habilidade-card habilidade-${skill.ramo}`;
@@ -27,7 +27,7 @@ function criarCardGrupoHabilidade(skill, atualId) {
   `;
 }
 
-function criarControladorDetalhe(dados, obterListaAtual) {
+export function criarControladorDetalheHabilidades(dados, obterListaAtual) {
   const detalhe = document.querySelector("[data-skill-detail]");
   let skillAberta = null;
 
@@ -121,7 +121,7 @@ export function inicializarWikiHabilidades() {
   const vazio = app.querySelector("[data-habilidades-empty]");
   const sentinela = app.querySelector("[data-habilidades-sentinel]");
   let listagem;
-  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
+  const detalheController = criarControladorDetalheHabilidades(dados, () => listagem?.obterResultadoAtual() ?? []);
 
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");

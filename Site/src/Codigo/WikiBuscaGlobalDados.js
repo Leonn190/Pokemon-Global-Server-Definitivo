@@ -1,7 +1,6 @@
 import { indexarPublicoPorNome, listarImagensPublicas } from "./AssetsPublicos.js";
 import { carregarAtaques, criarAssetsAtaques, indexarIconesAtaques } from "./AtaquesWikiDados.js";
 import { carregarComandos } from "./ComandosWikiDados.js";
-import { carregarWikiCombate } from "./CombateWikiDados.js";
 import { carregarDungeons, criarAssetsDungeons, indexarIconesDungeons } from "./DungeonsWikiDados.js";
 import { carregarEfeitos, criarAssetsEfeitos, indexarIconesEfeitos } from "./EfeitosWikiDados.js";
 import { carregarEquipaveis, criarAssetsEquipaveis } from "./EquipaveisWikiDados.js";
@@ -17,7 +16,7 @@ import {
   indexarIconesEstadios,
   indexarSkinsNpcs,
 } from "./NpcsWikiDados.js";
-import { carregarPokemons, criarAssetsPokemons, normalizarChave } from "./PokemonWikiDados.js";
+import { ATRIBUTOS_BASE, carregarPokemons, criarAssetsPokemons, normalizarChave } from "./PokemonWikiDados.js";
 
 export const SECOES_WIKI = [
   {
@@ -171,51 +170,15 @@ function categoriaPadrao(href, tipo, modelo) {
   return "outros";
 }
 
-function limparLinhasInfo(linhas) {
-  return (linhas || [])
-    .filter((linha) => Array.isArray(linha) && linha.length >= 2)
-    .map(([chave, valor]) => [String(chave ?? ""), valor === null || valor === undefined || valor === "" ? "-" : String(valor)]);
-}
-
-function detalhePadrao({ secao, titulo, tipo, meta, descricao, codigo, card }) {
-  return {
-    titulo,
-    codigo: codigo || secao.titulo,
-    subtitulo: meta || tipo || secao.titulo,
-    descricao: descricao || secao.texto || "Informações detalhadas ainda não cadastradas.",
-    imagem: card?.imagem || "",
-    fallback: String(card?.fallback || titulo || "?").slice(0, 2),
-    tags: [secao.titulo, tipo, card?.pillTexto].filter(Boolean),
-    infos: limparLinhasInfo([
-      ["Wiki", secao.titulo],
-      ["Categoria", tipo],
-      codigo ? ["Código", codigo] : null,
-      meta ? ["Resumo", meta] : null,
-      card?.meta ? ["Meta do cartucho", card.meta] : null,
-      card?.linhaRotulo ? [card.linhaRotulo, card.linhaValor] : null,
-      card?.pillTexto ? ["Raridade", card.pillTexto] : null,
-      card?.poder !== undefined ? ["Poder total", card.poder] : null,
-    ]),
-  };
-}
-
-function resultado({ href, id, titulo, tipo, meta, descricao = "", codigo = "", buscaExtra = "", modelo = "item", card = {}, categoria = "", detalhe = null }) {
+function resultado({ href, id, titulo, tipo, meta, descricao = "", codigo = "", buscaExtra = "", modelo = "item", card = {}, categoria = "" }) {
   const secao = secoes(href);
   const tituloLimpo = String(titulo ?? secao.titulo).trim() || secao.titulo;
   const metaLimpa = String(meta ?? secao.titulo).trim() || secao.titulo;
   const descricaoLimpa = limitarTexto(descricao || secao.texto || "");
   const categoriaFinal = categoria || categoriaPadrao(href, tipo, modelo);
-  const detalheFinal = detalhe || detalhePadrao({
-    secao,
-    titulo: tituloLimpo,
-    tipo,
-    meta: metaLimpa,
-    descricao: descricaoLimpa,
-    codigo: String(codigo ?? ""),
-    card,
-  });
   return {
     id: `${href}:${id ?? tituloLimpo}`,
+    ref: String(id ?? tituloLimpo),
     href,
     emoji: secao.emoji,
     secao: secao.titulo,
@@ -228,7 +191,6 @@ function resultado({ href, id, titulo, tipo, meta, descricao = "", codigo = "", 
     descricao: descricaoLimpa,
     modelo,
     card,
-    detalhe: detalheFinal,
     busca: busca(secao.titulo, tipo, tituloLimpo, codigo, metaLimpa, descricaoLimpa, buscaExtra),
   };
 }
@@ -241,11 +203,15 @@ function criarAssetsBuscaGlobal() {
   const equipaveis = carregarEquipaveis();
   const npcs = carregarNpcs();
   const estadios = carregarEstadios(npcs);
-  const { estruturas = [], biomas = [] } = carregarWikiMundo();
+  const mundo = carregarWikiMundo();
+  const { estruturas = [], biomas = [], captura = {} } = mundo;
   const dungeons = carregarDungeons();
   const musicas = carregarMusicas();
+  const habilidades = carregarHabilidades();
+  const comandos = carregarComandos();
 
   const iconesTipos = indexarPublicoPorNome("Tipos");
+  const iconesAtributos = indexarPublicoPorNome("Atributos");
   return {
     pokemons,
     ataques,
@@ -258,7 +224,11 @@ function criarAssetsBuscaGlobal() {
     biomas,
     dungeons,
     musicas,
+    habilidades,
+    comandos,
+    captura,
     iconesTipos,
+    iconesAtributos,
     assetsPokemons: criarAssetsPokemons(pokemons, indexarPublicoPorNome("Imagens")),
     assetsAtaques: criarAssetsAtaques(ataques, indexarIconesAtaques(listarImagensPublicas("Ataques"))),
     assetsEfeitos: criarAssetsEfeitos(efeitos, indexarIconesEfeitos(listarImagensPublicas("Efeitos"))),
@@ -409,30 +379,6 @@ function resultadosDeEquipaveis(ctx) {
   }));
 }
 
-function resultadosDeTipos(ctx) {
-  const { tabela = [] } = carregarWikiCombate();
-  return tabela.map((tipo) => resultado({
-    href: "/wiki/tipos",
-    id: tipo.chave || tipo.nome,
-    titulo: tipo.nome,
-    tipo: "Tipo",
-    meta: "Efetividades, fraquezas e resistências",
-    descricao: `Super eficaz contra ${juntar(tipo.superEfetivo?.map((item) => item.nome), "-")}. Fraquezas: ${juntar(tipo.fraquezas?.map((item) => item.nome), "-")}.`,
-    buscaExtra: busca(tipo.nome, tipo.superEfetivo?.map((item) => item.nome), tipo.fraquezas?.map((item) => item.nome), tipo.resistencias?.map((item) => item.nome), tipo.imunidades?.map((item) => item.nome)),
-    modelo: "item",
-    card: {
-      classe: "item-card tipo-resultado-card",
-      codigo: "Tipo",
-      nome: tipo.nome,
-      meta: "Tabela de efetividade",
-      imagem: ctx.iconesTipos?.[normalizarChave(tipo.nome)] ?? "",
-      fallback: String(tipo.nome || "T").slice(0, 1),
-      linhaValor: tipo.superEfetivo?.length ?? 0,
-      linhaRotulo: "Vantagens",
-    },
-  }));
-}
-
 function resultadosDeNpcsEEstadios(ctx) {
   const resultadosNpcs = ctx.npcs.map((npc) => resultado({
     href: "/wiki/npcs",
@@ -497,23 +443,7 @@ function resultadosDeMundo(ctx) {
       fallback: String(estrutura.nome || "M").slice(0, 1),
     },
   }));
-  const resultadosBiomas = ctx.biomas.map((bioma) => resultado({
-    href: "/wiki/mundo",
-    id: `bioma-${bioma.codigo}`,
-    titulo: bioma.nome,
-    tipo: "Bioma",
-    meta: juntar([bioma.tileBase, bioma.tileCosta]),
-    descricao: bioma.descricao,
-    buscaExtra: busca(bioma.codigo, bioma.principaisEstruturas),
-    modelo: "bioma",
-    card: {
-      nome: bioma.nome,
-      descricao: limitarTexto(bioma.descricao, 118),
-      tileBase: bioma.tileBase,
-      estruturas: bioma.principaisEstruturas?.slice(0, 4) ?? [],
-    },
-  }));
-  return [...resultadosEstruturas, ...resultadosBiomas];
+  return resultadosEstruturas;
 }
 
 function resultadosDeDungeons(ctx) {
@@ -561,7 +491,7 @@ function resultadosDeMusicas(ctx) {
 }
 
 function resultadosDeHabilidades(ctx) {
-  return carregarHabilidades().map((habilidade) => resultado({
+  return ctx.habilidades.map((habilidade) => resultado({
     href: "/wiki/habilidades",
     id: habilidade.id,
     titulo: habilidade.nome,
@@ -586,7 +516,7 @@ function resultadosDeHabilidades(ctx) {
 }
 
 function resultadosDeComandos(ctx) {
-  return carregarComandos().map((comando) => resultado({
+  return ctx.comandos.map((comando) => resultado({
     href: "/wiki/comandos",
     id: comando.id,
     titulo: comando.titulo || `/${comando.nome}`,
@@ -610,15 +540,13 @@ function resultadosDeComandos(ctx) {
   }));
 }
 
-export function montarIndiceBuscaWiki() {
-  const ctx = criarAssetsBuscaGlobal();
+function montarIndiceComContexto(ctx) {
   return [
     ...resultadosDePokemons(ctx),
     ...resultadosDeAtaques(ctx),
     ...resultadosDeEfeitos(ctx),
     ...resultadosDeItens(ctx),
     ...resultadosDeEquipaveis(ctx),
-    ...resultadosDeTipos(ctx),
     ...resultadosDeNpcsEEstadios(ctx),
     ...resultadosDeMundo(ctx),
     ...resultadosDeDungeons(ctx),
@@ -626,4 +554,57 @@ export function montarIndiceBuscaWiki() {
     ...resultadosDeHabilidades(ctx),
     ...resultadosDeComandos(ctx),
   ].map((item, ordem) => ({ ...item, ordem }));
+}
+
+function montarDetalhesBuscaGlobal(ctx) {
+  const pokedex = {
+    pokemons: ctx.pokemons,
+    ataques: ctx.ataques,
+    assetsPokemons: ctx.assetsPokemons,
+    assetsAtaques: ctx.assetsAtaques,
+    iconesTipos: ctx.iconesTipos,
+    iconesAtributos: ctx.iconesAtributos,
+    atributosBase: ATRIBUTOS_BASE,
+  };
+  return {
+    pokedex,
+    ataques: { ataques: ctx.ataques, assetsAtaques: ctx.assetsAtaques, iconesTipos: ctx.iconesTipos },
+    efeitos: { efeitos: ctx.efeitos, assetsEfeitos: ctx.assetsEfeitos },
+    itens: { itens: ctx.itens, assetsItens: ctx.assetsItens },
+    equipaveis: {
+      equipaveis: ctx.equipaveis,
+      assetsEquipaveis: ctx.assetsEquipaveis,
+      iconesTipos: ctx.iconesTipos,
+      iconesAtributos: ctx.iconesAtributos,
+    },
+    npcs: { npcs: ctx.npcs, assetsNpcs: ctx.assetsNpcs },
+    estadios: {
+      estadios: ctx.estadios,
+      npcs: ctx.npcs,
+      assetsEstadios: ctx.assetsEstadios,
+      assetsNpcs: ctx.assetsNpcs,
+    },
+    mundo: {
+      estruturas: ctx.estruturas,
+      biomas: ctx.biomas,
+      captura: ctx.captura,
+      assetsEstruturas: ctx.assetsEstruturas,
+    },
+    dungeons: { dungeons: ctx.dungeons, assetsDungeons: ctx.assetsDungeons },
+    musicas: { musicas: ctx.musicas },
+    habilidades: { habilidades: ctx.habilidades },
+    comandos: { comandos: ctx.comandos },
+  };
+}
+
+export function montarDadosBuscaGlobalWiki() {
+  const ctx = criarAssetsBuscaGlobal();
+  return {
+    itens: montarIndiceComContexto(ctx),
+    detalhes: montarDetalhesBuscaGlobal(ctx),
+  };
+}
+
+export function montarIndiceBuscaWiki() {
+  return montarDadosBuscaGlobalWiki().itens;
 }

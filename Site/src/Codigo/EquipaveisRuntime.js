@@ -34,7 +34,7 @@ function atributoIcone(atributo, dados) {
   const src = dados.iconesAtributos?.[normalizar(atributo.chave)] || dados.iconesAtributos?.[normalizar(atributo.rotulo)];
   return src ? `<img src="${src}" alt="" loading="lazy" decoding="async" />` : "";
 }
-function criarCardEquipavel(equipavel, dados) {
+export function criarCardEquipavel(equipavel, dados) {
   const asset = assetEquipavel(equipavel, dados);
   const card = document.createElement("button");
   card.type = "button";
@@ -51,7 +51,7 @@ function criarCardEquipavel(equipavel, dados) {
   `;
   return card;
 }
-function criarControladorDetalhe(dados, obterListaAtual) {
+export function criarControladorDetalheEquipaveis(dados, obterListaAtual) {
   const detalhe = document.querySelector("[data-equipavel-detail]");
   let equipavelAberto = null;
   function listaNavegacao() {
@@ -133,7 +133,7 @@ export function inicializarWikiEquipaveis(idDados = "equipaveis-data") {
   const sentinela = app.querySelector("[data-equipaveis-sentinel]");
   let tipoSelecionado = "";
   let listagem;
-  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
+  const detalheController = criarControladorDetalheEquipaveis(dados, () => listagem?.obterResultadoAtual() ?? []);
   function atualizarChipsTipo() {
     tipoChips.forEach((chip) => {
       const ativo = chip.dataset.equipaveisTypeChip === tipoSelecionado;

@@ -3,11 +3,12 @@ import Layout from "../../Componentes/Layout.astro";
 import CardWiki from "../../Componentes/CardWiki.astro";
 import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
 import JsonPayload from "../../Componentes/JsonPayload.astro";
-import { SECOES_WIKI, montarIndiceBuscaWiki } from "../../Codigo/WikiBuscaGlobalDados.js";
+import WikiBuscaGlobalDetalhes from "../../Componentes/WikiBuscaGlobalDetalhes.astro";
+import { SECOES_WIKI, montarDadosBuscaGlobalWiki } from "../../Codigo/WikiBuscaGlobalDados.js";
 import "../../Estilos/wiki.css";
 
 const secoes = SECOES_WIKI;
-const indiceBuscaWiki = montarIndiceBuscaWiki();
+const dadosBuscaGlobal = montarDadosBuscaGlobalWiki();
 const filtrosBuscaGlobal = [
   ["pokemons", "🐾", "Pokémons"],
   ["itens", "🎒", "Itens"],
@@ -62,9 +63,8 @@ const filtrosBuscaGlobal = [
     </div>
     <section class="filtros-rapidos wiki-busca-filtros" data-wiki-global-filters aria-label="Filtrar resultados por wiki" hidden>
       {filtrosBuscaGlobal.map(([chave, emoji, rotulo]) => (
-        <button type="button" class="tipo-chip wiki-busca-filtro-chip" data-wiki-global-filter={chave} aria-pressed="false">
+        <button type="button" class="tipo-chip wiki-busca-filtro-chip" data-wiki-global-filter={chave} aria-label={rotulo} title={rotulo} aria-pressed="false">
           <span class="tipo-icone-mini" aria-hidden="true">{emoji}</span>
-          <span>{rotulo}</span>
         </button>
       ))}
     </section>
@@ -74,7 +74,8 @@ const filtrosBuscaGlobal = [
       <p>Tente pesquisar por outro nome, tipo, música, estrutura, NPC, item ou ataque.</p>
     </div>
   </section>
-  <JsonPayload id="wiki-global-search-data" dados={{ itens: indiceBuscaWiki }} />
+  <WikiBuscaGlobalDetalhes />
+  <JsonPayload id="wiki-global-search-data" dados={dadosBuscaGlobal} />
   <script>
     import { inicializarBuscaGlobalWiki } from "../../Codigo/WikiBuscaGlobalRuntime.js";
     inicializarBuscaGlobalWiki();

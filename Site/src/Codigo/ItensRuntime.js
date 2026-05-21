@@ -2,7 +2,7 @@ import { fecharModalDetalhe, abrirModalDetalhe, infoHtml, aplicarImagemDetalhe, 
 function assetItem(item, assetsItens) {
   return assetsItens?.[item.id] ?? { imagem: null };
 }
-function criarCardItem(item, dados) {
+export function criarCardItem(item, dados) {
   const asset = assetItem(item, dados.assetsItens);
   const card = document.createElement("button");
   card.type = "button";
@@ -47,7 +47,7 @@ function receitaHtml(item, dados) {
   while (celulas.length < 9) celulas.push(null);
   return celulas.map((celula) => receitaCelulaHtml(celula, dados)).join("");
 }
-function criarControladorDetalhe(dados, obterListaAtual) {
+export function criarControladorDetalheItens(dados, obterListaAtual) {
   const detalhe = document.querySelector("[data-item-detail]");
   let itemAberto = null;
   function listaNavegacao() {
@@ -139,7 +139,7 @@ export function inicializarWikiItens(idDados = "itens-data") {
   const vazio = app.querySelector("[data-itens-empty]");
   const sentinela = app.querySelector("[data-itens-sentinel]");
   let listagem;
-  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
+  const detalheController = criarControladorDetalheItens(dados, () => listagem?.obterResultadoAtual() ?? []);
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const estilo = filtroEstilo?.value ?? "";

@@ -1,4 +1,16 @@
-import { abrirModalDetalhe, fecharModalDetalhe, formatarNumero, html, infoHtml, lerJson, normalizar } from "./WikiRuntimeBase.js";
+import { criarCardAtaque } from "./AtaquesRuntime.js";
+import { criarCardComando, criarControladorDetalheComandos } from "./ComandosRuntime.js";
+import { criarCardDungeon, criarControladorDetalheDungeons } from "./DungeonsRuntime.js";
+import { criarCardEfeito, criarControladorDetalheEfeitos } from "./EfeitosRuntime.js";
+import { criarCardEquipavel, criarControladorDetalheEquipaveis } from "./EquipaveisRuntime.js";
+import { criarCardEstadio, criarControladorEstadio } from "./EstadiosRuntime.js";
+import { criarCardHabilidade, criarControladorDetalheHabilidades } from "./HabilidadesRuntime.js";
+import { criarCardItem, criarControladorDetalheItens } from "./ItensRuntime.js";
+import { criarCardEstrutura, criarControladorDetalheMundo } from "./MundoRuntime.js";
+import { criarFaixa } from "./MusicasRuntime.js";
+import { criarCardNpc, criarControladorDetalheNpc } from "./NpcsRuntime.js";
+import { criarCardPokemon, criarControladorDetalhe as criarControladorDetalhePokemon } from "./PokedexRuntime.js";
+import { lerJson, normalizar } from "./WikiRuntimeBase.js";
 
 const LIMITE_RESULTADOS = 80;
 const CHAVE_VOLUME_GLOBAL = "pokemon-global-server-volume-musicas";
@@ -51,105 +63,6 @@ function buscar(itens, valor) {
     .map(({ item }) => item);
 }
 
-function criarBotaoResultado(item, classe) {
-  const card = document.createElement("button");
-  card.type = "button";
-  card.className = `${classe} wiki-busca-card-existente`;
-  card.dataset.resultadoId = item.id;
-  card.setAttribute("aria-label", `Abrir detalhes de ${item.titulo}`);
-  return card;
-}
-
-function imagemOuFallback(card, arteClasse = "item-card-arte") {
-  const fallbackClasse = card.fallbackClasse || "item-card-sem-arte";
-  return `
-    <span class="${html(arteClasse)}">
-      ${card.imagem
-        ? `<img src="${html(card.imagem)}" alt="${html(card.nome)}" loading="lazy" decoding="async" />`
-        : `<span class="${html(fallbackClasse)}">${html(String(card.fallback || card.nome || "?").slice(0, 2))}</span>`}
-    </span>
-  `;
-}
-
-function tipoBolinhaHtml(tipo) {
-  const chance = Number(tipo?.chance);
-  const classeChance = Number.isFinite(chance) ? (chance > 50 ? "chance-ouro" : chance === 50 ? "chance-prata" : "chance-bronze") : "chance-neutra";
-  return `<span class="tipo-bola pequena ${classeChance}" data-tipo="${html(tipo?.chave || normalizar(tipo?.nome))}" title="${html(tipo?.nome || "Tipo")}">
-    ${tipo?.icone ? `<img src="${html(tipo.icone)}" alt="${html(tipo.nome)}" loading="lazy" decoding="async" />` : `<b>${html(String(tipo?.nome || "?").slice(0, 1))}</b>`}
-  </span>`;
-}
-
-function tipoAfinidadeHtml(afinidade) {
-  if (!afinidade?.nome) return "";
-  return `${tipoBolinhaHtml(afinidade)}${html(afinidade.nome)}`;
-}
-
-function criarCardPokemon(item) {
-  const card = item.card || {};
-  const elemento = criarBotaoResultado(item, `pokemon-card ${card.radiante ? "pokemon-radiante" : ""}`.trim());
-  elemento.innerHTML = `
-    <span class="pokemon-card-codigo">${html(card.codigo || item.codigo || "")}</span>
-    <span class="pokemon-card-arte">
-      ${card.imagem
-        ? `<img class="${card.radiante ? "sprite-radiante" : ""}" src="${html(card.imagem)}" alt="${html(card.nome || item.titulo)}" loading="lazy" decoding="async" />`
-        : `<span class="pokemon-card-sem-arte">${html(String(card.fallback || item.titulo || "P").slice(0, 1))}</span>`}
-    </span>
-    <span class="pokemon-card-nome">${html(card.nome || item.titulo)}</span>
-    ${card.meta ? `<span class="pokemon-card-meta">${html(card.meta)}</span>` : ""}
-    <span class="pokemon-card-tipos">${(card.tipos || []).map(tipoBolinhaHtml).join("")}</span>
-    <span class="pokemon-card-poder"><strong>${formatarNumero(card.poder)}</strong><small>Poder total</small></span>
-  `;
-  return elemento;
-}
-
-function valorLinha(valor) {
-  if (valor === null || valor === undefined || valor === "") return "-";
-  return Number.isNaN(Number(valor)) ? String(valor) : formatarNumero(valor);
-}
-
-function criarCardItem(item) {
-  const card = item.card || {};
-  const elemento = criarBotaoResultado(item, card.classe || "item-card");
-  const linha = card.linhaRotulo || card.linhaValor !== undefined
-    ? `<span class="item-card-linha"><strong>${html(valorLinha(card.linhaValor))}</strong><small>${html(card.linhaRotulo || "Info")}</small></span>`
-    : "";
-  const meta = card.afinidade
-    ? `<span class="${html(card.metaClasse || "item-card-meta")}">${tipoAfinidadeHtml(card.afinidade)}</span>`
-    : card.meta
-      ? `<span class="${html(card.metaClasse || "item-card-meta")}">${html(card.meta)}</span>`
-      : "";
-  const pill = card.pillTexto ? `<span class="raridade-pill ${html(card.pillClasse || "")}">${html(card.pillTexto)}</span>` : "";
-  elemento.innerHTML = `
-    ${card.codigo ? `<span class="item-card-codigo">${html(card.codigo)}</span>` : ""}
-    ${imagemOuFallback(card, card.arteClasse || "item-card-arte")}
-    <span class="item-card-nome">${html(card.nome || item.titulo)}</span>
-    ${meta}
-    ${linha}
-    ${pill}
-  `;
-  return elemento;
-}
-
-function criarCardBioma(item) {
-  const card = item.card || {};
-  const elemento = criarBotaoResultado(item, "mundo-bioma-card wiki-busca-bioma-card");
-  elemento.innerHTML = `
-    <h3>${html(card.nome || item.titulo)}</h3>
-    <p>${html(card.descricao || item.descricao || "")}</p>
-    ${card.tileBase ? `<div class="mundo-bioma-info"><span>Terreno principal</span><strong>${html(card.tileBase)}</strong></div>` : ""}
-    <div class="mundo-bioma-estruturas">${(card.estruturas || []).map((estrutura) => `<span>${html(estrutura)}</span>`).join("")}</div>
-  `;
-  return elemento;
-}
-
-function formatarTempo(segundos) {
-  if (!Number.isFinite(segundos) || segundos < 0) return "--:--";
-  const total = Math.floor(segundos);
-  const minutos = Math.floor(total / 60);
-  const resto = String(total % 60).padStart(2, "0");
-  return `${minutos}:${resto}`;
-}
-
 function limitarVolume(valor) {
   const numero = Number(valor);
   if (!Number.isFinite(numero)) return 1;
@@ -178,56 +91,26 @@ function aplicarVolumeGlobal(raiz = document) {
   });
 }
 
-function atualizarFaixaTempo(card) {
-  const audio = card.querySelector("audio");
-  const barra = card.querySelector("[data-musica-progress]");
-  const tempo = card.querySelector("[data-musica-tempo]");
-  const duracao = Number.isFinite(audio?.duration) ? audio.duration : Number(card.dataset.duracao || NaN);
-  const atual = Number.isFinite(audio?.currentTime) ? audio.currentTime : 0;
-  if (barra && Number.isFinite(duracao) && duracao > 0 && !barra.matches(":active")) {
-    barra.value = String(Math.round((atual / duracao) * 1000));
-  }
-  if (tempo) tempo.textContent = `${formatarTempo(atual)} / ${formatarTempo(duracao)}`;
+function encontrarPorId(lista, id, seletor = (item) => item.id) {
+  return (lista || []).find((item) => String(seletor(item)) === String(id));
 }
 
-function definirTocando(card, tocando) {
-  const botao = card.querySelector("[data-musica-toggle]");
-  const icone = card.querySelector("[data-musica-icone]");
-  card.classList.toggle("tocando", tocando);
-  if (icone) icone.textContent = tocando ? "⏸" : "▶";
-  if (botao) {
-    const nome = card.dataset.nome || "música";
-    botao.setAttribute("aria-label", tocando ? `Pausar ${nome}` : `Tocar ${nome}`);
-  }
+function encontrarAtaque(lista, id) {
+  return (lista || []).find((ataque) => String(ataque.uid || ataque.id) === String(id));
 }
 
-function criarFaixaMusica(item) {
-  const musica = item.card || {};
-  const card = document.createElement("article");
-  card.className = "faixa-musica wiki-busca-resultado-musica";
+function marcarCardBusca(card, item) {
+  if (!card) return null;
+  card.classList.add("wiki-busca-card-existente");
   card.dataset.resultadoId = item.id;
-  card.dataset.musicaId = musica.id || item.id;
-  card.dataset.nome = musica.nome || item.titulo;
-  card.dataset.duracao = Number.isFinite(musica.duracao) ? String(musica.duracao) : "";
-  card.setAttribute("role", "button");
-  card.setAttribute("tabindex", "0");
-  card.setAttribute("aria-label", `Abrir detalhes de ${musica.nome || item.titulo}`);
-  card.innerHTML = `
-    <button class="faixa-musica-botao" type="button" data-musica-toggle aria-label="Tocar ${html(musica.nome || item.titulo)}">
-      <span data-musica-icone aria-hidden="true">▶</span>
-    </button>
-    <div class="faixa-musica-texto">
-      <strong>${html(musica.nome || item.titulo)}</strong>
-      <span>${html(musica.estiloRotulo || item.meta || "Música")}</span>
-    </div>
-    <label class="faixa-musica-barra" aria-label="Posição da música ${html(musica.nome || item.titulo)}">
-      <input type="range" min="0" max="1000" value="0" step="1" data-musica-progress />
-    </label>
-    <time class="faixa-musica-tempo" data-musica-tempo>0:00 / ${formatarTempo(musica.duracao)}</time>
-    <audio preload="none" src="${html(musica.url || "")}"></audio>
-  `;
+  return card;
+}
+
+function criarFaixaMusicaBusca(musica, item) {
+  const card = criarFaixa(musica);
+  marcarCardBusca(card, item);
+  card.classList.add("wiki-busca-resultado-musica");
   const audio = card.querySelector("audio");
-  const barra = card.querySelector("[data-musica-progress]");
   const botao = card.querySelector("[data-musica-toggle]");
   if (audio) audio.volume = volumeGlobal;
   botao?.addEventListener("click", (evento) => {
@@ -236,140 +119,146 @@ function criarFaixaMusica(item) {
     if (faixaGlobalTocando && faixaGlobalTocando !== audio) faixaGlobalTocando.pause();
     if (audio.paused) {
       faixaGlobalTocando = audio;
-      audio.play().catch(() => definirTocando(card, false));
+      audio.play().catch(() => {
+        if (faixaGlobalTocando === audio) faixaGlobalTocando = null;
+      });
     } else {
       audio.pause();
     }
   });
-  barra?.addEventListener("click", (evento) => evento.stopPropagation());
-  barra?.addEventListener("pointerdown", (evento) => evento.stopPropagation());
-  audio?.addEventListener("loadedmetadata", () => {
-    if (Number.isFinite(audio.duration)) {
-      card.dataset.duracao = String(audio.duration);
-      atualizarFaixaTempo(card);
-    }
-  });
-  audio?.addEventListener("timeupdate", () => atualizarFaixaTempo(card));
-  audio?.addEventListener("ended", () => {
-    definirTocando(card, false);
-    atualizarFaixaTempo(card);
-  });
   audio?.addEventListener("pause", () => {
     if (faixaGlobalTocando === audio) faixaGlobalTocando = null;
-    definirTocando(card, false);
-  });
-  audio?.addEventListener("play", () => definirTocando(card, true));
-  barra?.addEventListener("input", () => {
-    if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
-    audio.currentTime = (Number(barra.value) / 1000) * audio.duration;
-    atualizarFaixaTempo(card);
   });
   return card;
 }
 
-function criarResultadoCard(item) {
-  if (item.modelo === "pokemon") return criarCardPokemon(item);
-  if (item.modelo === "musica") return criarFaixaMusica(item);
-  if (item.modelo === "bioma") return criarCardBioma(item);
-  return criarCardItem(item);
+function criarResultadoCard(item, detalhes) {
+  const id = item.ref;
+  if (item.href === "/wiki/pokemons") {
+    const pokemon = encontrarPorId(detalhes.pokedex?.pokemons, id);
+    return marcarCardBusca(pokemon && criarCardPokemon(pokemon, detalhes.pokedex, "busca-global"), item);
+  }
+  if (item.href === "/wiki/ataques") {
+    const ataque = encontrarAtaque(detalhes.ataques?.ataques, id);
+    return marcarCardBusca(ataque && criarCardAtaque(ataque, detalhes.ataques), item);
+  }
+  if (item.href === "/wiki/efeitos") {
+    const efeito = encontrarPorId(detalhes.efeitos?.efeitos, id);
+    return marcarCardBusca(efeito && criarCardEfeito(efeito, detalhes.efeitos), item);
+  }
+  if (item.href === "/wiki/itens") {
+    const itemDados = encontrarPorId(detalhes.itens?.itens, id);
+    return marcarCardBusca(itemDados && criarCardItem(itemDados, detalhes.itens), item);
+  }
+  if (item.href === "/wiki/equipaveis") {
+    const equipavel = encontrarPorId(detalhes.equipaveis?.equipaveis, id);
+    return marcarCardBusca(equipavel && criarCardEquipavel(equipavel, detalhes.equipaveis), item);
+  }
+  if (item.href === "/wiki/npcs") {
+    const npc = encontrarPorId(detalhes.npcs?.npcs, id);
+    return marcarCardBusca(npc && criarCardNpc(npc, detalhes.npcs, "busca-global"), item);
+  }
+  if (item.href === "/wiki/mundo") {
+    const estrutura = encontrarPorId(detalhes.mundo?.estruturas, id);
+    return marcarCardBusca(estrutura && criarCardEstrutura(estrutura, detalhes.mundo), item);
+  }
+  if (item.href === "/wiki/dungeons") {
+    const dungeon = encontrarPorId(detalhes.dungeons?.dungeons, id);
+    return marcarCardBusca(dungeon && criarCardDungeon(dungeon, detalhes.dungeons), item);
+  }
+  if (item.href === "/wiki/estadios") {
+    const estadio = encontrarPorId(detalhes.estadios?.estadios, id);
+    return marcarCardBusca(estadio && criarCardEstadio(estadio, detalhes.estadios), item);
+  }
+  if (item.href === "/wiki/musicas") {
+    const musica = encontrarPorId(detalhes.musicas?.musicas, id);
+    return musica ? criarFaixaMusicaBusca(musica, item) : null;
+  }
+  if (item.href === "/wiki/habilidades") {
+    const habilidade = encontrarPorId(detalhes.habilidades?.habilidades, id);
+    return marcarCardBusca(habilidade && criarCardHabilidade(habilidade), item);
+  }
+  if (item.href === "/wiki/comandos") {
+    const comando = encontrarPorId(detalhes.comandos?.comandos, id);
+    return marcarCardBusca(comando && criarCardComando(comando), item);
+  }
+  return null;
 }
 
-function criarModalDetalheGlobal() {
-  let detalhe = document.querySelector("[data-wiki-global-detail]");
-  if (detalhe) return detalhe;
-  detalhe = document.createElement("aside");
-  detalhe.className = "pokemon-detalhe item-detalhe wiki-busca-detalhe";
-  detalhe.dataset.wikiGlobalDetail = "true";
-  detalhe.hidden = true;
-  detalhe.setAttribute("aria-live", "polite");
-  detalhe.innerHTML = `
-    <div class="pokemon-detalhe-backdrop" data-wiki-global-detail-close></div>
-    <article class="pokemon-detalhe-card item-detalhe-card wiki-busca-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="wiki-busca-detalhe-nome">
-      <button class="pokemon-fechar" type="button" aria-label="Fechar detalhes" data-wiki-global-detail-close>×</button>
-      <section class="pokemon-detalhe-topo item-detalhe-topo wiki-busca-detalhe-topo">
-        <div class="pokemon-palco-detalhe item-palco-detalhe wiki-busca-detalhe-palco">
-          <span class="pokemon-brilho-detalhe"></span>
-          <img data-wiki-global-detail-image hidden alt="" />
-          <span class="item-card-sem-arte wiki-busca-detalhe-fallback" data-wiki-global-detail-fallback hidden></span>
-        </div>
-        <div class="pokemon-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-wiki-global-detail-code></span>
-          <h2 id="wiki-busca-detalhe-nome" data-wiki-global-detail-name>Resultado</h2>
-          <div class="pokemon-tags" data-wiki-global-detail-tags></div>
-          <p data-wiki-global-detail-summary></p>
-        </div>
-      </section>
-      <div class="pokemon-detalhe-grid wiki-busca-detalhe-grid">
-        <section class="painel-detalhe item-info-painel">
-          <h3>Informações avançadas</h3>
-          <dl class="pokemon-info-lista" data-wiki-global-detail-info></dl>
-        </section>
-        <section class="painel-detalhe item-info-painel">
-          <h3>Descrição</h3>
-          <p class="item-descricao-melhor" data-wiki-global-detail-description></p>
-        </section>
-      </div>
-    </article>
-  `;
-  document.body.appendChild(detalhe);
-  return detalhe;
-}
-
-function abrirDetalheGlobal(item) {
-  const detalhe = criarModalDetalheGlobal();
-  const dados = item.detalhe || {};
-  const imagem = detalhe.querySelector("[data-wiki-global-detail-image]");
-  const fallback = detalhe.querySelector("[data-wiki-global-detail-fallback]");
-  const codigo = detalhe.querySelector("[data-wiki-global-detail-code]");
-  const nome = detalhe.querySelector("[data-wiki-global-detail-name]");
-  const tags = detalhe.querySelector("[data-wiki-global-detail-tags]");
-  const resumo = detalhe.querySelector("[data-wiki-global-detail-summary]");
-  const info = detalhe.querySelector("[data-wiki-global-detail-info]");
-  const descricao = detalhe.querySelector("[data-wiki-global-detail-description]");
-
-  const titulo = dados.titulo || item.titulo;
-  if (codigo) codigo.textContent = dados.codigo || item.codigo || item.secao || "Wiki";
-  if (nome) nome.textContent = titulo;
-  if (resumo) resumo.textContent = dados.subtitulo || item.meta || item.tipo || "";
-  if (descricao) descricao.textContent = dados.descricao || item.descricao || "Informações detalhadas ainda não cadastradas.";
-  if (tags) {
-    const tagsLista = Array.isArray(dados.tags) && dados.tags.length ? dados.tags : [item.secao, item.tipo].filter(Boolean);
-    tags.innerHTML = tagsLista.map((tag) => `<span class="tag-extra">${html(tag)}</span>`).join("");
-  }
-  if (info) {
-    const linhas = Array.isArray(dados.infos) && dados.infos.length
-      ? dados.infos
-      : [["Wiki", item.secao], ["Categoria", item.tipo], ["Resumo", item.meta]];
-    info.innerHTML = infoHtml(linhas);
-  }
-  if (imagem && fallback) {
-    if (dados.imagem) {
-      imagem.hidden = false;
-      imagem.src = dados.imagem;
-      imagem.alt = titulo;
-      fallback.hidden = true;
-      fallback.textContent = "";
-    } else {
-      imagem.hidden = true;
-      imagem.removeAttribute("src");
-      fallback.hidden = false;
-      fallback.textContent = String(dados.fallback || titulo || "?").slice(0, 2);
-    }
-  }
-  abrirModalDetalhe(detalhe);
-}
-
-function conectarModalGlobal() {
-  const detalhe = criarModalDetalheGlobal();
-  const fechar = () => fecharModalDetalhe(detalhe);
-  detalhe.querySelectorAll("[data-wiki-global-detail-close]").forEach((botao) => botao.addEventListener("click", fechar));
-  document.addEventListener("keydown", (evento) => {
-    if (evento.key === "Escape" && detalhe && !detalhe.hidden) fechar();
+function criarControladoresDetalhe(detalhes) {
+  const pokemonController = criarControladorDetalhePokemon(detalhes.pokedex, {
+    obterListaAtual: () => detalhes.pokedex?.pokemons || [],
+    seletorAtaqueDetalhe: "[data-ataque-detail]",
   });
+  const controladores = {
+    pokemons: pokemonController,
+    ataques: { abrirDetalhe: pokemonController.abrirAtaqueDetalhe },
+    efeitos: criarControladorDetalheEfeitos(detalhes.efeitos, () => detalhes.efeitos?.efeitos || []),
+    itens: criarControladorDetalheItens(detalhes.itens, () => detalhes.itens?.itens || []),
+    equipaveis: criarControladorDetalheEquipaveis(detalhes.equipaveis, () => detalhes.equipaveis?.equipaveis || []),
+    mundo: criarControladorDetalheMundo(detalhes.mundo),
+    dungeons: null,
+    npcs: null,
+    estadios: null,
+    habilidades: criarControladorDetalheHabilidades(detalhes.habilidades, () => detalhes.habilidades?.habilidades || []),
+    comandos: criarControladorDetalheComandos(detalhes.comandos, () => detalhes.comandos?.comandos || []),
+  };
+
+  const npcPokemonController = criarControladorDetalhePokemon(detalhes.pokedex, {
+    seletorDetalhe: "[data-npc-pokemon-detail]",
+    mostrarLinhagem: true,
+    seletorAtaqueDetalhe: "[data-busca-global-ataque-npc-inexistente]",
+  });
+  controladores.npcs = criarControladorDetalheNpc(detalhes.npcs, detalhes.pokedex, {
+    obterListaAtual: () => detalhes.npcs?.npcs || [],
+  });
+  document.querySelector("[data-npc-detail]")?.addEventListener("click", (evento) => {
+    const card = evento.target.closest("[data-pokemon-id]");
+    if (card) npcPokemonController.abrirDetalhe(card.dataset.pokemonId);
+  });
+
+  const dungeonPokemonController = criarControladorDetalhePokemon(detalhes.pokedex, {
+    seletorDetalhe: "[data-dungeon-pokemon-detail]",
+    mostrarLinhagem: true,
+    seletorAtaqueDetalhe: "[data-busca-global-ataque-dungeon-inexistente]",
+  });
+  controladores.dungeons = criarControladorDetalheDungeons(detalhes.dungeons, detalhes.pokedex, () => detalhes.dungeons?.dungeons || []);
+  document.querySelector("[data-dungeon-detail]")?.addEventListener("click", (evento) => {
+    const card = evento.target.closest("[data-pokemon-id]");
+    if (card) dungeonPokemonController.abrirDetalhe(card.dataset.pokemonId);
+  });
+
+  const estadioNpcController = criarControladorDetalheNpc(detalhes.estadios, detalhes.pokedex, {
+    seletorDetalhe: "[data-estadio-npc-detail]",
+    obterListaAtual: () => detalhes.estadios?.npcs || [],
+  });
+  const estadioPokemonController = criarControladorDetalhePokemon(detalhes.pokedex, {
+    seletorDetalhe: "[data-estadio-pokemon-detail]",
+    mostrarLinhagem: true,
+    seletorAtaqueDetalhe: "[data-busca-global-ataque-estadio-inexistente]",
+  });
+  controladores.estadios = criarControladorEstadio(detalhes.estadios, () => detalhes.estadios?.estadios || [], estadioNpcController);
+  document.querySelector("[data-estadio-npc-detail]")?.addEventListener("click", (evento) => {
+    const card = evento.target.closest("[data-pokemon-id]");
+    if (card) estadioPokemonController.abrirDetalhe(card.dataset.pokemonId);
+  });
+
+  return controladores;
 }
 
-function deveIgnorarCliqueDoCard(evento) {
-  return !!evento.target.closest?.("button, input, audio, label, [data-musica-toggle], [data-musica-progress]");
+function abrirDetalheResultado(item, controladores) {
+  const id = item.ref;
+  if (item.href === "/wiki/pokemons") controladores.pokemons?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/ataques") controladores.ataques?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/efeitos") controladores.efeitos?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/itens") controladores.itens?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/equipaveis") controladores.equipaveis?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/npcs") controladores.npcs?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/mundo") controladores.mundo?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/dungeons") controladores.dungeons?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/estadios") controladores.estadios?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/habilidades") controladores.habilidades?.abrirDetalhe?.(id);
+  else if (item.href === "/wiki/comandos") controladores.comandos?.abrirDetalhe?.(id);
 }
 
 function atualizarFiltrosVisuais(filtros, selecionados) {
@@ -399,12 +288,13 @@ export function inicializarBuscaGlobalWiki(idDados = "wiki-global-search-data") 
   const filtros = [...document.querySelectorAll("[data-wiki-global-filter]")];
   const volumeControle = document.querySelector("[data-wiki-global-volume]");
   const itens = Array.isArray(dados.itens) ? dados.itens : [];
+  const detalhes = dados.detalhes || {};
+  const controladores = criarControladoresDetalhe(detalhes);
   const selecionados = new Set();
   let renderId = 0;
 
   volumeGlobal = lerVolumeSalvo();
   if (volumeControle) volumeControle.value = String(volumeGlobal);
-  conectarModalGlobal();
 
   function atualizar() {
     const termo = input?.value?.trim() ?? "";
@@ -433,19 +323,10 @@ export function inicializarBuscaGlobalWiki(idDados = "wiki-global-search-data") 
       if (idAtual !== renderId) return;
       const fragmento = document.createDocumentFragment();
       resultados.slice(0, totalLimitado).forEach((item) => {
-        const card = criarResultadoCard(item);
-        const abrir = (evento) => {
-          if (item.modelo === "musica" && deveIgnorarCliqueDoCard(evento)) return;
-          abrirDetalheGlobal(item);
-        };
-        card.addEventListener("click", abrir);
-        if (card.tagName !== "BUTTON") {
-          card.addEventListener("keydown", (evento) => {
-            if (evento.key === "Enter" || evento.key === " ") {
-              evento.preventDefault();
-              abrirDetalheGlobal(item);
-            }
-          });
+        const card = criarResultadoCard(item, detalhes);
+        if (!card) return;
+        if (item.href !== "/wiki/musicas") {
+          card.addEventListener("click", () => abrirDetalheResultado(item, controladores));
         }
         fragmento.appendChild(card);
       });

@@ -1,6 +1,6 @@
 import { abrirModalDetalhe, criarWikiCatalogo, fecharModalDetalhe, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
-function criarCardComando(comando) {
+export function criarCardComando(comando) {
   const card = document.createElement("button");
   card.type = "button";
   card.className = `item-card comando-card comando-${comando.local} nivel-${comando.nivel >= 2 ? "avancado" : "basico"}`;
@@ -15,7 +15,7 @@ function criarCardComando(comando) {
   return card;
 }
 
-function criarControladorDetalhe(dados, obterListaAtual) {
+export function criarControladorDetalheComandos(dados, obterListaAtual) {
   const detalhe = document.querySelector("[data-comando-detail]");
   let comandoAberto = null;
 
@@ -102,7 +102,7 @@ export function inicializarWikiComandos() {
   const vazio = app.querySelector("[data-comandos-empty]");
   const sentinela = app.querySelector("[data-comandos-sentinel]");
   let listagem;
-  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
+  const detalheController = criarControladorDetalheComandos(dados, () => listagem?.obterResultadoAtual() ?? []);
 
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");

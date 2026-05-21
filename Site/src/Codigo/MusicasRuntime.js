@@ -63,7 +63,7 @@ function definirTocando(card, tocando) {
   }
 }
 
-function criarFaixa(musica) {
+export function criarFaixa(musica) {
   const card = document.createElement("article");
   card.className = "faixa-musica";
   card.dataset.musicaId = musica.id;

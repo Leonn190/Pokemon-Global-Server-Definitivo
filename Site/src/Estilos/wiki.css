@@ -135,12 +135,19 @@
   margin: 0 0 18px;
 }
 .wiki-busca-filtro-chip {
-  min-height: 40px;
-  padding-right: 12px;
+  width: 42px;
+  min-height: 42px;
+  justify-content: center;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.055);
 }
 .wiki-busca-filtro-chip .tipo-icone-mini {
-  font-size: 1rem;
+  width: auto;
+  height: auto;
+  font-size: 1.16rem;
   line-height: 1;
+  background: transparent;
+  box-shadow: none;
 }
 .wiki-busca-filtro-chip[aria-pressed="true"],
 .wiki-busca-filtro-chip.ativo {
@@ -169,12 +176,13 @@
 }
 .wiki-busca-resultados .faixa-musica {
   grid-column: span 3;
-  grid-template-columns: 42px minmax(0, 1.05fr) minmax(96px, 1.25fr) minmax(68px, auto);
+  grid-template-columns: 42px minmax(0, 0.95fr) minmax(0, 1fr) max-content;
+  box-sizing: border-box;
+  max-width: 100%;
   gap: 10px;
   min-width: 0;
   min-height: 68px;
   padding: 10px 12px;
-  cursor: pointer;
 }
 .wiki-busca-resultados .faixa-musica > * {
   min-width: 0;
@@ -192,45 +200,14 @@
   font-size: 0.76rem;
   justify-self: end;
 }
-.wiki-busca-resultados .mundo-bioma-card {
-  grid-column: span 2;
-  color: var(--texto);
-  cursor: pointer;
-}
-.wiki-busca-resultados .mundo-bioma-card:hover,
-.wiki-busca-resultados .mundo-bioma-card:focus-visible {
-  outline: none;
-  transform: translateY(-3px);
-  border-color: rgba(255, 217, 52, 0.42);
-  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.32), 0 0 28px rgba(16, 135, 255, 0.12);
-}
 .wiki-busca-vazio {
   margin-top: 14px;
-}
-.wiki-busca-detalhe-card {
-  width: min(980px, 100%);
-}
-.wiki-busca-detalhe-palco .wiki-busca-detalhe-fallback {
-  position: relative;
-  z-index: 1;
-  width: 96px;
-  height: 96px;
-  border-radius: 28px;
-  font-size: 2rem;
-}
-.wiki-busca-detalhe-grid {
-  grid-template-columns: 0.92fr 1.08fr;
-}
-.wiki-busca-detalhe .item-descricao-melhor {
-  margin: 0;
-  max-width: none;
 }
 @media (max-width: 1180px) {
   .wiki-busca-resultados {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-  .wiki-busca-resultados .faixa-musica,
-  .wiki-busca-resultados .mundo-bioma-card {
+  .wiki-busca-resultados .faixa-musica {
     grid-column: span 2;
   }
 }
@@ -249,17 +226,12 @@
   .wiki-busca-volume-global {
     width: min(100%, 360px);
   }
-  .wiki-busca-detalhe-topo,
-  .wiki-busca-detalhe-grid {
-    grid-template-columns: 1fr;
-  }
 }
 @media (max-width: 760px) {
   .wiki-busca-resultados {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .wiki-busca-resultados .faixa-musica,
-  .wiki-busca-resultados .mundo-bioma-card {
+  .wiki-busca-resultados .faixa-musica {
     grid-column: 1 / -1;
   }
 }

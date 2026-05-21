@@ -2,7 +2,7 @@ import { fecharModalDetalhe, abrirModalDetalhe, infoHtml, aplicarImagemDetalhe, 
 function assetEfeito(efeito, dados) {
   return dados.assetsEfeitos?.[efeito.id] ?? { imagem: null };
 }
-function criarCardEfeito(efeito, dados) {
+export function criarCardEfeito(efeito, dados) {
   const asset = assetEfeito(efeito, dados);
   const card = document.createElement("button");
   card.type = "button";
@@ -17,7 +17,7 @@ function criarCardEfeito(efeito, dados) {
   `;
   return card;
 }
-function criarControladorDetalhe(dados, obterListaAtual) {
+export function criarControladorDetalheEfeitos(dados, obterListaAtual) {
   const detalhe = document.querySelector("[data-efeito-detail]");
   let efeitoAberto = null;
   function listaNavegacao() {
@@ -88,7 +88,7 @@ export function inicializarWikiEfeitos(idDados = "efeitos-data") {
   const vazio = app.querySelector("[data-efeitos-empty]");
   const sentinela = app.querySelector("[data-efeitos-sentinel]");
   let listagem;
-  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
+  const detalheController = criarControladorDetalheEfeitos(dados, () => listagem?.obterResultadoAtual() ?? []);
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const estilo = filtroEstilo?.value ?? "";

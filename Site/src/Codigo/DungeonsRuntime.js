@@ -3,7 +3,7 @@ import { fecharModalDetalhe, abrirModalDetalhe, infoHtml, aplicarImagemDetalhe, 
 function assetDungeon(dungeon, dados) {
   return dados.assetsDungeons?.[dungeon.id] ?? { imagem: null };
 }
-function criarCardDungeon(dungeon, dados) {
+export function criarCardDungeon(dungeon, dados) {
   const asset = assetDungeon(dungeon, dados);
   const card = document.createElement("button");
   card.type = "button";
@@ -49,7 +49,7 @@ function preencherPokemonGrid(node, nomes, pokedex, origem) {
     node.appendChild(vazio);
   });
 }
-function criarControladorDetalhe(dados, pokedex, obterListaAtual) {
+export function criarControladorDetalheDungeons(dados, pokedex, obterListaAtual) {
   const detalhe = document.querySelector("[data-dungeon-detail]");
   let dungeonAberta = null;
   function listaNavegacao() {
@@ -121,7 +121,7 @@ export function inicializarWikiDungeons(idDados = "dungeons-data") {
   const vazio = app.querySelector("[data-dungeons-empty]");
   const sentinela = app.querySelector("[data-dungeons-sentinel]");
   let listagem;
-  const detalheController = criarControladorDetalhe(dados, pokedex, () => listagem?.obterResultadoAtual() ?? []);
+  const detalheController = criarControladorDetalheDungeons(dados, pokedex, () => listagem?.obterResultadoAtual() ?? []);
   const pokemonController = criarControladorPokemonDetalhe(pokedex, {
     seletorDetalhe: "[data-dungeon-pokemon-detail]",
     mostrarLinhagem: true,

@@ -216,3 +216,54 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Busca global usando os cartuchos reais das wikis. */
+.wiki-busca-resultados {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: stretch;
+}
+.wiki-busca-resultados .wiki-busca-card-existente {
+  min-width: 0;
+  text-decoration: none;
+}
+.wiki-busca-resultados .pokemon-card,
+.wiki-busca-resultados .item-card {
+  width: 100%;
+}
+.wiki-busca-resultados .faixa-musica {
+  grid-column: span 3;
+}
+.wiki-busca-resultados .mundo-bioma-card {
+  grid-column: span 2;
+  color: var(--texto);
+}
+.wiki-busca-resultados .mundo-bioma-card:hover,
+.wiki-busca-resultados .mundo-bioma-card:focus-visible {
+  outline: none;
+  transform: translateY(-3px);
+  border-color: rgba(255, 217, 52, 0.42);
+  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.32), 0 0 28px rgba(16, 135, 255, 0.12);
+}
+@media (max-width: 1180px) {
+  .wiki-busca-resultados {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .wiki-busca-resultados .faixa-musica,
+  .wiki-busca-resultados .mundo-bioma-card {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 760px) {
+  .wiki-busca-resultados {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .wiki-busca-resultados .faixa-musica,
+  .wiki-busca-resultados .mundo-bioma-card {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 560px) {
+  .wiki-busca-resultados {
+    grid-template-columns: 1fr;
+  }
+}

@@ -12,6 +12,8 @@ class Subtela:
     usar_overlay_gerenciador = True
     alpha_overlay = 170
     camada_render = "hud"
+    animar_entrada = True
+    fade_entrada_ms = 160
 
     def __init__(self):
         self.encerrada = False
@@ -38,6 +40,8 @@ class GerenciadorSubtelas:
         self._overlay_cache = None
         self._overlay_cache_size = None
         self._overlay_alpha = 170
+        self._fade_surface_cache = None
+        self._fade_surface_cache_size = None
 
     @property
     def ativa(self) -> bool:
@@ -55,6 +59,7 @@ class GerenciadorSubtelas:
     def abrir(self, subtela: Subtela):
         if subtela is None:
             return None
+        subtela._fade_inicio_ms = pygame.time.get_ticks()
         self._pilha.append(subtela)
         return subtela
 
@@ -100,23 +105,50 @@ class GerenciadorSubtelas:
             return eventos
         return [] if bool(getattr(topo, "bloquear_input_fundo", True)) else eventos
 
+    def _progresso_fade_entrada(self, subtela):
+        if subtela is None or not bool(getattr(subtela, "animar_entrada", True)):
+            return 1.0
+        duracao = int(getattr(subtela, "fade_entrada_ms", 160) or 0)
+        if duracao <= 0:
+            return 1.0
+        inicio = getattr(subtela, "_fade_inicio_ms", None)
+        if inicio is None:
+            return 1.0
+        tempo = max(0, pygame.time.get_ticks() - int(inicio))
+        progresso_linear = max(0.0, min(1.0, tempo / duracao))
+        return 1.0 - ((1.0 - progresso_linear) ** 2)
+
+    def _surface_fade(self, tela):
+        tamanho = tela.get_size()
+        if self._fade_surface_cache is None or self._fade_surface_cache_size != tamanho:
+            self._fade_surface_cache = pygame.Surface(tamanho, pygame.SRCALPHA)
+            self._fade_surface_cache_size = tamanho
+        self._fade_surface_cache.set_alpha(255)
+        self._fade_surface_cache.fill((0, 0, 0, 0))
+        return self._fade_surface_cache
+
     def atualizar(self, jogo, eventos, dt):
         topo = self.topo
         if topo is None:
             return
+        progresso = self._progresso_fade_entrada(topo)
+        eventos_topo = eventos if progresso >= 1.0 else []
         if hasattr(topo, "processar_eventos"):
-            topo.processar_eventos(jogo, eventos)
+            topo.processar_eventos(jogo, eventos_topo)
         if hasattr(topo, "atualizar"):
             topo.atualizar(dt)
         self._limpar_encerradas()
 
     def _desenhar_overlay(self, tela, alpha):
         tamanho = tela.get_size()
-        if self._overlay_cache is None or self._overlay_cache_size != tamanho or self._overlay_alpha != alpha:
+        alpha = int(alpha)
+        if self._overlay_cache is None or self._overlay_cache_size != tamanho:
             self._overlay_cache = pygame.Surface(tamanho, pygame.SRCALPHA)
-            self._overlay_cache.fill((0, 0, 0, int(alpha)))
             self._overlay_cache_size = tamanho
-            self._overlay_alpha = int(alpha)
+            self._overlay_alpha = None
+        if self._overlay_alpha != alpha:
+            self._overlay_cache.fill((0, 0, 0, alpha))
+            self._overlay_alpha = alpha
         tela.blit(self._overlay_cache, (0, 0))
 
     def render(self, tela, eventos, dt, JOGO=None, camada="hud"):
@@ -127,7 +159,15 @@ class GerenciadorSubtelas:
         camada_atual = str(camada or "hud").strip().lower()
         if camada_topo != camada_atual:
             return
+        progresso = self._progresso_fade_entrada(topo)
         if bool(getattr(topo, "usar_overlay_gerenciador", True)):
-            self._desenhar_overlay(tela, getattr(topo, "alpha_overlay", 170))
-        topo.render(tela, eventos, dt, JOGO=JOGO)
+            self._desenhar_overlay(tela, int(getattr(topo, "alpha_overlay", 170) * progresso))
+        if progresso >= 1.0:
+            topo.render(tela, eventos, dt, JOGO=JOGO)
+        else:
+            surface = self._surface_fade(tela)
+            topo.render(surface, [], dt, JOGO=JOGO)
+            surface.set_alpha(int(255 * progresso))
+            tela.blit(surface, (0, 0))
+            surface.set_alpha(255)
         self._limpar_encerradas()

@@ -138,121 +138,6 @@ def registrar_log_execute(ctx, tipo, dados):
         partida.registrar_evento_log(tipo, dados)
 
 
-def efeito_eh_negativo(efeito, lista_negativos=None):
-    nome = normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
-    tipo = str((efeito or {}).get("tipo") or "").strip().lower()
-    negativos = {normalizar(item) for item in list(lista_negativos or [])}
-    return tipo == "negativo" or nome in negativos
-
-
-def efeito_eh_positivo(efeito):
-    return str((efeito or {}).get("tipo") or "").strip().lower() == "positivo"
-
-
-def passos_positivos_efeito(efeito):
-    if bool((efeito or {}).get("permanente")):
-        return 0
-    return max(0, int(fnum((efeito or {}).get("passos_restantes"), 0.0)))
-
-
-def adicionar_efeito_formal_preservado(ctx, alvo, efeito, origem=None):
-    if alvo is None or not isinstance(efeito, dict):
-        return {"aplicado": False, "motivo": "efeito_invalido"}
-    formal = copy.deepcopy(efeito)
-    alvo.efeitos_formais.append(formal)
-    if hasattr(alvo, "recalcular_atributos"):
-        alvo.recalcular_atributos()
-    registrar_log_execute(
-        ctx,
-        "pokemon_recebeu_efeito",
-        {
-            "pokemon_id": getattr(alvo, "id_batalha", None),
-            "pokemon_nome": getattr(alvo, "nome", None),
-            "efeito_nome": formal.get("nome"),
-            "efeito_code": formal.get("code"),
-            "tipo": formal.get("tipo"),
-            "passos_restantes": formal.get("passos_restantes"),
-            "passos_totais": formal.get("passos_totais"),
-            "stacks": formal.get("stacks", 1),
-            "origem_id": getattr(origem, "id_batalha", None),
-            "origem_nome": getattr(origem, "nome", None),
-            "efeito": copy.deepcopy(formal),
-        },
-    )
-    return {"aplicado": True, "efeito": formal}
-
-
-def remover_efeito_formal(ctx, alvo, efeito, origem=None, motivo=None):
-    if alvo is None or not isinstance(efeito, dict):
-        return False
-    removido = False
-    restantes = []
-    for atual in list(getattr(alvo, "efeitos_formais", []) or []):
-        if not removido and atual is efeito:
-            removido = True
-            continue
-        restantes.append(atual)
-    if not removido:
-        chave = normalizar(efeito.get("code") or efeito.get("nome"))
-        restantes = []
-        for atual in list(getattr(alvo, "efeitos_formais", []) or []):
-            if not removido and normalizar((atual or {}).get("code") or (atual or {}).get("nome")) == chave:
-                removido = True
-                continue
-            restantes.append(atual)
-    if not removido:
-        return False
-    alvo.efeitos_formais = restantes
-    if hasattr(alvo, "recalcular_atributos"):
-        alvo.recalcular_atributos()
-    registrar_log_execute(
-        ctx,
-        "pokemon_removeu_efeito",
-        {
-            "pokemon_id": getattr(alvo, "id_batalha", None),
-            "pokemon_nome": getattr(alvo, "nome", None),
-            "efeito_nome": efeito.get("nome") or efeito.get("code"),
-            "passos_removidos": passos_positivos_efeito(efeito),
-            "origem_id": getattr(origem, "id_batalha", None),
-            "origem_nome": getattr(origem, "nome", None),
-            "motivo": motivo,
-            **dados_ataque_contexto(ctx, motivo or "Ataque"),
-        },
-    )
-    return True
-
-
-def remover_efeitos_negativos(ctx, alvo, lista_negativos, origem=None, motivo=None):
-    removidos = []
-    restantes = []
-    passos = 0
-    for efeito in list(getattr(alvo, "efeitos_formais", []) or []):
-        if efeito_eh_negativo(efeito, lista_negativos):
-            removidos.append(copy.deepcopy(efeito))
-            passos += passos_positivos_efeito(efeito)
-        else:
-            restantes.append(efeito)
-    alvo.efeitos_formais = restantes
-    if removidos and hasattr(alvo, "recalcular_atributos"):
-        alvo.recalcular_atributos()
-    for efeito in removidos:
-        registrar_log_execute(
-            ctx,
-            "pokemon_removeu_efeito",
-            {
-                "pokemon_id": getattr(alvo, "id_batalha", None),
-                "pokemon_nome": getattr(alvo, "nome", None),
-                "efeito_nome": efeito.get("nome") or efeito.get("code"),
-                "passos_removidos": passos_positivos_efeito(efeito),
-                "origem_id": getattr(origem, "id_batalha", None),
-                "origem_nome": getattr(origem, "nome", None),
-                "motivo": motivo,
-                **dados_ataque_contexto(ctx, motivo or "Ataque"),
-            },
-        )
-    return {"removidos": len(removidos), "passos": passos, "efeitos": removidos}
-
-
 def numero_area_batalha(area_id):
     try:
         return int(str(area_id or "")[1:])
@@ -274,33 +159,6 @@ def inicio_fileira_area(area_id):
     if 7 <= numero <= 9:
         return f"{area[0]}7"
     return None
-
-
-def dano_generico(ctx, alvo, bruto, categoria="normal", **extra):
-    usuario = (ctx or {}).get("usuario")
-    if usuario is None or alvo is None:
-        return {"falha": True, "motivo": "alvo_invalido"}
-    ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
-    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
-    parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
-    dados = {
-        "dano_bruto": max(0.0, float(bruto or 0.0)),
-        "tipo": parametros.get("tipo") or props.get("tipo") or "normal",
-        "categoria": categoria,
-        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
-        "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
-        "reativos_acao": (ctx or {}).get("reativos_acao"),
-        "bonus_critico_acerto": (ctx or {}).get("bonus_critico_acerto", 0.0),
-        **extra,
-    }
-    return usuario.AplicarDano(alvo, dados, contexto=ctx)
-
-
-def aplicar_efeito(usuario, alvo, nome, duracao=3, dados=None, valor=0.0, negativo=None):
-    efeito = {"nome": nome, "duracao": duracao, "valor": valor}
-    if negativo is not None:
-        efeito["negativo"] = bool(negativo)
-    return usuario.AplicarEfeito(alvo, efeito, dados=dados or {})
 
 
 _AREAS_BATALHA = {
@@ -368,68 +226,6 @@ def area_selecionada_da_acao(ctx):
     return area_alvo_contexto(ctx)
 
 
-def obter_passos_efeito(pokemon, nome):
-    alvo = normalizar(nome)
-    for efeito in list(getattr(pokemon, "efeitos_formais", []) or []):
-        if normalizar((efeito or {}).get("nome") or (efeito or {}).get("code")) == alvo:
-            dados = (efeito or {}).get("dados") if isinstance((efeito or {}).get("dados"), dict) else {}
-            if bool((efeito or {}).get("permanente")):
-                return max(
-                    0,
-                    int(
-                        fnum(
-                            dados.get("passos_equivalentes", dados.get("queimado_passos_equivalentes", (efeito or {}).get("passos_equivalentes"))),
-                            0.0,
-                        )
-                    ),
-                )
-            return max(0, int(fnum((efeito or {}).get("passos_restantes"), 0.0)))
-    return 0
-
-
-def efeito_formal(pokemon, nome):
-    alvo = normalizar(nome)
-    for efeito in list(getattr(pokemon, "efeitos_formais", []) or []):
-        if normalizar((efeito or {}).get("nome") or (efeito or {}).get("code")) == alvo:
-            return efeito
-    return None
-
-
-def remover_efeitos_contando_passos(pokemon, nomes, origem=None, dados=None):
-    if pokemon is None:
-        return {"removidos": 0, "passos": 0, "efeitos": []}
-    alvos = {normalizar(nome) for nome in list(nomes or [])}
-    removidos = []
-    restantes = []
-    passos = 0
-    for efeito in list(getattr(pokemon, "efeitos_formais", []) or []):
-        nome_norm = normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
-        if nome_norm in alvos:
-            removidos.append(efeito)
-            passos += max(0, int(fnum((efeito or {}).get("passos_restantes"), 0.0)))
-        else:
-            restantes.append(efeito)
-    pokemon.efeitos_formais = restantes
-    if removidos and hasattr(pokemon, "recalcular_atributos"):
-        pokemon.recalcular_atributos()
-    partida = getattr(pokemon, "partida", None)
-    if removidos and partida is not None and hasattr(partida, "registrar_evento_log"):
-        for efeito in removidos:
-            partida.registrar_evento_log(
-                "pokemon_removeu_efeito",
-                {
-                    "pokemon_id": getattr(pokemon, "id_batalha", None),
-                    "pokemon_nome": getattr(pokemon, "nome", None),
-                    "efeito_nome": (efeito or {}).get("nome") or (efeito or {}).get("code"),
-                    "passos_removidos": max(0, int(fnum((efeito or {}).get("passos_restantes"), 0.0))),
-                    "origem_id": getattr(origem, "id_batalha", None),
-                    "origem_nome": getattr(origem, "nome", None),
-                    **dict(dados or {}),
-                },
-            )
-    return {"removidos": len(removidos), "passos": passos, "efeitos": removidos}
-
-
 def pokemons_ativos_em_campo(partida, filtro_lado=None):
     if partida is None:
         return []
@@ -459,210 +255,6 @@ def adjacentes_todos_lados(area_id):
         if abs(linha - linha_base) <= 1 and abs(coluna - coluna_base) <= 1:
             saida.append(chave)
     return saida
-
-
-def dano_puro_ignorando_barreira(ctx, alvo, valor, reducao_dur=True):
-    usuario = (ctx or {}).get("usuario")
-    if alvo is None or not alvo.esta_vivo():
-        return {"aplicado": False, "motivo": "alvo_invalido", "dano_vida": 0.0}
-    ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
-    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
-    dano_base = max(0.0, fnum(valor, 0.0))
-    dano = dano_base
-    calculo = [f"Dano puro base = {round(dano_base, 4)}"]
-    dur = fnum(alvo.obter_atributo("Dur") if hasattr(alvo, "obter_atributo") else 0.0, 0.0)
-    if reducao_dur and dur > 0:
-        mult = max(0.0, 1.0 - (dur / 100.0))
-        antes = dano
-        dano *= mult
-        calculo.append(f"Durabilidade: {round(antes, 4)} * {round(mult, 4)} = {round(dano, 4)}")
-    antes_vida = fnum(getattr(alvo, "VidaAtual", 0.0), 0.0)
-    alvo.VidaAtual = max(0.0, antes_vida - dano)
-    dano_vida = max(0.0, antes_vida - alvo.VidaAtual)
-    alvo.estatisticas_batalha["dano_recebido"] = fnum(alvo.estatisticas_batalha.get("dano_recebido"), 0.0) + dano_vida
-    if usuario is not None:
-        usuario.estatisticas_batalha["dano_causado"] = fnum(usuario.estatisticas_batalha.get("dano_causado"), 0.0) + dano_vida
-    partida = (ctx or {}).get("partida") or getattr(alvo, "partida", None)
-    dados = {
-        "alvo_id": getattr(alvo, "id_batalha", None),
-        "alvo_nome": getattr(alvo, "nome", None),
-        "pokemon_id": getattr(alvo, "id_batalha", None),
-        "pokemon_nome": getattr(alvo, "nome", None),
-        "origem_id": getattr(usuario, "id_batalha", None),
-        "origem_nome": getattr(usuario, "nome", None),
-        "valor": round(dano_vida, 4),
-        "vida_antes": round(antes_vida, 4),
-        "vida_depois": round(alvo.VidaAtual, 4),
-        "critico": False,
-        "tipo": (props.get("parametros") if isinstance(props.get("parametros"), dict) else {}).get("tipo") or props.get("tipo"),
-        "categoria": "puro",
-        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
-        "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
-        "detalhes": {"dano_base": round(dano_base, 4), "durabilidade": round(dur, 4), "ignora_barreira": True},
-        "calculo": calculo,
-    }
-    if partida is not None and hasattr(partida, "registrar_evento_log"):
-        partida.registrar_evento_log("pokemon_sofreu_dano", dados)
-    retorno = {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0, "dano_puro": True, "critico": False}
-    letalidade = False
-    if dano_vida > 0 and usuario is not None and hasattr(alvo, "_aplicar_letalidade"):
-        letalidade = bool(alvo._aplicar_letalidade(usuario, dano_vida, {"origem": usuario, "ataque_nome": dados.get("ataque_nome"), "reativos_acao": (ctx or {}).get("reativos_acao")}))
-    if letalidade:
-        retorno["letalidade"] = True
-    if alvo.VidaAtual <= 0:
-        alvo.Morrer({"origem_id": getattr(usuario, "id_batalha", None), "origem": usuario, "ataque_nome": dados.get("ataque_nome"), "reativos_acao": (ctx or {}).get("reativos_acao")})
-    if partida is not None and hasattr(partida, "disparar_flag") and dano_vida > 0:
-        flag_ctx = {
-            "partida": partida,
-            "usuario": usuario,
-            "origem": usuario,
-            "alvo": alvo,
-            "pokemon_evento": alvo,
-            "dano_vida": round(dano_vida, 4),
-            "resultado": dict(retorno),
-            "dados_dano": dict(dados),
-            "reativos_acao": (ctx or {}).get("reativos_acao"),
-        }
-        partida.disparar_flag("AoReceberDano", flag_ctx, reativos=(ctx or {}).get("reativos_acao"))
-        partida.disparar_flag("AoAplicarDano", {**flag_ctx, "pokemon_evento": usuario}, reativos=(ctx or {}).get("reativos_acao"))
-    return retorno
-
-
-def dano_direto_vida(ctx, alvo, valor, motivo=None, respeitar_imortal=True):
-    usuario = (ctx or {}).get("usuario")
-    if alvo is None or not alvo.esta_vivo():
-        return {"aplicado": False, "motivo": "alvo_invalido", "dano_vida": 0.0}
-    ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
-    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
-    dano = max(0.0, fnum(valor, 0.0))
-    antes = fnum(getattr(alvo, "VidaAtual", 0.0), 0.0)
-    vida_depois = max(0.0, antes - dano)
-    imortal_bloqueou = False
-    if respeitar_imortal and vida_depois <= 0 and hasattr(alvo, "possui_efeito") and alvo.possui_efeito("Imortal"):
-        vida_depois = min(max(1.0, vida_depois), max(1.0, alvo.obter_atributo("Vida", 1.0)))
-        imortal_bloqueou = True
-    alvo.VidaAtual = vida_depois
-    dano_vida = max(0.0, antes - alvo.VidaAtual)
-    if hasattr(alvo, "estatisticas_batalha"):
-        alvo.estatisticas_batalha["dano_recebido"] = fnum(alvo.estatisticas_batalha.get("dano_recebido"), 0.0) + dano_vida
-    partida = (ctx or {}).get("partida") or getattr(alvo, "partida", None)
-    dados = {
-        "alvo_id": getattr(alvo, "id_batalha", None),
-        "alvo_nome": getattr(alvo, "nome", None),
-        "pokemon_id": getattr(alvo, "id_batalha", None),
-        "pokemon_nome": getattr(alvo, "nome", None),
-        "origem_id": getattr(usuario, "id_batalha", None),
-        "origem_nome": getattr(usuario, "nome", None),
-        "valor": round(dano_vida, 4),
-        "vida_antes": round(antes, 4),
-        "vida_depois": round(alvo.VidaAtual, 4),
-        "critico": False,
-        "tipo": (props.get("parametros") if isinstance(props.get("parametros"), dict) else {}).get("tipo") or props.get("tipo"),
-        "categoria": "direto",
-        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
-        "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
-        "motivo": motivo or "dano_direto_vida",
-        "ignora_barreira": True,
-        "ignora_defesa": True,
-        "imortal_bloqueou": imortal_bloqueou,
-    }
-    if partida is not None and hasattr(partida, "registrar_evento_log") and (dano_vida > 0 or dano > 0):
-        partida.registrar_evento_log("pokemon_sofreu_dano", dados)
-    if alvo.VidaAtual <= 0 and getattr(alvo, "vivo", False):
-        alvo.Morrer({"origem_id": getattr(usuario, "id_batalha", None), "origem": usuario, "ataque_nome": dados.get("ataque_nome"), "reativos_acao": (ctx or {}).get("reativos_acao")})
-    return {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0, "direto_vida": True, "imortal_bloqueou": imortal_bloqueou}
-
-
-def dano_fixo_respeitando_barreira(ctx, alvo, valor, motivo=None):
-    usuario = (ctx or {}).get("usuario")
-    if alvo is None or not alvo.esta_vivo():
-        return {"aplicado": False, "motivo": "alvo_invalido", "dano_vida": 0.0, "dano_barreira": 0.0}
-    ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
-    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
-    dano = max(0.0, fnum(valor, 0.0))
-    antes_barreira = fnum(getattr(alvo, "BarreiraAtual", 0.0), 0.0)
-    dano_barreira = min(antes_barreira, dano)
-    alvo.BarreiraAtual = max(0.0, antes_barreira - dano_barreira)
-    restante = max(0.0, dano - dano_barreira)
-    antes_vida = fnum(getattr(alvo, "VidaAtual", 0.0), 0.0)
-    alvo.VidaAtual = max(0.0, antes_vida - restante)
-    dano_vida = max(0.0, antes_vida - alvo.VidaAtual)
-    if hasattr(alvo, "estatisticas_batalha"):
-        alvo.estatisticas_batalha["dano_recebido"] = fnum(alvo.estatisticas_batalha.get("dano_recebido"), 0.0) + dano_vida
-    if usuario is not None and hasattr(usuario, "estatisticas_batalha"):
-        usuario.estatisticas_batalha["dano_causado"] = fnum(usuario.estatisticas_batalha.get("dano_causado"), 0.0) + dano_vida
-    partida = (ctx or {}).get("partida") or getattr(alvo, "partida", None)
-    base_evento = {
-        "alvo_id": getattr(alvo, "id_batalha", None),
-        "alvo_nome": getattr(alvo, "nome", None),
-        "pokemon_id": getattr(alvo, "id_batalha", None),
-        "pokemon_nome": getattr(alvo, "nome", None),
-        "origem_id": getattr(usuario, "id_batalha", None),
-        "origem_nome": getattr(usuario, "nome", None),
-        "critico": False,
-        "tipo": (props.get("parametros") if isinstance(props.get("parametros"), dict) else {}).get("tipo") or props.get("tipo"),
-        "categoria": "fixo",
-        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
-        "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
-        "motivo": motivo or "dano_fixo_respeitando_barreira",
-        "detalhes": {
-            "dano_fixo": round(dano, 4),
-            "ignora_modificadores": True,
-            "respeita_barreira": True,
-        },
-        "calculo": [
-            f"Dano fixo = {round(dano, 4)}",
-            f"Barreira absorvida = {round(dano_barreira, 4)}",
-            f"Dano em vida = {round(dano_vida, 4)}",
-        ],
-    }
-    if partida is not None and hasattr(partida, "registrar_evento_log"):
-        if dano_barreira > 0:
-            partida.registrar_evento_log(
-                "barreira_absorveu",
-                {
-                    **base_evento,
-                    "dano_original": round(dano, 4),
-                    "dano_barreira": round(dano_barreira, 4),
-                    "barreira_antes": round(antes_barreira, 4),
-                    "barreira_depois": round(alvo.BarreiraAtual, 4),
-                },
-            )
-        if dano_vida > 0 or dano <= 0.001:
-            partida.registrar_evento_log(
-                "pokemon_sofreu_dano",
-                {
-                    **base_evento,
-                    "valor": round(dano_vida, 4),
-                    "vida_antes": round(antes_vida, 4),
-                    "vida_depois": round(alvo.VidaAtual, 4),
-                    "dano_barreira": round(dano_barreira, 4),
-                },
-            )
-    retorno = {
-        "aplicado": True,
-        "dano_vida": round(dano_vida, 4),
-        "dano_barreira": round(dano_barreira, 4),
-        "dano_fixo": True,
-        "critico": False,
-    }
-    if alvo.VidaAtual <= 0 and getattr(alvo, "vivo", False):
-        alvo.Morrer({"origem_id": getattr(usuario, "id_batalha", None), "origem": usuario, "ataque_nome": base_evento.get("ataque_nome"), "reativos_acao": (ctx or {}).get("reativos_acao")})
-    if partida is not None and hasattr(partida, "disparar_flag") and dano_vida > 0:
-        flag_ctx = {
-            "partida": partida,
-            "usuario": usuario,
-            "origem": usuario,
-            "alvo": alvo,
-            "pokemon_evento": alvo,
-            "dano_vida": round(dano_vida, 4),
-            "resultado": dict(retorno),
-            "dados_dano": dict(base_evento),
-            "reativos_acao": (ctx or {}).get("reativos_acao"),
-        }
-        partida.disparar_flag("AoReceberDano", flag_ctx, reativos=(ctx or {}).get("reativos_acao"))
-        partida.disparar_flag("AoAplicarDano", {**flag_ctx, "pokemon_evento": usuario}, reativos=(ctx or {}).get("reativos_acao"))
-    return retorno
 
 
 def pokemons_vivos_adjacentes_todos_lados(ctx, area_id, ignorar=None):
@@ -1017,3 +609,22 @@ def aplicar_passiva_permanente(ctx, nome_efeito):
         return {}
     efeito = {"nome": nome_efeito, "permanente": True, "dados": {"permanente": True}}
     return alvo.ReceberEfeito(efeito, origem=alvo, dados={"permanente": True})
+
+from Servidor.Logica.Executes.ExecutesAtaques.UtilitariosDanoExecutes import (
+    dano_direto_vida,
+    dano_fixo_respeitando_barreira,
+    dano_generico,
+    dano_puro_ignorando_barreira,
+)
+from Servidor.Logica.Executes.ExecutesAtaques.UtilitariosEfeitosExecutes import (
+    adicionar_efeito_formal_preservado,
+    aplicar_efeito,
+    efeito_eh_negativo,
+    efeito_eh_positivo,
+    efeito_formal,
+    obter_passos_efeito,
+    passos_positivos_efeito,
+    remover_efeito_formal,
+    remover_efeitos_contando_passos,
+    remover_efeitos_negativos,
+)

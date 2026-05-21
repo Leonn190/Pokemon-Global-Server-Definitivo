@@ -155,16 +155,71 @@ function tipoCompacto(tipo, iconesTipos) {
   };
 }
 
-function resultado({ href, id, titulo, tipo, meta, descricao = "", codigo = "", buscaExtra = "", modelo = "item", card = {} }) {
+
+function categoriaPadrao(href, tipo, modelo) {
+  if (href === "/wiki/pokemons") return "pokemons";
+  if (href === "/wiki/ataques") return "ataques";
+  if (href === "/wiki/itens" || href === "/wiki/equipaveis") return "itens";
+  if (href === "/wiki/npcs") return "npcs";
+  if (href === "/wiki/mundo" && String(tipo || "").toLowerCase().includes("estrutura")) return "estruturas";
+  if (href === "/wiki/mundo" && String(tipo || "").toLowerCase().includes("bioma")) return "estruturas";
+  if (href === "/wiki/musicas") return "musicas";
+  if (href === "/wiki/habilidades") return "habilidades";
+  if (href === "/wiki/comandos") return "comandos";
+  if (href === "/wiki/dungeons") return "dungeons";
+  if (href === "/wiki/estadios") return "estadios";
+  return "outros";
+}
+
+function limparLinhasInfo(linhas) {
+  return (linhas || [])
+    .filter((linha) => Array.isArray(linha) && linha.length >= 2)
+    .map(([chave, valor]) => [String(chave ?? ""), valor === null || valor === undefined || valor === "" ? "-" : String(valor)]);
+}
+
+function detalhePadrao({ secao, titulo, tipo, meta, descricao, codigo, card }) {
+  return {
+    titulo,
+    codigo: codigo || secao.titulo,
+    subtitulo: meta || tipo || secao.titulo,
+    descricao: descricao || secao.texto || "Informações detalhadas ainda não cadastradas.",
+    imagem: card?.imagem || "",
+    fallback: String(card?.fallback || titulo || "?").slice(0, 2),
+    tags: [secao.titulo, tipo, card?.pillTexto].filter(Boolean),
+    infos: limparLinhasInfo([
+      ["Wiki", secao.titulo],
+      ["Categoria", tipo],
+      codigo ? ["Código", codigo] : null,
+      meta ? ["Resumo", meta] : null,
+      card?.meta ? ["Meta do cartucho", card.meta] : null,
+      card?.linhaRotulo ? [card.linhaRotulo, card.linhaValor] : null,
+      card?.pillTexto ? ["Raridade", card.pillTexto] : null,
+      card?.poder !== undefined ? ["Poder total", card.poder] : null,
+    ]),
+  };
+}
+
+function resultado({ href, id, titulo, tipo, meta, descricao = "", codigo = "", buscaExtra = "", modelo = "item", card = {}, categoria = "", detalhe = null }) {
   const secao = secoes(href);
   const tituloLimpo = String(titulo ?? secao.titulo).trim() || secao.titulo;
   const metaLimpa = String(meta ?? secao.titulo).trim() || secao.titulo;
   const descricaoLimpa = limitarTexto(descricao || secao.texto || "");
+  const categoriaFinal = categoria || categoriaPadrao(href, tipo, modelo);
+  const detalheFinal = detalhe || detalhePadrao({
+    secao,
+    titulo: tituloLimpo,
+    tipo,
+    meta: metaLimpa,
+    descricao: descricaoLimpa,
+    codigo: String(codigo ?? ""),
+    card,
+  });
   return {
     id: `${href}:${id ?? tituloLimpo}`,
     href,
     emoji: secao.emoji,
     secao: secao.titulo,
+    categoria: categoriaFinal,
     tipo,
     titulo: tituloLimpo,
     tituloBusca: busca(tituloLimpo),
@@ -173,6 +228,7 @@ function resultado({ href, id, titulo, tipo, meta, descricao = "", codigo = "", 
     descricao: descricaoLimpa,
     modelo,
     card,
+    detalhe: detalheFinal,
     busca: busca(secao.titulo, tipo, tituloLimpo, codigo, metaLimpa, descricaoLimpa, buscaExtra),
   };
 }

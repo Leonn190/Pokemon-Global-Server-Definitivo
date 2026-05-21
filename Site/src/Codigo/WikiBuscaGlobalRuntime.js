@@ -1,8 +1,22 @@
-import { formatarNumero, html, lerJson, normalizar } from "./WikiRuntimeBase.js";
-import { rotaSite } from "./RotasSite.js";
+import { abrirModalDetalhe, fecharModalDetalhe, formatarNumero, html, infoHtml, lerJson, normalizar } from "./WikiRuntimeBase.js";
 
 const LIMITE_RESULTADOS = 80;
+const CHAVE_VOLUME_GLOBAL = "pokemon-global-server-volume-musicas";
 let faixaGlobalTocando = null;
+let volumeGlobal = 1;
+
+const FILTROS_WIKI = [
+  "pokemons",
+  "itens",
+  "ataques",
+  "npcs",
+  "estruturas",
+  "musicas",
+  "habilidades",
+  "comandos",
+  "dungeons",
+  "estadios",
+];
 
 function tokensBusca(valor) {
   return String(valor ?? "")
@@ -37,11 +51,12 @@ function buscar(itens, valor) {
     .map(({ item }) => item);
 }
 
-function linkResultado(item, classe) {
-  const card = document.createElement("a");
+function criarBotaoResultado(item, classe) {
+  const card = document.createElement("button");
+  card.type = "button";
   card.className = `${classe} wiki-busca-card-existente`;
-  card.href = rotaSite(item.href || "/wiki");
-  card.setAttribute("aria-label", `Abrir ${item.secao}: ${item.titulo}`);
+  card.dataset.resultadoId = item.id;
+  card.setAttribute("aria-label", `Abrir detalhes de ${item.titulo}`);
   return card;
 }
 
@@ -71,7 +86,7 @@ function tipoAfinidadeHtml(afinidade) {
 
 function criarCardPokemon(item) {
   const card = item.card || {};
-  const elemento = linkResultado(item, `pokemon-card ${card.radiante ? "pokemon-radiante" : ""}`.trim());
+  const elemento = criarBotaoResultado(item, `pokemon-card ${card.radiante ? "pokemon-radiante" : ""}`.trim());
   elemento.innerHTML = `
     <span class="pokemon-card-codigo">${html(card.codigo || item.codigo || "")}</span>
     <span class="pokemon-card-arte">
@@ -94,7 +109,7 @@ function valorLinha(valor) {
 
 function criarCardItem(item) {
   const card = item.card || {};
-  const elemento = linkResultado(item, card.classe || "item-card");
+  const elemento = criarBotaoResultado(item, card.classe || "item-card");
   const linha = card.linhaRotulo || card.linhaValor !== undefined
     ? `<span class="item-card-linha"><strong>${html(valorLinha(card.linhaValor))}</strong><small>${html(card.linhaRotulo || "Info")}</small></span>`
     : "";
@@ -117,7 +132,7 @@ function criarCardItem(item) {
 
 function criarCardBioma(item) {
   const card = item.card || {};
-  const elemento = linkResultado(item, "mundo-bioma-card wiki-busca-bioma-card");
+  const elemento = criarBotaoResultado(item, "mundo-bioma-card wiki-busca-bioma-card");
   elemento.innerHTML = `
     <h3>${html(card.nome || item.titulo)}</h3>
     <p>${html(card.descricao || item.descricao || "")}</p>
@@ -133,6 +148,34 @@ function formatarTempo(segundos) {
   const minutos = Math.floor(total / 60);
   const resto = String(total % 60).padStart(2, "0");
   return `${minutos}:${resto}`;
+}
+
+function limitarVolume(valor) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return 1;
+  return Math.min(1, Math.max(0, numero));
+}
+
+function lerVolumeSalvo() {
+  try {
+    return limitarVolume(window.localStorage?.getItem(CHAVE_VOLUME_GLOBAL) ?? 1);
+  } catch {
+    return 1;
+  }
+}
+
+function salvarVolume(valor) {
+  try {
+    window.localStorage?.setItem(CHAVE_VOLUME_GLOBAL, String(valor));
+  } catch {
+    // localStorage pode estar indisponível em alguns contextos.
+  }
+}
+
+function aplicarVolumeGlobal(raiz = document) {
+  raiz.querySelectorAll?.(".faixa-musica audio").forEach((audio) => {
+    audio.volume = volumeGlobal;
+  });
 }
 
 function atualizarFaixaTempo(card) {
@@ -162,9 +205,13 @@ function criarFaixaMusica(item) {
   const musica = item.card || {};
   const card = document.createElement("article");
   card.className = "faixa-musica wiki-busca-resultado-musica";
+  card.dataset.resultadoId = item.id;
   card.dataset.musicaId = musica.id || item.id;
   card.dataset.nome = musica.nome || item.titulo;
   card.dataset.duracao = Number.isFinite(musica.duracao) ? String(musica.duracao) : "";
+  card.setAttribute("role", "button");
+  card.setAttribute("tabindex", "0");
+  card.setAttribute("aria-label", `Abrir detalhes de ${musica.nome || item.titulo}`);
   card.innerHTML = `
     <button class="faixa-musica-botao" type="button" data-musica-toggle aria-label="Tocar ${html(musica.nome || item.titulo)}">
       <span data-musica-icone aria-hidden="true">▶</span>
@@ -182,7 +229,9 @@ function criarFaixaMusica(item) {
   const audio = card.querySelector("audio");
   const barra = card.querySelector("[data-musica-progress]");
   const botao = card.querySelector("[data-musica-toggle]");
-  botao?.addEventListener("click", () => {
+  if (audio) audio.volume = volumeGlobal;
+  botao?.addEventListener("click", (evento) => {
+    evento.stopPropagation();
     if (!audio) return;
     if (faixaGlobalTocando && faixaGlobalTocando !== audio) faixaGlobalTocando.pause();
     if (audio.paused) {
@@ -192,6 +241,8 @@ function criarFaixaMusica(item) {
       audio.pause();
     }
   });
+  barra?.addEventListener("click", (evento) => evento.stopPropagation());
+  barra?.addEventListener("pointerdown", (evento) => evento.stopPropagation());
   audio?.addEventListener("loadedmetadata", () => {
     if (Number.isFinite(audio.duration)) {
       card.dataset.duracao = String(audio.duration);
@@ -223,6 +274,117 @@ function criarResultadoCard(item) {
   return criarCardItem(item);
 }
 
+function criarModalDetalheGlobal() {
+  let detalhe = document.querySelector("[data-wiki-global-detail]");
+  if (detalhe) return detalhe;
+  detalhe = document.createElement("aside");
+  detalhe.className = "pokemon-detalhe item-detalhe wiki-busca-detalhe";
+  detalhe.dataset.wikiGlobalDetail = "true";
+  detalhe.hidden = true;
+  detalhe.setAttribute("aria-live", "polite");
+  detalhe.innerHTML = `
+    <div class="pokemon-detalhe-backdrop" data-wiki-global-detail-close></div>
+    <article class="pokemon-detalhe-card item-detalhe-card wiki-busca-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="wiki-busca-detalhe-nome">
+      <button class="pokemon-fechar" type="button" aria-label="Fechar detalhes" data-wiki-global-detail-close>×</button>
+      <section class="pokemon-detalhe-topo item-detalhe-topo wiki-busca-detalhe-topo">
+        <div class="pokemon-palco-detalhe item-palco-detalhe wiki-busca-detalhe-palco">
+          <span class="pokemon-brilho-detalhe"></span>
+          <img data-wiki-global-detail-image hidden alt="" />
+          <span class="item-card-sem-arte wiki-busca-detalhe-fallback" data-wiki-global-detail-fallback hidden></span>
+        </div>
+        <div class="pokemon-cabecalho-detalhe">
+          <span class="codigo-pokemon" data-wiki-global-detail-code></span>
+          <h2 id="wiki-busca-detalhe-nome" data-wiki-global-detail-name>Resultado</h2>
+          <div class="pokemon-tags" data-wiki-global-detail-tags></div>
+          <p data-wiki-global-detail-summary></p>
+        </div>
+      </section>
+      <div class="pokemon-detalhe-grid wiki-busca-detalhe-grid">
+        <section class="painel-detalhe item-info-painel">
+          <h3>Informações avançadas</h3>
+          <dl class="pokemon-info-lista" data-wiki-global-detail-info></dl>
+        </section>
+        <section class="painel-detalhe item-info-painel">
+          <h3>Descrição</h3>
+          <p class="item-descricao-melhor" data-wiki-global-detail-description></p>
+        </section>
+      </div>
+    </article>
+  `;
+  document.body.appendChild(detalhe);
+  return detalhe;
+}
+
+function abrirDetalheGlobal(item) {
+  const detalhe = criarModalDetalheGlobal();
+  const dados = item.detalhe || {};
+  const imagem = detalhe.querySelector("[data-wiki-global-detail-image]");
+  const fallback = detalhe.querySelector("[data-wiki-global-detail-fallback]");
+  const codigo = detalhe.querySelector("[data-wiki-global-detail-code]");
+  const nome = detalhe.querySelector("[data-wiki-global-detail-name]");
+  const tags = detalhe.querySelector("[data-wiki-global-detail-tags]");
+  const resumo = detalhe.querySelector("[data-wiki-global-detail-summary]");
+  const info = detalhe.querySelector("[data-wiki-global-detail-info]");
+  const descricao = detalhe.querySelector("[data-wiki-global-detail-description]");
+
+  const titulo = dados.titulo || item.titulo;
+  if (codigo) codigo.textContent = dados.codigo || item.codigo || item.secao || "Wiki";
+  if (nome) nome.textContent = titulo;
+  if (resumo) resumo.textContent = dados.subtitulo || item.meta || item.tipo || "";
+  if (descricao) descricao.textContent = dados.descricao || item.descricao || "Informações detalhadas ainda não cadastradas.";
+  if (tags) {
+    const tagsLista = Array.isArray(dados.tags) && dados.tags.length ? dados.tags : [item.secao, item.tipo].filter(Boolean);
+    tags.innerHTML = tagsLista.map((tag) => `<span class="tag-extra">${html(tag)}</span>`).join("");
+  }
+  if (info) {
+    const linhas = Array.isArray(dados.infos) && dados.infos.length
+      ? dados.infos
+      : [["Wiki", item.secao], ["Categoria", item.tipo], ["Resumo", item.meta]];
+    info.innerHTML = infoHtml(linhas);
+  }
+  if (imagem && fallback) {
+    if (dados.imagem) {
+      imagem.hidden = false;
+      imagem.src = dados.imagem;
+      imagem.alt = titulo;
+      fallback.hidden = true;
+      fallback.textContent = "";
+    } else {
+      imagem.hidden = true;
+      imagem.removeAttribute("src");
+      fallback.hidden = false;
+      fallback.textContent = String(dados.fallback || titulo || "?").slice(0, 2);
+    }
+  }
+  abrirModalDetalhe(detalhe);
+}
+
+function conectarModalGlobal() {
+  const detalhe = criarModalDetalheGlobal();
+  const fechar = () => fecharModalDetalhe(detalhe);
+  detalhe.querySelectorAll("[data-wiki-global-detail-close]").forEach((botao) => botao.addEventListener("click", fechar));
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape" && detalhe && !detalhe.hidden) fechar();
+  });
+}
+
+function deveIgnorarCliqueDoCard(evento) {
+  return !!evento.target.closest?.("button, input, audio, label, [data-musica-toggle], [data-musica-progress]");
+}
+
+function atualizarFiltrosVisuais(filtros, selecionados) {
+  filtros.forEach((botao) => {
+    const ativo = selecionados.has(botao.dataset.wikiGlobalFilter || "");
+    botao.classList.toggle("ativo", ativo);
+    botao.setAttribute("aria-pressed", ativo ? "true" : "false");
+  });
+}
+
+function filtrarPorWiki(resultados, selecionados) {
+  if (!selecionados.size) return resultados;
+  return resultados.filter((item) => selecionados.has(item.categoria));
+}
+
 export function inicializarBuscaGlobalWiki(idDados = "wiki-global-search-data") {
   const dados = lerJson(idDados, "Busca global da wiki");
   const raiz = document.querySelector("[data-wiki-global-search-root]");
@@ -233,21 +395,36 @@ export function inicializarBuscaGlobalWiki(idDados = "wiki-global-search-data") 
   const resultadosGrid = document.querySelector("[data-wiki-global-results]");
   const vazio = document.querySelector("[data-wiki-global-empty]");
   const status = raiz.querySelector("[data-wiki-global-status]");
+  const filtrosWrapper = document.querySelector("[data-wiki-global-filters]");
+  const filtros = [...document.querySelectorAll("[data-wiki-global-filter]")];
+  const volumeControle = document.querySelector("[data-wiki-global-volume]");
   const itens = Array.isArray(dados.itens) ? dados.itens : [];
+  const selecionados = new Set();
   let renderId = 0;
+
+  volumeGlobal = lerVolumeSalvo();
+  if (volumeControle) volumeControle.value = String(volumeGlobal);
+  conectarModalGlobal();
 
   function atualizar() {
     const termo = input?.value?.trim() ?? "";
     const ativo = termo.length > 0;
     const idAtual = ++renderId;
-    const resultados = ativo ? buscar(itens, termo) : [];
+    const resultadosBrutos = ativo ? buscar(itens, termo) : [];
+    const resultados = filtrarPorWiki(resultadosBrutos, selecionados);
+    const totalLimitado = Math.min(resultados.length, LIMITE_RESULTADOS);
     if (secoes) secoes.hidden = ativo;
     if (resultadosSecao) resultadosSecao.hidden = !ativo;
+    if (filtrosWrapper) filtrosWrapper.hidden = !ativo;
     if (vazio) vazio.hidden = !ativo || resultados.length > 0;
     if (status) {
-      status.textContent = ativo
-        ? `${resultados.length} resultado${resultados.length === 1 ? "" : "s"} encontrado${resultados.length === 1 ? "" : "s"}.`
-        : `${itens.length} cartuchos e faixas indexados para busca rápida.`;
+      if (!ativo) {
+        status.textContent = `${itens.length} cartuchos e faixas indexados para busca rápida.`;
+      } else if (selecionados.size) {
+        status.textContent = `${resultados.length} de ${resultadosBrutos.length} resultado${resultadosBrutos.length === 1 ? "" : "s"} encontrado${resultadosBrutos.length === 1 ? "" : "s"}.`;
+      } else {
+        status.textContent = `${resultados.length} resultado${resultados.length === 1 ? "" : "s"} encontrado${resultados.length === 1 ? "" : "s"}.`;
+      }
     }
     if (!resultadosGrid) return;
     resultadosGrid.replaceChildren();
@@ -255,11 +432,44 @@ export function inicializarBuscaGlobalWiki(idDados = "wiki-global-search-data") 
     window.requestAnimationFrame(() => {
       if (idAtual !== renderId) return;
       const fragmento = document.createDocumentFragment();
-      resultados.slice(0, LIMITE_RESULTADOS).forEach((item) => fragmento.appendChild(criarResultadoCard(item)));
+      resultados.slice(0, totalLimitado).forEach((item) => {
+        const card = criarResultadoCard(item);
+        const abrir = (evento) => {
+          if (item.modelo === "musica" && deveIgnorarCliqueDoCard(evento)) return;
+          abrirDetalheGlobal(item);
+        };
+        card.addEventListener("click", abrir);
+        if (card.tagName !== "BUTTON") {
+          card.addEventListener("keydown", (evento) => {
+            if (evento.key === "Enter" || evento.key === " ") {
+              evento.preventDefault();
+              abrirDetalheGlobal(item);
+            }
+          });
+        }
+        fragmento.appendChild(card);
+      });
       resultadosGrid.appendChild(fragmento);
+      aplicarVolumeGlobal(resultadosGrid);
     });
   }
 
+  filtros.forEach((botao) => {
+    const chave = botao.dataset.wikiGlobalFilter || "";
+    if (!FILTROS_WIKI.includes(chave)) return;
+    botao.addEventListener("click", () => {
+      if (selecionados.has(chave)) selecionados.delete(chave);
+      else selecionados.add(chave);
+      atualizarFiltrosVisuais(filtros, selecionados);
+      atualizar();
+    });
+  });
+  volumeControle?.addEventListener("input", () => {
+    volumeGlobal = limitarVolume(volumeControle.value);
+    salvarVolume(volumeGlobal);
+    aplicarVolumeGlobal(resultadosGrid || document);
+  });
   input?.addEventListener("input", atualizar);
+  atualizarFiltrosVisuais(filtros, selecionados);
   atualizar();
 }

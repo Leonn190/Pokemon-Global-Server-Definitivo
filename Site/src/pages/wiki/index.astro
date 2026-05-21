@@ -8,6 +8,18 @@ import "../../Estilos/wiki.css";
 
 const secoes = SECOES_WIKI;
 const indiceBuscaWiki = montarIndiceBuscaWiki();
+const filtrosBuscaGlobal = [
+  ["pokemons", "🐾", "Pokémons"],
+  ["itens", "🎒", "Itens"],
+  ["ataques", "⚡", "Ataques"],
+  ["npcs", "🧍", "NPCs"],
+  ["estruturas", "🌿", "Estruturas naturais"],
+  ["musicas", "🎵", "Músicas"],
+  ["habilidades", "🌟", "Habilidades"],
+  ["comandos", "⌨️", "Comandos"],
+  ["dungeons", "🗺️", "Dungeons"],
+  ["estadios", "🏟️", "Estádios"],
+];
 ---
 <Layout titulo="Wiki | Pokémon Global Server" descricao="Wiki do Pokémon Global Server.">
   <section class="wiki-hero">
@@ -40,8 +52,22 @@ const indiceBuscaWiki = montarIndiceBuscaWiki();
   <section class="secao wiki-busca-resultados-secao" data-wiki-global-results-section hidden>
     <div class="wiki-busca-resultados-topo">
       <h2>Resultados encontrados</h2>
-      <p>A busca usa os cartuchos visuais das próprias wikis; faixas de música aparecem como linhas de áudio no meio dos resultados.</p>
+      <div class="wiki-busca-resultados-acoes">
+        <p>A busca usa os cartuchos visuais das próprias wikis; faixas de música aparecem como linhas de áudio no meio dos resultados.</p>
+        <label class="musicas-volume-global wiki-busca-volume-global" aria-label="Volume das músicas nos resultados">
+          <span>Volume</span>
+          <input type="range" min="0" max="1" value="1" step="0.01" data-wiki-global-volume />
+        </label>
+      </div>
     </div>
+    <section class="filtros-rapidos wiki-busca-filtros" data-wiki-global-filters aria-label="Filtrar resultados por wiki" hidden>
+      {filtrosBuscaGlobal.map(([chave, emoji, rotulo]) => (
+        <button type="button" class="tipo-chip wiki-busca-filtro-chip" data-wiki-global-filter={chave} aria-pressed="false">
+          <span class="tipo-icone-mini" aria-hidden="true">{emoji}</span>
+          <span>{rotulo}</span>
+        </button>
+      ))}
+    </section>
     <div class="wiki-busca-resultados" data-wiki-global-results aria-live="polite"></div>
     <div class="wiki-vazio wiki-busca-vazio" data-wiki-global-empty hidden>
       <strong>Nenhum resultado encontrado.</strong>

@@ -572,13 +572,17 @@ body.detalhe-aberto {
 }
 .pokemon-movelist {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 18px;
 }
 .pokemon-movelist-grupo {
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.095);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.035);
 }
 .pokemon-movelist-grupo h4 {
   margin: 0;
@@ -590,11 +594,40 @@ body.detalhe-aberto {
 }
 .pokemon-movelist-lista {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 .pokemon-movelist-lista .ataque-card {
-  min-height: 196px;
+  min-height: 166px;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 18px;
+}
+.pokemon-movelist-lista .ataque-card::before {
+  inset: 8px;
+  border-radius: 14px;
+}
+.pokemon-movelist-lista .item-card-codigo {
+  font-size: 0.72rem;
+}
+.pokemon-movelist-lista .item-card-arte {
+  width: 66px;
+  height: 66px;
+  border-radius: 22px;
+}
+.pokemon-movelist-lista .item-card-arte img {
+  width: 58px;
+  height: 58px;
+}
+.pokemon-movelist-lista .item-card-nome {
+  font-size: 0.88rem;
+  line-height: 1.12;
+}
+.pokemon-movelist-lista .item-card-linha strong {
+  font-size: 0.92rem;
+}
+.pokemon-movelist-lista .item-card-linha small {
+  font-size: 0.64rem;
 }
 .painel-titulo-linha {
   display: flex;
@@ -663,6 +696,11 @@ body.detalhe-aberto {
     grid-column: 1 / -1;
   }
 }
+@media (max-width: 1100px) {
+  .pokemon-movelist-lista {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
 @media (max-width: 900px) {
   .wiki-hero-pokedex,
   .pokemon-detalhe-topo,
@@ -675,13 +713,18 @@ body.detalhe-aberto {
   .pokedex-resumo {
     grid-template-columns: repeat(2, 1fr);
   }
+  .pokemon-movelist-lista {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 @media (max-width: 620px) {
   .pokedex-toolbar,
   .pokedex-resumo,
-  .pokemon-movelist,
   .pokemon-info-lista {
     grid-template-columns: 1fr;
+  }
+  .pokemon-movelist-lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .pokedex-status {
     align-items: flex-start;

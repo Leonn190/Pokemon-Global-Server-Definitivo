@@ -1,99 +1,13 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import CardWiki from "../../Componentes/CardWiki.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
+import { SECOES_WIKI, montarIndiceBuscaWiki } from "../../Codigo/WikiBuscaGlobalDados.js";
 import "../../Estilos/wiki.css";
-const secoes = [
-  {
-    href: "/wiki/pokemons",
-    emoji: "🐾",
-    titulo: "Pokémons",
-    texto: "Pokédex com busca, filtros, atributos, tipagens, raridades e linhagens.",
-  },
-  {
-    href: "/wiki/lore",
-    emoji: "📖",
-    titulo: "Lore",
-    texto: "Espaço reservado para história, regiões, personagens e contexto do universo do jogo.",
-  },
-  {
-    href: "/wiki/ataques",
-    emoji: "⚡",
-    titulo: "Ataques",
-    texto: "Ataques com custo, tipo, estilo, motor, foco, descrição e aprimoramento.",
-  },
-  {
-    href: "/wiki/efeitos",
-    emoji: "✨",
-    titulo: "Efeitos",
-    texto: "Status de Pokémon, climas, terrenos, sentido, passos base e descrições.",
-  },
-  {
-    href: "/wiki/itens",
-    emoji: "🎒",
-    titulo: "Itens",
-    texto: "Consumíveis, doces, equipamentos, receitas e itens especiais do jogo.",
-  },
-  {
-    href: "/wiki/equipaveis",
-    emoji: "🛡️",
-    titulo: "Equipáveis",
-    texto: "Equipamentos, bônus, raridades, slots e efeitos aplicados aos Pokémons.",
-  },
-  {
-    href: "/wiki/tipos",
-    emoji: "🧬",
-    titulo: "Tipos",
-    texto: "Tabela de efetividade, fraquezas, resistências e imunidades dos tipos do jogo.",
-  },
-  {
-    href: "/wiki/npcs",
-    emoji: "🧍",
-    titulo: "NPCs",
-    texto: "Combatentes, vendedores, cargos, categorias, níveis, skins e equipes de Pokémon.",
-  },
-  {
-    href: "/wiki/mundo",
-    emoji: "🌍",
-    titulo: "Mundo",
-    texto: "Biomas, chunks, exploração, vilas, rotas, mapa e geração do mundo.",
-  },
-  {
-    href: "/wiki/combate",
-    emoji: "⚔️",
-    titulo: "Combate",
-    texto: "Regras de batalha, turnos, energia, dano, colisões, indicadores e animações.",
-  },
-  {
-    href: "/wiki/dungeons",
-    emoji: "🗺️",
-    titulo: "Dungeons",
-    texto: "Áreas fechadas, desafios especiais, progressão, recompensas e exploração por etapas.",
-  },
-  {
-    href: "/wiki/estadios",
-    emoji: "🏟️",
-    titulo: "Estádios",
-    texto: "Estádios de cada tipo, progressão de respeito, insígnias, líderes e associados.",
-  },
-  {
-    href: "/wiki/musicas",
-    emoji: "🎵",
-    titulo: "Músicas",
-    texto: "Faixas do jogo com player, busca, filtro por estilo, ordem oficial e duração.",
-  },
-  {
-    href: "/wiki/habilidades",
-    emoji: "🌟",
-    titulo: "Habilidades",
-    texto: "Árvore de skills do jogador com ramos, níveis, grupos, efeitos e dependências.",
-  },
-  {
-    href: "/wiki/comandos",
-    emoji: "⌨️",
-    titulo: "Comandos",
-    texto: "Comandos disponíveis, atalhos, permissões e ações rápidas para usar dentro do jogo.",
-  },
-];
+
+const secoes = SECOES_WIKI;
+const indiceBuscaWiki = montarIndiceBuscaWiki();
 ---
 <Layout titulo="Wiki | Pokémon Global Server" descricao="Wiki do Pokémon Global Server.">
   <section class="wiki-hero">
@@ -103,9 +17,40 @@ const secoes = [
       Esta é a entrada principal da wiki. Aqui você encontra as informações do jogo organizadas por área, com dados, filtros e detalhes para consultar tudo de forma rápida.
     </p>
   </section>
-  <section class="secao">
+  <section class="wiki-busca-global" data-wiki-global-search-root aria-labelledby="titulo-busca-global-wiki">
+    <div>
+      <p class="selo">Busca global</p>
+      <h2 id="titulo-busca-global-wiki">Pesquise em todas as wikis</h2>
+      <p>
+        Procure por Pokémons, ataques, itens, NPCs, estruturas naturais, faixas de música e outros cartuchos sem entrar seção por seção.
+      </p>
+    </div>
+    <CampoBuscaWiki
+      data-wiki-global-search
+      label="Pesquisar na wiki inteira"
+      placeholder="Ex.: Pikachu, envenenado, pedra, boss, música, estrutura..."
+    />
+    <span class="wiki-busca-global-status" data-wiki-global-status></span>
+  </section>
+  <section class="secao" data-wiki-menu-secoes>
     <div class="cards wiki-cards-quinze">
       {secoes.map((secao) => <CardWiki {...secao} />)}
     </div>
   </section>
+  <section class="secao wiki-busca-resultados-secao" data-wiki-global-results-section hidden>
+    <div class="wiki-busca-resultados-topo">
+      <h2>Resultados encontrados</h2>
+      <p>Os cards levam para a wiki correspondente, mantendo a entrada principal limpa enquanto a pesquisa está ativa.</p>
+    </div>
+    <div class="wiki-busca-resultados" data-wiki-global-results aria-live="polite"></div>
+    <div class="wiki-vazio wiki-busca-vazio" data-wiki-global-empty hidden>
+      <strong>Nenhum resultado encontrado.</strong>
+      <p>Tente pesquisar por outro nome, tipo, música, estrutura, NPC, item ou ataque.</p>
+    </div>
+  </section>
+  <JsonPayload id="wiki-global-search-data" dados={{ itens: indiceBuscaWiki }} />
+  <script>
+    import { inicializarBuscaGlobalWiki } from "../../Codigo/WikiBuscaGlobalRuntime.js";
+    inicializarBuscaGlobalWiki();
+  </script>
 </Layout>

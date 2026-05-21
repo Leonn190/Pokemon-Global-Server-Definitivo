@@ -159,10 +159,21 @@ function entradasMoveList(entradas) {
     .filter((entrada) => entrada.nome);
 }
 
+function combinarEntradasMoveList(...grupos) {
+  const entradas = new Map();
+  grupos.forEach((grupo) => {
+    entradasMoveList(grupo).forEach((entrada) => {
+      const chave = normalizarChave(entrada.nome);
+      if (chave && !entradas.has(chave)) entradas.set(chave, entrada);
+    });
+  });
+  return [...entradas.values()];
+}
+
 function normalizarMoveList(entrada) {
   if (!entrada || typeof entrada !== "object") return null;
-  const regulares = entradasMoveList(entrada.regulares);
-  const artificiais = entradasMoveList(entrada.artificiais);
+  const regulares = combinarEntradasMoveList(entrada.regulares, entrada.naturais, entrada.natural);
+  const artificiais = combinarEntradasMoveList(entrada.artificiais, entrada.artificial);
   return regulares.length || artificiais.length ? { regulares, artificiais } : null;
 }
 

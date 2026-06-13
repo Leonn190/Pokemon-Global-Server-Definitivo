@@ -43,9 +43,18 @@ const TIPOS_CANONICOS = {
   veneno: "Venenoso",
   voador: "Voador",
 };
+const NOMES_PRIVADOS_SITE = [
+  [[..."na", ..."thzinha"].join(""), "nameless"],
+];
 function titulo(valor) {
   const texto = limparTexto(valor);
   return texto ? texto.replace(/^./, (letra) => letra.toUpperCase()) : "";
+}
+function nomePublicoSite(valor) {
+  const texto = limparTexto(valor);
+  const chave = normalizarChave(texto);
+  const substituto = NOMES_PRIVADOS_SITE.find(([nome]) => nome === chave)?.[1];
+  return substituto ?? texto;
 }
 function tipoCanonico(valor) {
   const texto = limparTexto(valor);
@@ -78,7 +87,7 @@ function coletarPokemons(linha) {
 }
 function normalizarCombatente(linha, indice) {
   const code = campoNumero(linha, ["Code", "Código", "ID", "Id"], indice + 1) ?? indice + 1;
-  const nome = limparTexto(campo(linha, ["Nome", "NPC"], "")) || `Combatente ${code}`;
+  const nome = nomePublicoSite(campo(linha, ["Nome", "NPC"], "")) || `Combatente ${code}`;
   const estadio = tipoCanonico(campo(linha, ["Estadio", "Estádio", "Tipo", "Tipagem"], ""));
   const cargo = cargoCanonico(campo(linha, ["Cargo", "Função", "Funcao"], ""));
   const nivel = campoNumero(linha, ["Nivel", "Nível", "Level"], null);
@@ -107,7 +116,7 @@ function normalizarCombatente(linha, indice) {
 }
 function normalizarVendedor(linha, indice, deslocamento) {
   const code = campoNumero(linha, ["Code", "Código", "ID", "Id"], deslocamento + indice + 1) ?? deslocamento + indice + 1;
-  const nome = limparTexto(campo(linha, ["Nome", "NPC"], "")) || `Vendedor ${code}`;
+  const nome = nomePublicoSite(campo(linha, ["Nome", "NPC"], "")) || `Vendedor ${code}`;
   const categoria = titulo(campo(linha, ["Categoria", "Loja", "Tipo"], "")) || "Sem categoria";
   const nivel = campoNumero(linha, ["Nivel", "Nível", "Level"], null);
   const skin = limparTexto(campo(linha, ["Skin", "Icone", "Ícone", "Imagem"], ""));
